@@ -1,0 +1,25 @@
+{
+  "name": "@robloach/nextcloud-nostalgist",
+  "version": "0.0.1",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": "^20.0.0",
+    "npm": "^10.0.0"
+  },
+  "scripts": {
+    "precores": "git submodule update --init --recursive",
+    "cores": "cp -r 3rdparty/retroarch-emscripten-build/retroarch img/cores",
+    "postcores": "cp 3rdparty/retroarch-emscripten-build/license img/cores/license",
+    "build": "NODE_ENV=production webpack --config webpack.js --progress",
+    "dev": "NODE_ENV=development webpack --config webpack.js --progress",
+    "watch": "NODE_ENV=development webpack --config webpack.js --progress --watch"
+  },
+  "browserslist": [
+    "extends @nextcloud/browserslist-config"
+  ],
+  "devDependencies": {
+    "@nextcloud/browserslist-config": "^3.0.1",
+    "@nextcloud/webpack-vue-config": "^6.0.1",
+    "nostalgist": "0.11.0"
+  }
+}

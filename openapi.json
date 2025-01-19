@@ -1,0 +1,12 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "nostalgist",
+        "version": "0.0.1",
+        "description": "Nostalgist for NextCloud",
+        "license": {
+            "name": "agpl"
+        }
+    },
+    "tags": []
+}

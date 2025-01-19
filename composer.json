@@ -1,0 +1,44 @@
+{
+	"name": "robloach/nextcloud-nostalgist",
+	"description": "Run emulators directly from NextCloud.",
+	"license": "AGPL-3.0-or-later",
+	"authors": [
+		{
+			"name": "Rob Loach",
+			"email": "robloach@gmail.com",
+			"homepage": "https://robloach.net"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"OCA\\Nostalgist\\": "lib/"
+		}
+	},
+	"scripts": {
+		"post-install-cmd": [
+			"@composer bin all install --ansi"
+		],
+		"post-update-cmd": [
+			"@composer bin all update --ansi"
+		],
+		"openapi": "generate-spec"
+	},
+	"require": {
+		"bamarni/composer-bin-plugin": "^1.8",
+		"php": "^8.1"
+	},
+	"require-dev": {
+		"nextcloud/ocp": "dev-stable29",
+		"roave/security-advisories": "dev-latest"
+	},
+	"config": {
+		"allow-plugins": {
+			"bamarni/composer-bin-plugin": true
+		},
+		"optimize-autoloader": true,
+		"sort-packages": true,
+		"platform": {
+			"php": "8.1"
+		}
+	}
+}

@@ -1,0 +1,3 @@
+[submodule "3rdparty/retroarch-emscripten-build"]
+	path = 3rdparty/retroarch-emscripten-build
+	url = https://github.com/arianrhodsandlot/retroarch-emscripten-build.git

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>nostalgist</id>
+	<name>Nostalgist</name>
+	<summary>Nostalgist for NextCloud</summary>
+	<description>Play retro games directly in NextCloud.</description>
+	<version>0.0.1</version>
+	<licence>mit</licence>
+	<author mail="robloach@gmail.com" homepage="https://robloach.net">Rob Loach</author>
+	<namespace>Nostalgist</namespace>
+	<category>games</category>
+	<bugs>https://github.com/robloach/nextcloud-nostalgist</bugs>
+	<dependencies>
+		<nextcloud min-version="29" max-version="29"/>
+	</dependencies>
+	<navigations>
+		<navigation>
+			<id>nostalgist</id>
+			<name>Nostalgist</name>
+			<route>nostalgist.page.index</route>
+			<icon>app.svg</icon>
+			<type>link</type>
+		</navigation>
+	</navigations>
+</info>
