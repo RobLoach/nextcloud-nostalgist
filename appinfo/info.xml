@@ -7,10 +7,12 @@
 	<description>Play retro games directly in NextCloud.</description>
 	<version>0.0.1</version>
 	<licence>mit</licence>
-	<author mail="robloach@gmail.com" homepage="https://robloach.net">Rob Loach</author>
+	<author homepage="https://robloach.net">Rob Loach</author>
 	<namespace>Nostalgist</namespace>
 	<category>games</category>
 	<bugs>https://github.com/robloach/nextcloud-nostalgist</bugs>
+	<repository type="git">https://github.com/robloach/nextcloud-nostalgist.git</repository>
+	<screenshot small-thumbnail="https://raw.githubusercontent.com/robloach/nextcloud-nostalgist/master/img/screenshot-thumbnail.jpg">https://raw.githubusercontent.com/robloach/nextcloud-nostalgist/master/img/screenshot.png</screenshot>
 	<dependencies>
 		<nextcloud min-version="29" max-version="29"/>
 	</dependencies>

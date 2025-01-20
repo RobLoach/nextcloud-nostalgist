@@ -5,5 +5,7 @@ script('nostalgist', 'main');
 ?>
 
 <div id="app-content">
-	<canvas class="nostalgist-canvas"></canvas>
+	<div class="nostalgist">
+		<canvas></canvas>
+	</div>
 </div>

@@ -12,6 +12,8 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\TemplateResponse;
 
+use OCP\AppFramework\Http\ContentSecurityPolicy;
+
 /**
  * @psalm-suppress UnusedClass
  */

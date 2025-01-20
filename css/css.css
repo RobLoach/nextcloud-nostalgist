@@ -1,3 +1,13 @@
-#nostalgist {
-	color: red;
+.nostalgist {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.nostalgist canvas {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
 }
