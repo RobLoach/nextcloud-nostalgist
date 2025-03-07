@@ -20,5 +20,5 @@ Nostalgist.configure({
 
 await Nostalgist.launch({
 	core: 'fceumm',
-	rom: 'https://cdn.jsdelivr.net/gh/retrobrews/nes-games@master/twindragons.nes'
+	rom: 'https://nextcloud.ddev.site/s/t3Rcinx6YtR4ZGd/download/Super%20Mario%20Bros%20%28E%29.nes'
 });
