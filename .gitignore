@@ -10,4 +10,10 @@
 /node_modules/
 #/js/
 
+# Extracted cores from `npm run cores`. Only fceumm and the license are committed.
+/img/cores/*
+!/img/cores/fceumm_libretro.js
+!/img/cores/fceumm_libretro.wasm
+!/img/cores/license
+
 package-lock.json

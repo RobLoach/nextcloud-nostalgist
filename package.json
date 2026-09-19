@@ -3,12 +3,12 @@
   "version": "0.0.1",
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": "^20.0.0",
+    "node": "^22.0.0",
     "npm": "^10.0.0"
   },
   "scripts": {
     "precores": "git submodule update --init --recursive",
-    "cores": "cp -r 3rdparty/retroarch-emscripten-build/retroarch img/cores",
+    "cores": "mkdir -p img/cores && for zip in 3rdparty/retroarch-emscripten-build/retroarch/*_libretro.zip; do unzip -o -q \"$zip\" -d img/cores; done",
     "postcores": "cp 3rdparty/retroarch-emscripten-build/license img/cores/license",
     "build": "NODE_ENV=production webpack --config webpack.js --progress",
     "dev": "NODE_ENV=development webpack --config webpack.js --progress",
@@ -19,8 +19,8 @@
     "extends @nextcloud/browserslist-config"
   ],
   "devDependencies": {
-    "@nextcloud/browserslist-config": "^3.0.1",
-    "@nextcloud/webpack-vue-config": "^6.0.1",
-    "nostalgist": "0.14.0"
+    "@nextcloud/browserslist-config": "^3.1.2",
+    "@nextcloud/webpack-vue-config": "^7.0.4",
+    "nostalgist": "0.22.0"
   }
 }
