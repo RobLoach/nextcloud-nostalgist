@@ -23,9 +23,19 @@ class PageController extends Controller {
 	//#[OpenAPI(OpenAPI::SCOPE_IGNORE)]
 	#[FrontpageRoute(verb: 'GET', url: '/')]
 	public function index(): TemplateResponse {
-		return new TemplateResponse(
+		$response = new TemplateResponse(
 			Application::APP_ID,
 			'index',
 		);
+
+		// Nostalgist.js compiles RetroArch cores to WebAssembly from blob: URLs,
+		// which the default policy blocks.
+		$csp = new ContentSecurityPolicy();
+		$csp->allowEvalWasm(true);
+		$csp->addAllowedScriptDomain('blob:');
+		$csp->addAllowedWorkerSrcDomain('blob:');
+		$response->setContentSecurityPolicy($csp);
+
+		return $response;
 	}
 }
