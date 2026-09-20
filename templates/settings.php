@@ -32,6 +32,15 @@ $systems = $_['systems'];
 			value="<?php p($settings['fastforward_ratio']); ?>">
 	</p>
 
+	<h3><?php p($l->t('Games library')); ?></h3>
+	<p class="settings-hint"><?php p($l->t('Games in this folder are listed on the Nostalgist page.')); ?></p>
+	<p>
+		<label for="nostalgist-library-folder"><?php p($l->t('Games library folder')); ?></label><br>
+		<input type="text" id="nostalgist-library-folder" class="nostalgist-setting"
+			data-setting="library_folder" placeholder="/Games"
+			value="<?php p($settings['library_folder']); ?>">
+	</p>
+
 	<h3><?php p($l->t('Emulator cores')); ?></h3>
 	<p class="settings-hint"><?php p($l->t('Choose which libretro core is used for each system.')); ?></p>
 	<?php foreach ($systems as $id => $system): ?>

@@ -19,27 +19,44 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
    and by file extension, with a "Play with Nostalgist" action available in
    the file's menu.
 
+4. The Nostalgist page itself lists the games found in your games library
+   folder (`/Games` by default, configurable in the personal settings), so
+   you can start playing from there too.
+
 ### Cores
 
-Only the NES core (`fceumm`) ships with the repository to keep it small. To
-extract every core from
-[retroarch-emscripten-build](https://github.com/arianrhodsandlot/retroarch-emscripten-build)
-and unlock the other systems, run:
+The default libretro core for each supported system ships with the app:
+
+| System | Core |
+| --- | --- |
+| NES | fceumm |
+| SNES | snes9x |
+| Game Boy / Game Boy Color | gambatte |
+| Game Boy Advance | mgba |
+| Sega Genesis / Mega Drive, Master System, Game Gear | genesis_plus_gx |
+| Sega 32X | picodrive |
+| PC Engine / TurboGrafx-16 | mednafen_pce_fast |
+| Atari Lynx | handy |
+| Neo Geo Pocket | mednafen_ngp |
+| WonderSwan | mednafen_wswan |
+| Virtual Boy | mednafen_vb |
+| Vectrex | vecx |
+| ColecoVision | gearcoleco |
+
+To also extract the alternative cores (selectable in the personal settings)
+from
+[retroarch-emscripten-build](https://github.com/arianrhodsandlot/retroarch-emscripten-build),
+run:
 
 ```sh
 npm run cores
 ```
 
-Supported systems: NES, SNES, Game Boy, Game Boy Color, Game Boy Advance,
-Sega Genesis / Mega Drive, Master System, Game Gear, 32X, PC Engine,
-Atari Lynx, Neo Geo Pocket, WonderSwan, Virtual Boy, Vectrex, and
-ColecoVision.
-
 ### Settings
 
 Personal settings → Nostalgist lets you configure the player: which libretro
-core is used per system, rewind, video smoothing, fast-forward ratio, and
-global input capture.
+core is used per system, the games library folder, rewind, video smoothing,
+fast-forward ratio, and global input capture.
 
 ### Existing files
 

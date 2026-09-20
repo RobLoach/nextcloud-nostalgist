@@ -24,6 +24,7 @@ class SettingsService {
 			'video_smooth' => true,
 			'fastforward_ratio' => 10,
 			'respond_to_global_events' => true,
+			'library_folder' => '/Games',
 		];
 	}
 
@@ -71,6 +72,12 @@ class SettingsService {
 		if (array_key_exists('fastforward_ratio', $settings) && is_numeric($settings['fastforward_ratio'])) {
 			// 0 means unlimited in RetroArch.
 			$sanitized['fastforward_ratio'] = max(0, min(50, (float)$settings['fastforward_ratio']));
+		}
+		if (array_key_exists('library_folder', $settings) && is_string($settings['library_folder'])) {
+			$folder = '/' . trim(trim($settings['library_folder']), '/');
+			if (!str_contains($folder, '..')) {
+				$sanitized['library_folder'] = $folder;
+			}
 		}
 		if (isset($settings['cores']) && is_array($settings['cores'])) {
 			$cores = [];

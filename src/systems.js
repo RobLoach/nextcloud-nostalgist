@@ -40,3 +40,11 @@ export function systemForFile(basename, mime = '') {
 export function coreForSystem(systemId, settings = {}) {
 	return settings?.cores?.[systemId] ?? systems[systemId]?.cores?.[0] ?? null
 }
+
+/**
+ * @param {string} systemId the system id
+ * @return {string} the human readable name of the system
+ */
+export function systemLabel(systemId) {
+	return systems[systemId]?.label ?? systemId
+}

@@ -125,6 +125,19 @@ class CoreMap {
 	}
 
 	/**
+	 * @return array<string, string> extension => system id
+	 */
+	public static function extensionSystemMap(): array {
+		$map = [];
+		foreach (self::SYSTEMS as $id => $system) {
+			foreach ($system['extensions'] as $extension) {
+				$map[$extension] = $id;
+			}
+		}
+		return $map;
+	}
+
+	/**
 	 * @return array<string, string> system id => default core
 	 */
 	public static function defaultCores(): array {

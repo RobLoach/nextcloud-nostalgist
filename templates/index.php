@@ -7,5 +7,6 @@ script('nostalgist', 'main');
 	<div class="nostalgist">
 		<canvas></canvas>
 		<div class="nostalgist-message hidden"></div>
+		<div class="nostalgist-library hidden"></div>
 	</div>
 </div>

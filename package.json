@@ -27,5 +27,9 @@
     "@nextcloud/router": "^3.0.1",
     "@nextcloud/webpack-vue-config": "^7.0.4",
     "nostalgist": "0.22.0"
+  },
+  "allowScripts": {
+    "@nextcloud/webpack-vue-config@7.0.4": true,
+    "@parcel/watcher@2.6.0": true
   }
 }
