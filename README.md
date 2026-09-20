@@ -36,7 +36,15 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
 
 A control bar overlays the bottom of the player with pause/resume, restart,
 a save state menu, mute, fast-forward, the RetroArch menu (core options,
-control remapping and more), screenshot, and fullscreen.
+control remapping and more), screenshot, and fullscreen. On touch devices
+a virtual gamepad is overlaid too — a D-pad with diagonals, A/B/X/Y, L/R,
+Start and Select — toggleable from the control bar.
+
+In-game battery saves (SRAM) are synchronized automatically: restored when
+a game starts and uploaded every minute and when the page closes, so
+progress saved through a game's own save system survives. When a game has
+save states, the player offers to continue from the most recent one at
+launch.
 
 The save state menu has six slots per game, each with a screenshot
 thumbnail and timestamp. States are stored per user and per game on the

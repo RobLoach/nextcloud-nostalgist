@@ -66,6 +66,34 @@ class StateService {
 		return $this->readAppData($this->thumbnailName($userId, $romPath, $slot));
 	}
 
+	/**
+	 * SRAM is the in-game battery save (e.g. an RPG's own save file),
+	 * stored once per user and game, next to the save states.
+	 */
+	public function saveSram(string $userId, string $romPath, string $data): void {
+		$folder = $this->getGameFolder($userId, $romPath, true);
+		if ($folder !== null) {
+			$this->writeNode($folder, $this->sramNodeName($romPath), $data);
+			return;
+		}
+		$this->writeAppData($this->key($userId, $romPath) . '.srm', $data);
+	}
+
+	public function loadSram(string $userId, string $romPath): ?string {
+		$folder = $this->getGameFolder($userId, $romPath, false);
+		if ($folder !== null) {
+			return $this->readNode($folder, $this->sramNodeName($romPath));
+		}
+		if ($this->savesFolderPath($userId) !== '') {
+			return null;
+		}
+		return $this->readAppData($this->key($userId, $romPath) . '.srm');
+	}
+
+	private function sramNodeName(string $romPath): string {
+		return pathinfo(basename($romPath), PATHINFO_FILENAME) . '.srm';
+	}
+
 	public function delete(string $userId, string $romPath, int $slot): bool {
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null) {

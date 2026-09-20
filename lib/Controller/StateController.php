@@ -106,6 +106,33 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
+	#[FrontpageRoute(verb: 'GET', url: '/sram')]
+	public function getSram(string $file = ''): Response {
+		if ($this->userId === null || $file === '') {
+			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
+		}
+		$sram = $this->stateService->loadSram($this->userId, $file);
+		if ($sram === null) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
+		return new DataDownloadResponse($sram, basename($file) . '.srm', 'application/octet-stream');
+	}
+
+	#[NoAdminRequired]
+	#[FrontpageRoute(verb: 'POST', url: '/sram')]
+	public function saveSram(string $file = ''): JSONResponse {
+		if ($this->userId === null || $file === '') {
+			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
+		}
+		$sram = $this->readBody(self::MAX_STATE_SIZE);
+		if ($sram === null) {
+			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
+		}
+		$this->stateService->saveSram($this->userId, $file, $sram);
+		return new JSONResponse(['size' => strlen($sram)]);
+	}
+
+	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'DELETE', url: '/state')]
 	public function delete(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isValidRequest($file, $slot)) {

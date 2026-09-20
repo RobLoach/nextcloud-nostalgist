@@ -1,9 +1,12 @@
 import { unzipSync } from 'fflate'
 import { Nostalgist } from 'nostalgist'
+import { getCurrentUser, getRequestToken } from '@nextcloud/auth'
 import { defaultRemoteURL, defaultRootPath } from '@nextcloud/files/dav'
 import { translate as t } from '@nextcloud/l10n'
-import { generateFilePath } from '@nextcloud/router'
+import { generateFilePath, generateUrl } from '@nextcloud/router'
 import { coreForSystem, systemForFile } from './systems.js'
+
+const SRAM_SYNC_INTERVAL = 60 * 1000
 
 /**
  * @param {string} path path of the file, relative to the user folder or,
@@ -57,9 +60,10 @@ async function resolveRom(blob, romName, systemHint) {
  * @param {string} options.romName file name of the ROM
  * @param {object} options.settings the user settings
  * @param {?object} [options.systemHint] system detected from the game's folder
+ * @param {string} [options.romPath] path identifying the game, enables SRAM restore
  * @return {Promise<Nostalgist>} the running Nostalgist instance
  */
-export async function launchRom({ element, romUrl, romName, settings = {}, systemHint = null }) {
+export async function launchRom({ element, romUrl, romName, settings = {}, systemHint = null, romPath = '' }) {
 	// Fetch the ROM here so the request carries the Nextcloud session.
 	const response = await fetch(romUrl, { credentials: 'same-origin' })
 	if (!response.ok) {
@@ -69,11 +73,13 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 	if (system === null) {
 		throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: romName }))
 	}
+	const sram = await fetchSram(romPath)
 
 	return await Nostalgist.launch({
 		element,
 		core: coreForSystem(system.id, settings),
 		rom,
+		sram: sram ?? undefined,
 		respondToGlobalEvents: settings.respond_to_global_events !== false,
 		retroarchConfig: {
 			video_smooth: settings.video_smooth === true,
@@ -86,4 +92,81 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 			return generateFilePath('nostalgist', 'img', `cores/${coreName}_libretro.wasm`)
 		},
 	})
+}
+
+/**
+ * @param {string} romPath path identifying the game
+ * @return {string} the SRAM endpoint URL
+ */
+function sramUrl(romPath) {
+	return generateUrl('/apps/nostalgist/sram?file={file}', { file: romPath })
+}
+
+/**
+ * Fetch the stored in-game battery save, if any.
+ *
+ * @param {string} romPath path identifying the game
+ * @return {Promise<?Blob>} the SRAM, or null
+ */
+async function fetchSram(romPath) {
+	if (!romPath || getCurrentUser() === null) {
+		return null
+	}
+	try {
+		const response = await fetch(sramUrl(romPath), {
+			headers: { requesttoken: getRequestToken() ?? '' },
+		})
+		if (!response.ok) {
+			return null
+		}
+		const blob = await response.blob()
+		return blob.size > 0 ? blob : null
+	} catch (error) {
+		console.error('Could not fetch the SRAM', error)
+		return null
+	}
+}
+
+/**
+ * Periodically upload the in-game battery save, and once more when the
+ * page is hidden, so in-game saves survive closing the tab.
+ *
+ * @param {Nostalgist} instance the running emulator
+ * @param {string} romPath path identifying the game
+ * @return {Function} stops the synchronization
+ */
+export function startSramSync(instance, romPath) {
+	if (!romPath || getCurrentUser() === null) {
+		return () => {}
+	}
+	const upload = async () => {
+		try {
+			const sram = await instance.saveSRAM()
+			if (sram === undefined || sram.size === 0) {
+				return
+			}
+			await fetch(sramUrl(romPath), {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/octet-stream',
+					requesttoken: getRequestToken() ?? '',
+				},
+				body: sram,
+				// So the final upload survives the page closing.
+				keepalive: true,
+			})
+		} catch (error) {
+			console.error('Could not save the SRAM', error)
+		}
+	}
+	const timer = setInterval(upload, SRAM_SYNC_INTERVAL)
+	const onPageHide = () => {
+		upload()
+	}
+	window.addEventListener('pagehide', onPageHide)
+	return () => {
+		clearInterval(timer)
+		window.removeEventListener('pagehide', onPageHide)
+		upload()
+	}
 }

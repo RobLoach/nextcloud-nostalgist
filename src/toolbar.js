@@ -2,6 +2,7 @@ import { getCurrentUser, getRequestToken } from '@nextcloud/auth'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { davUrl } from './player.js'
+import { attachTouchControls, isTouchDevice } from './touch.js'
 
 const ICONS = {
 	pause: 'M14,19H18V5H14M6,19H10V5H6V19Z',
@@ -14,6 +15,7 @@ const ICONS = {
 	screenshot: 'M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z',
 	fullscreen: 'M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z',
 	close: 'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z',
+	gamepad: 'M7.97,16L5,19C4.67,19.3 4.23,19.5 3.75,19.5A1.75,1.75 0 0,1 2,17.75V17.5L3,10.12C3.21,7.81 5.14,6 7.5,6H16.5C18.86,6 20.79,7.81 21,10.12L22,17.5V17.75A1.75,1.75 0 0,1 20.25,19.5C19.77,19.5 19.33,19.3 19,19L16.03,16H7.97M7,8V10H5V11H7V13H8V11H10V10H8V8H7M16.5,8A0.75,0.75 0 0,0 15.75,8.75A0.75,0.75 0 0,0 16.5,9.5A0.75,0.75 0 0,0 17.25,8.75A0.75,0.75 0 0,0 16.5,8M14.75,9.75A0.75,0.75 0 0,0 14,10.5A0.75,0.75 0 0,0 14.75,11.25A0.75,0.75 0 0,0 15.5,10.5A0.75,0.75 0 0,0 14.75,9.75M18.25,9.75A0.75,0.75 0 0,0 17.5,10.5A0.75,0.75 0 0,0 18.25,11.25A0.75,0.75 0 0,0 19,10.5A0.75,0.75 0 0,0 18.25,9.75M16.5,11.5A0.75,0.75 0 0,0 15.75,12.25A0.75,0.75 0 0,0 16.5,13A0.75,0.75 0 0,0 17.25,12.25A0.75,0.75 0 0,0 16.5,11.5Z',
 }
 
 const STYLE_ID = 'nostalgist-toolbar-style'
@@ -101,6 +103,34 @@ const STYLE = `
 }
 .nostalgist-states-slot button:hover:not(:disabled) { background-color: rgba(255, 255, 255, 0.3); }
 .nostalgist-states-slot button:disabled { opacity: 0.4; cursor: default; }
+.nostalgist-resume {
+	position: absolute;
+	top: 16px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	background-color: rgba(0, 0, 0, 0.8);
+	border-radius: 8px;
+	padding: 8px 12px;
+	z-index: 20100;
+	color: #fff;
+	font-size: 13px;
+}
+.nostalgist-resume button {
+	background-color: rgba(255, 255, 255, 0.15);
+	border: none;
+	border-radius: 6px;
+	color: #fff;
+	font-size: 13px;
+	padding: 6px 12px;
+	margin: 0;
+	min-height: 0;
+	cursor: pointer;
+}
+.nostalgist-resume button:hover { background-color: rgba(255, 255, 255, 0.3); }
+.nostalgist-resume button.primary-action { background-color: rgba(255, 255, 255, 0.3); font-weight: bold; }
 `
 
 /**
@@ -276,7 +306,62 @@ function createStatesPanel({ instance, romPath, flash }) {
 		}
 	}
 
-	return { element, refresh }
+	return { element, refresh, load }
+}
+
+/**
+ * Offer to continue from the most recent save state.
+ *
+ * @param {object} options options
+ * @param {HTMLElement} options.container element to attach the prompt to
+ * @param {string} options.romPath path identifying the game
+ * @param {Function} options.load loads a state slot
+ */
+async function offerResume({ container, romPath, load }) {
+	let latest = null
+	try {
+		const response = await api(stateUrl('/states', romPath))
+		const data = await response.json()
+		latest = data.states.reduce((a, b) => (a === null || b.mtime > a.mtime ? b : a), null)
+	} catch (error) {
+		console.error('Could not list the states', error)
+	}
+	if (latest === null) {
+		return
+	}
+
+	const prompt = document.createElement('div')
+	prompt.className = 'nostalgist-resume'
+	const text = document.createElement('span')
+	text.textContent = t('nostalgist', 'Continue from slot {slot} ({date})?', {
+		slot: latest.slot,
+		date: new Date(latest.mtime * 1000).toLocaleString(),
+	})
+	prompt.appendChild(text)
+
+	const dismiss = () => {
+		clearTimeout(timer)
+		prompt.remove()
+	}
+	const timer = setTimeout(dismiss, 15000)
+
+	const resumeButton = document.createElement('button')
+	resumeButton.type = 'button'
+	resumeButton.className = 'primary-action'
+	resumeButton.textContent = t('nostalgist', 'Continue')
+	resumeButton.addEventListener('click', () => {
+		load(latest.slot)
+		dismiss()
+	})
+	prompt.appendChild(resumeButton)
+
+	const dismissButton = document.createElement('button')
+	dismissButton.type = 'button'
+	dismissButton.textContent = t('nostalgist', 'Dismiss')
+	dismissButton.addEventListener('click', dismiss)
+	prompt.appendChild(dismissButton)
+
+	container.appendChild(prompt)
 }
 
 /**
@@ -354,6 +439,17 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 				statesPanel.refresh()
 			}
 		})
+		offerResume({ container, romPath, load: statesPanel.load })
+	}
+
+	// Virtual gamepad for touch play.
+	let touchControls = null
+	if (isTouchDevice()) {
+		touchControls = attachTouchControls({ container, instance })
+		button(ICONS.gamepad, t('nostalgist', 'Touch controls'), (element) => {
+			const hidden = touchControls.element.classList.toggle('hidden')
+			element.classList.toggle('active', !hidden)
+		}).classList.add('active')
 	}
 
 	button(ICONS.mute, t('nostalgist', 'Mute'), (element) => {
@@ -421,7 +517,9 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 
 	return () => {
 		clearTimeout(statusTimer)
+		touchControls?.detach()
 		statesPanel?.element.remove()
+		container.querySelector('.nostalgist-resume')?.remove()
 		toolbar.remove()
 	}
 }
