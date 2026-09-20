@@ -10,10 +10,35 @@
 /node_modules/
 #/js/
 
-# Extracted cores from `npm run cores`. Only fceumm and the license are committed.
+# Extracted cores from `npm run cores`. Only the default core for each
+# supported system (see lib/CoreMap.php) and the license are committed.
 /img/cores/*
 !/img/cores/fceumm_libretro.js
 !/img/cores/fceumm_libretro.wasm
+!/img/cores/gambatte_libretro.js
+!/img/cores/gambatte_libretro.wasm
+!/img/cores/gearcoleco_libretro.js
+!/img/cores/gearcoleco_libretro.wasm
+!/img/cores/genesis_plus_gx_libretro.js
+!/img/cores/genesis_plus_gx_libretro.wasm
+!/img/cores/handy_libretro.js
+!/img/cores/handy_libretro.wasm
+!/img/cores/mednafen_ngp_libretro.js
+!/img/cores/mednafen_ngp_libretro.wasm
+!/img/cores/mednafen_pce_fast_libretro.js
+!/img/cores/mednafen_pce_fast_libretro.wasm
+!/img/cores/mednafen_vb_libretro.js
+!/img/cores/mednafen_vb_libretro.wasm
+!/img/cores/mednafen_wswan_libretro.js
+!/img/cores/mednafen_wswan_libretro.wasm
+!/img/cores/mgba_libretro.js
+!/img/cores/mgba_libretro.wasm
+!/img/cores/picodrive_libretro.js
+!/img/cores/picodrive_libretro.wasm
+!/img/cores/snes9x_libretro.js
+!/img/cores/snes9x_libretro.wasm
+!/img/cores/vecx_libretro.js
+!/img/cores/vecx_libretro.wasm
 !/img/cores/license
 
 package-lock.json
