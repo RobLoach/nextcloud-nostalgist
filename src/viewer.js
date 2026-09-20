@@ -1,7 +1,7 @@
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { davUrl, launchRom } from './player.js'
-import { coreForSystem, romMimes, systemForFile } from './systems.js'
+import { isPlayable, romMimes } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
 const settings = loadState('nostalgist', 'settings', {})
@@ -79,15 +79,13 @@ const NostalgistViewer = {
 		async start() {
 			this.started = true
 			try {
-				const system = systemForFile(this.basename, this.mime)
-				if (system === null) {
+				if (!isPlayable(this.basename, this.mime)) {
 					throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: this.basename }))
 				}
 				this.instance = await launchRom({
 					element: this.$refs.canvas,
 					romUrl: this.source ?? davUrl(this.filename),
 					romName: this.basename,
-					core: coreForSystem(system.id, settings),
 					settings,
 				})
 				this.detachToolbar = attachToolbar({
@@ -95,6 +93,7 @@ const NostalgistViewer = {
 					instance: this.instance,
 					romPath: this.filename,
 					romName: this.basename,
+					settings,
 				})
 			} catch (error) {
 				console.error('Nostalgist failed to start', error)

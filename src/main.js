@@ -3,7 +3,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { davUrl, launchRom } from './player.js'
-import { coreForSystem, systemForFile, systemLabel } from './systems.js'
+import { isPlayable, systemLabel } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
 const file = loadState('nostalgist', 'file', '')
@@ -76,11 +76,21 @@ async function showLibrary() {
 		const item = document.createElement('li')
 		const link = document.createElement('a')
 		link.href = generateUrl('/apps/nostalgist/?file={file}', { file: game.path })
-		link.textContent = game.basename
+		if (game.thumbnail) {
+			const thumbnail = document.createElement('img')
+			thumbnail.className = 'nostalgist-library-thumbnail'
+			thumbnail.src = generateUrl('/core/preview?fileId={fileId}&x=64&y=64&a=1', { fileId: game.thumbnail })
+			thumbnail.alt = ''
+			thumbnail.loading = 'lazy'
+			link.appendChild(thumbnail)
+		}
+		link.appendChild(document.createTextNode(game.basename))
 		item.appendChild(link)
 		const system = document.createElement('span')
 		system.className = 'nostalgist-library-system'
-		system.textContent = systemLabel(game.system)
+		system.textContent = game.system === 'zip'
+			? t('nostalgist', 'ZIP archive')
+			: systemLabel(game.system)
 		item.appendChild(system)
 		list.appendChild(item)
 	}
@@ -93,8 +103,7 @@ async function main() {
 		return
 	}
 	const basename = file.split('/').pop()
-	const system = systemForFile(basename)
-	if (system === null) {
+	if (!isPlayable(basename)) {
 		showMessage(t('nostalgist', 'Unsupported ROM type: {file}', { file: basename }))
 		return
 	}
@@ -104,7 +113,6 @@ async function main() {
 			element: canvas,
 			romUrl: davUrl(file),
 			romName: basename,
-			core: coreForSystem(system.id, settings),
 			settings,
 		})
 		attachToolbar({
@@ -112,6 +120,7 @@ async function main() {
 			instance,
 			romPath: file,
 			romName: basename,
+			settings,
 		})
 	} catch (error) {
 		console.error('Nostalgist failed to start', error)

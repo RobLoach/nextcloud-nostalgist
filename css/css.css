@@ -50,6 +50,21 @@
 	background-color: var(--color-background-hover);
 }
 
+.nostalgist .nostalgist-library-list a {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex: 1;
+}
+
+.nostalgist .nostalgist-library-thumbnail {
+	width: 48px;
+	height: 36px;
+	object-fit: cover;
+	border-radius: var(--border-radius);
+	flex-shrink: 0;
+}
+
 .nostalgist .nostalgist-library-system {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.85em;

@@ -11,17 +11,73 @@ use OCP\Files\SimpleFS\ISimpleFolder;
 
 /**
  * Stores emulator save states in the app data folder, keyed by user and
- * ROM path, so every Nextcloud user has their own save state per game.
+ * ROM path, so every Nextcloud user has their own save states per game.
+ * Each game has a fixed number of slots, with an optional screenshot
+ * thumbnail per slot.
  */
 class StateService {
+	public const SLOTS = 6;
+
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
 	) {
 	}
 
-	public function save(string $userId, string $romPath, string $data): void {
+	public function save(string $userId, string $romPath, int $slot, string $data): void {
+		$this->write($this->stateName($userId, $romPath, $slot), $data);
+	}
+
+	public function saveThumbnail(string $userId, string $romPath, int $slot, string $data): void {
+		$this->write($this->thumbnailName($userId, $romPath, $slot), $data);
+	}
+
+	public function load(string $userId, string $romPath, int $slot): ?string {
+		return $this->read($this->stateName($userId, $romPath, $slot));
+	}
+
+	public function loadThumbnail(string $userId, string $romPath, int $slot): ?string {
+		return $this->read($this->thumbnailName($userId, $romPath, $slot));
+	}
+
+	public function delete(string $userId, string $romPath, int $slot): bool {
 		$folder = $this->getStatesFolder();
-		$name = $this->fileName($userId, $romPath);
+		try {
+			$folder->getFile($this->thumbnailName($userId, $romPath, $slot))->delete();
+		} catch (NotFoundException) {
+			// No thumbnail to delete.
+		}
+		try {
+			$folder->getFile($this->stateName($userId, $romPath, $slot))->delete();
+			return true;
+		} catch (NotFoundException) {
+			return false;
+		}
+	}
+
+	/**
+	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool}>
+	 */
+	public function list(string $userId, string $romPath): array {
+		$folder = $this->getStatesFolder();
+		$states = [];
+		for ($slot = 1; $slot <= self::SLOTS; $slot++) {
+			try {
+				$file = $folder->getFile($this->stateName($userId, $romPath, $slot));
+			} catch (NotFoundException) {
+				continue;
+			}
+			$states[] = [
+				'slot' => $slot,
+				'size' => $file->getSize(),
+				'mtime' => $file->getMTime(),
+				'hasThumbnail' => $folder->fileExists($this->thumbnailName($userId, $romPath, $slot)),
+			];
+		}
+		return $states;
+	}
+
+	private function write(string $name, string $data): void {
+		$folder = $this->getStatesFolder();
 		try {
 			$folder->getFile($name)->putContent($data);
 		} catch (NotFoundException) {
@@ -29,24 +85,11 @@ class StateService {
 		}
 	}
 
-	public function load(string $userId, string $romPath): ?string {
+	private function read(string $name): ?string {
 		try {
-			return $this->getStatesFolder()
-				->getFile($this->fileName($userId, $romPath))
-				->getContent();
+			return $this->getStatesFolder()->getFile($name)->getContent();
 		} catch (NotFoundException) {
 			return null;
-		}
-	}
-
-	public function delete(string $userId, string $romPath): bool {
-		try {
-			$this->getStatesFolder()
-				->getFile($this->fileName($userId, $romPath))
-				->delete();
-			return true;
-		} catch (NotFoundException) {
-			return false;
 		}
 	}
 
@@ -59,7 +102,15 @@ class StateService {
 		}
 	}
 
-	private function fileName(string $userId, string $romPath): string {
-		return hash('sha256', $userId . '|' . $romPath) . '.state';
+	private function stateName(string $userId, string $romPath, int $slot): string {
+		return $this->key($userId, $romPath) . '-' . $slot . '.state';
+	}
+
+	private function thumbnailName(string $userId, string $romPath, int $slot): string {
+		return $this->key($userId, $romPath) . '-' . $slot . '.png';
+	}
+
+	private function key(string $userId, string $romPath): string {
+		return hash('sha256', $userId . '|' . $romPath);
 	}
 }

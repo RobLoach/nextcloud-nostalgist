@@ -1,6 +1,6 @@
 {
   "name": "@robloach/nextcloud-nostalgist",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "AGPL-3.0-or-later",
   "engines": {
     "node": "^22.0.0",
@@ -30,6 +30,12 @@
   },
   "allowScripts": {
     "@nextcloud/webpack-vue-config@7.0.4": true,
-    "@parcel/watcher@2.6.0": true
+    "@parcel/watcher@2.6.0": true,
+    "vue-demi@0.14.10": true,
+    "core-js@3.50.0": true
+  },
+  "dependencies": {
+    "@nextcloud/dialogs": "^5.3.8",
+    "fflate": "^0.8.3"
   }
 }

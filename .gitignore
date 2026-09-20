@@ -13,6 +13,7 @@
 # Extracted cores from `npm run cores`. Only the default core for each
 # supported system (see lib/CoreMap.php) and the license are committed.
 /img/cores/*
+!/img/cores/.htaccess
 !/img/cores/fceumm_libretro.js
 !/img/cores/fceumm_libretro.wasm
 !/img/cores/gambatte_libretro.js

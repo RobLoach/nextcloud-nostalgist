@@ -48,3 +48,13 @@ export function coreForSystem(systemId, settings = {}) {
 export function systemLabel(systemId) {
 	return systems[systemId]?.label ?? systemId
 }
+
+/**
+ * @param {string} basename the file name
+ * @param {string} [mime] the file mimetype, if known
+ * @return {boolean} whether the player can (try to) run this file
+ */
+export function isPlayable(basename, mime = '') {
+	return systemForFile(basename, mime) !== null
+		|| (basename || '').toLowerCase().endsWith('.zip')
+}

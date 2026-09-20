@@ -20,11 +20,12 @@ class SettingsService {
 	public function getDefaults(): array {
 		return [
 			'cores' => CoreMap::defaultCores(),
-			'rewind_enable' => false,
-			'video_smooth' => true,
+			'video_smooth' => false,
 			'fastforward_ratio' => 10,
 			'respond_to_global_events' => true,
 			'library_folder' => '/Games',
+			'thumbnails_folder' => '',
+			'screenshots_folder' => '',
 		];
 	}
 
@@ -64,7 +65,7 @@ class SettingsService {
 	 */
 	private function sanitize(array $settings): array {
 		$sanitized = [];
-		foreach (['rewind_enable', 'video_smooth', 'respond_to_global_events'] as $key) {
+		foreach (['video_smooth', 'respond_to_global_events'] as $key) {
 			if (array_key_exists($key, $settings)) {
 				$sanitized[$key] = filter_var($settings[$key], FILTER_VALIDATE_BOOLEAN);
 			}
@@ -73,10 +74,17 @@ class SettingsService {
 			// 0 means unlimited in RetroArch.
 			$sanitized['fastforward_ratio'] = max(0, min(50, (float)$settings['fastforward_ratio']));
 		}
-		if (array_key_exists('library_folder', $settings) && is_string($settings['library_folder'])) {
-			$folder = '/' . trim(trim($settings['library_folder']), '/');
-			if (!str_contains($folder, '..')) {
-				$sanitized['library_folder'] = $folder;
+		// An empty folder means the feature is disabled; the library folder
+		// always has one.
+		foreach (['library_folder', 'thumbnails_folder', 'screenshots_folder'] as $key) {
+			if (!array_key_exists($key, $settings) || !is_string($settings[$key])) {
+				continue;
+			}
+			$folder = trim(trim($settings[$key]), '/');
+			if ($folder === '' && $key !== 'library_folder') {
+				$sanitized[$key] = '';
+			} elseif ($folder !== '' && !str_contains($folder, '..')) {
+				$sanitized[$key] = '/' . $folder;
 			}
 		}
 		if (isset($settings['cores']) && is_array($settings['cores'])) {

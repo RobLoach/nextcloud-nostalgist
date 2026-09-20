@@ -32,3 +32,22 @@ registerFileAction(new FileAction({
 		return null
 	},
 }))
+
+// Zipped ROMs get a menu entry instead of a default action, so a regular
+// click on a zip archive keeps its normal behavior.
+registerFileAction(new FileAction({
+	id: 'nostalgist-play-zip',
+	displayName: () => t('nostalgist', 'Play with Nostalgist'),
+	iconSvgInline: () => ICON,
+	order: 1000,
+
+	enabled(nodes) {
+		return nodes.length === 1
+			&& nodes[0].basename.toLowerCase().endsWith('.zip')
+	},
+
+	async exec(node) {
+		window.location.href = generateUrl('/apps/nostalgist/?file={file}', { file: node.path })
+		return null
+	},
+}))

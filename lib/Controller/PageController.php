@@ -94,14 +94,48 @@ class PageController extends Controller {
 		}
 
 		$games = [];
-		$this->findRoms($folder, $userFolder, CoreMap::extensionSystemMap(), $games, 0);
+		$extensionMap = CoreMap::extensionSystemMap();
+		// Zipped ROMs are extracted in the browser when launched.
+		$extensionMap['zip'] = 'zip';
+		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0);
 		usort($games, static fn (array $a, array $b): int => strcasecmp($a['basename'], $b['basename']));
+		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder']);
 
 		return new JSONResponse([
 			'folder' => $folderPath,
 			'exists' => true,
 			'games' => $games,
 		]);
+	}
+
+	/**
+	 * Attach the file id of a matching thumbnail image to each game. A game
+	 * called Mario.nes matches Mario.png, Mario.jpg, etc. in the thumbnails
+	 * folder.
+	 *
+	 * @param list<array{path: string, basename: string, system: string}> $games
+	 */
+	private function addThumbnails(array &$games, Folder $userFolder, string $thumbnailsPath): void {
+		if ($thumbnailsPath === '') {
+			return;
+		}
+		try {
+			$thumbnails = $userFolder->get($thumbnailsPath);
+		} catch (NotFoundException) {
+			return;
+		}
+		if (!$thumbnails instanceof Folder) {
+			return;
+		}
+		foreach ($games as &$game) {
+			$stem = pathinfo($game['basename'], PATHINFO_FILENAME);
+			foreach (['png', 'jpg', 'jpeg', 'webp', 'gif'] as $extension) {
+				if ($thumbnails->nodeExists("$stem.$extension")) {
+					$game['thumbnail'] = $thumbnails->get("$stem.$extension")->getId();
+					break;
+				}
+			}
+		}
 	}
 
 	/**

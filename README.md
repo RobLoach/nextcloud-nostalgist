@@ -17,7 +17,8 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
 3. Open a ROM (for example a `.nes` file) in the Files app and it starts
    playing right in the file viewer. Files are recognized both by mimetype
    and by file extension, with a "Play with Nostalgist" action available in
-   the file's menu.
+   the file's menu. Zipped ROMs work too, through the same menu action on
+   `.zip` files — the archive is extracted in the browser.
 
 4. The Nostalgist page itself lists the games found in your games library
    folder (`/Games` by default, configurable in the personal settings), so
@@ -29,11 +30,15 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
 ### Player controls
 
 A control bar overlays the bottom of the player with pause/resume, restart,
-save state, load state, mute, fast-forward, screenshot, and fullscreen.
+a save state menu, mute, fast-forward, screenshot, and fullscreen.
 
-Save states are stored per user and per game on the server, so every
-Nextcloud user has their own save, even for a shared ROM. Save states are
-not available on public share links.
+The save state menu has six slots per game, each with a screenshot
+thumbnail and timestamp. States are stored per user and per game on the
+server, so every Nextcloud user has their own saves, even for a shared ROM.
+Save states are not available on public share links.
+
+Screenshots are downloaded by default, or saved into a Nextcloud folder if
+one is configured in the personal settings.
 
 ### Cores
 
@@ -67,8 +72,10 @@ npm run cores
 ### Settings
 
 Personal settings → Nostalgist lets you configure the player: which libretro
-core is used per system, the games library folder, rewind, video smoothing,
-fast-forward ratio, and global input capture.
+core is used per system, the games library folder, a thumbnails folder
+(images matched by file name, so `Mario.png` is the thumbnail of
+`Mario.nes`), a screenshots folder, video smoothing, fast-forward ratio,
+and global input capture.
 
 ### Existing files
 
@@ -87,19 +94,21 @@ file extension.
 ## Performance
 
 The emulator cores are WebAssembly files of a few megabytes that the browser
-downloads and compiles on every launch. To speed that up, configure the web
-server in front of Nextcloud to:
+downloads and compiles on every launch. On Apache, the app ships an
+`.htaccess` in `img/cores/` that sets the `application/wasm` mimetype
+(streaming compilation), a week-long `Cache-Control`, and gzip compression —
+no configuration needed.
 
-- serve `.wasm` files with the `application/wasm` mimetype, which lets
-  browsers compile the core while it downloads (streaming compilation);
-- compress `.js` and `.wasm` responses (gzip or brotli roughly cuts the
-  transfer to a third);
-- cache `/apps/nostalgist/img/cores/*` with a long `Cache-Control` lifetime,
-  so a core is only downloaded once per browser.
+On nginx, add the equivalent to the Nextcloud server block:
 
-In the player itself, rewind support (off by default) is the most expensive
-setting — it snapshots the emulator continuously — so only enable it on
-machines with headroom.
+```nginx
+location ~ ^/apps/nostalgist/img/cores/ {
+    types { application/wasm wasm; }
+    add_header Cache-Control "public, max-age=604800";
+    gzip on;
+    gzip_types application/wasm application/javascript;
+}
+```
 
 ## Content Security Policy
 

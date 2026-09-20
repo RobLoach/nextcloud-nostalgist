@@ -1,0 +1,11 @@
+# Speed up emulator core loading on Apache setups.
+<IfModule mod_mime.c>
+	# Lets browsers compile the core while it downloads.
+	AddType application/wasm .wasm
+</IfModule>
+<IfModule mod_headers.c>
+	Header set Cache-Control "public, max-age=604800"
+</IfModule>
+<IfModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE application/wasm application/javascript
+</IfModule>

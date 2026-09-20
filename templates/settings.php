@@ -11,11 +11,6 @@ $systems = $_['systems'];
 
 	<h3><?php p($l->t('Player')); ?></h3>
 	<p>
-		<input type="checkbox" id="nostalgist-rewind" class="checkbox nostalgist-setting"
-			data-setting="rewind_enable" <?php if ($settings['rewind_enable']) { p('checked'); } ?>>
-		<label for="nostalgist-rewind"><?php p($l->t('Enable rewinding')); ?></label>
-	</p>
-	<p>
 		<input type="checkbox" id="nostalgist-smooth" class="checkbox nostalgist-setting"
 			data-setting="video_smooth" <?php if ($settings['video_smooth']) { p('checked'); } ?>>
 		<label for="nostalgist-smooth"><?php p($l->t('Smooth video filtering (bilinear)')); ?></label>
@@ -32,13 +27,33 @@ $systems = $_['systems'];
 			value="<?php p($settings['fastforward_ratio']); ?>">
 	</p>
 
-	<h3><?php p($l->t('Games library')); ?></h3>
-	<p class="settings-hint"><?php p($l->t('Games in this folder are listed on the Nostalgist page.')); ?></p>
+	<h3><?php p($l->t('Folders')); ?></h3>
 	<p>
 		<label for="nostalgist-library-folder"><?php p($l->t('Games library folder')); ?></label><br>
+		<em><?php p($l->t('Games in this folder are listed on the Nostalgist page.')); ?></em><br>
 		<input type="text" id="nostalgist-library-folder" class="nostalgist-setting"
 			data-setting="library_folder" placeholder="/Games"
 			value="<?php p($settings['library_folder']); ?>">
+		<button type="button" class="nostalgist-folder-picker"
+			data-target="nostalgist-library-folder"><?php p($l->t('Browse …')); ?></button>
+	</p>
+	<p>
+		<label for="nostalgist-thumbnails-folder"><?php p($l->t('Thumbnails folder')); ?></label><br>
+		<em><?php p($l->t('Images in this folder are used as game thumbnails, matched by file name: Mario.png is the thumbnail of Mario.nes. Leave empty to disable.')); ?></em><br>
+		<input type="text" id="nostalgist-thumbnails-folder" class="nostalgist-setting"
+			data-setting="thumbnails_folder"
+			value="<?php p($settings['thumbnails_folder']); ?>">
+		<button type="button" class="nostalgist-folder-picker"
+			data-target="nostalgist-thumbnails-folder"><?php p($l->t('Browse …')); ?></button>
+	</p>
+	<p>
+		<label for="nostalgist-screenshots-folder"><?php p($l->t('Screenshots folder')); ?></label><br>
+		<em><?php p($l->t('Screenshots taken in the player are saved to this folder. Leave empty to download them instead.')); ?></em><br>
+		<input type="text" id="nostalgist-screenshots-folder" class="nostalgist-setting"
+			data-setting="screenshots_folder"
+			value="<?php p($settings['screenshots_folder']); ?>">
+		<button type="button" class="nostalgist-folder-picker"
+			data-target="nostalgist-screenshots-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
 
 	<h3><?php p($l->t('Emulator cores')); ?></h3>
