@@ -20,7 +20,10 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
    the file's menu. Zipped ROMs work too, through the same menu action on
    `.zip` files — the archive is extracted in the browser, and the system
    is detected from the file inside or from the folder the game is stored
-   in (`Games/SNES/NHL 96.zip` is recognized as Super Nintendo).
+   in — short names and No-Intro platform names both work, so
+   `Games/SNES/NHL 96.zip` and
+   `Games/Nintendo - Super Nintendo Entertainment System/NHL 96.zip` are
+   recognized as Super Nintendo.
 
 4. The Nostalgist page itself lists the games found in your games library
    folder (`/Games` by default, configurable in the personal settings), so
@@ -38,7 +41,11 @@ control remapping and more), screenshot, and fullscreen.
 The save state menu has six slots per game, each with a screenshot
 thumbnail and timestamp. States are stored per user and per game on the
 server, so every Nextcloud user has their own saves, even for a shared ROM.
-Save states are not available on public share links.
+By default they live in the app's internal storage; configure a saves
+folder in the personal settings to keep them in your own files instead,
+one subfolder per game with the screenshots next to the states
+(`Saves/Mario/Slot 1.state`, `Saves/Mario/Slot 1.png`). Save states are
+not available on public share links.
 
 Screenshots are downloaded by default, or saved into a Nextcloud folder if
 one is configured in the personal settings.

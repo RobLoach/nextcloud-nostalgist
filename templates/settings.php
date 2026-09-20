@@ -47,6 +47,15 @@ $systems = $_['systems'];
 			data-target="nostalgist-thumbnails-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
 	<p>
+		<label for="nostalgist-saves-folder"><?php p($l->t('Saves folder')); ?></label><br>
+		<em><?php p($l->t('Save states and their screenshots are stored in this folder, one subfolder per game. Leave empty to store them internally.')); ?></em><br>
+		<input type="text" id="nostalgist-saves-folder" class="nostalgist-setting"
+			data-setting="saves_folder"
+			value="<?php p($settings['saves_folder']); ?>">
+		<button type="button" class="nostalgist-folder-picker"
+			data-target="nostalgist-saves-folder"><?php p($l->t('Browse …')); ?></button>
+	</p>
+	<p>
 		<label for="nostalgist-screenshots-folder"><?php p($l->t('Screenshots folder')); ?></label><br>
 		<em><?php p($l->t('Screenshots taken in the player are saved to this folder. Leave empty to download them instead.')); ?></em><br>
 		<input type="text" id="nostalgist-screenshots-folder" class="nostalgist-setting"

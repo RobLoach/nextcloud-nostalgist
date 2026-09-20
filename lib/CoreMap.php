@@ -20,7 +20,7 @@ class CoreMap {
 			'mime' => 'application/x-nes-rom',
 			'extensions' => ['nes', 'fds', 'unf', 'unif'],
 			'cores' => ['fceumm', 'nestopia', 'quicknes'],
-			'aliases' => ['nes', 'famicom', 'fc', 'nintendoentertainmentsystem'],
+			'aliases' => ['nes', 'famicom', 'fc', 'nintendoentertainmentsystem', 'fds', 'famicomdisksystem', 'familycomputerdisksystem'],
 		],
 		'snes' => [
 			'label' => 'Super Nintendo',
@@ -62,7 +62,7 @@ class CoreMap {
 			'mime' => 'application/x-sms-rom',
 			'extensions' => ['sms'],
 			'cores' => ['genesis_plus_gx', 'gearsystem', 'picodrive'],
-			'aliases' => ['sms', 'mastersystem', 'segamastersystem'],
+			'aliases' => ['sms', 'mastersystem', 'segamastersystem', 'markiii', 'mark3'],
 		],
 		'gamegear' => [
 			'label' => 'Sega Game Gear',
@@ -130,16 +130,22 @@ class CoreMap {
 	];
 
 	/**
-	 * Detect the system from a folder name like "SNES" or "Super Nintendo".
+	 * Detect the system from a folder name like "SNES", "Super Nintendo",
+	 * or a No-Intro platform name like
+	 * "Nintendo - Super Nintendo Entertainment System", whose dash-separated
+	 * segments are matched individually.
 	 */
 	public static function systemForFolderName(string $name): ?string {
-		$normalized = preg_replace('/[^a-z0-9]/', '', strtolower($name));
-		if ($normalized === '') {
-			return null;
-		}
-		foreach (self::SYSTEMS as $id => $system) {
-			if ($normalized === $id || in_array($normalized, $system['aliases'], true)) {
-				return $id;
+		$candidates = [$name, ...(preg_split('/\s*[-–]\s*/', $name) ?: [])];
+		foreach ($candidates as $candidate) {
+			$normalized = preg_replace('/[^a-z0-9]/', '', strtolower($candidate));
+			if ($normalized === '') {
+				continue;
+			}
+			foreach (self::SYSTEMS as $id => $system) {
+				if ($normalized === $id || in_array($normalized, $system['aliases'], true)) {
+					return $id;
+				}
 			}
 		}
 		return null;

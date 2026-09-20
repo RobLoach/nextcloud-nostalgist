@@ -26,6 +26,7 @@ class SettingsService {
 			'library_folder' => '/Games',
 			'thumbnails_folder' => '',
 			'screenshots_folder' => '',
+			'saves_folder' => '',
 		];
 	}
 
@@ -76,7 +77,7 @@ class SettingsService {
 		}
 		// An empty folder means the feature is disabled; the library folder
 		// always has one.
-		foreach (['library_folder', 'thumbnails_folder', 'screenshots_folder'] as $key) {
+		foreach (['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder'] as $key) {
 			if (!array_key_exists($key, $settings) || !is_string($settings[$key])) {
 				continue;
 			}

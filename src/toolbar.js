@@ -186,7 +186,12 @@ function createStatesPanel({ instance, romPath, flash }) {
 
 	const save = async (slot) => {
 		try {
-			const { state, thumbnail } = await instance.saveState()
+			let { state, thumbnail } = await instance.saveState()
+			if (thumbnail === undefined) {
+				// Not every core provides a state thumbnail; fall back to a
+				// plain screenshot so the slot always has one.
+				thumbnail = await instance.screenshot().catch(() => undefined)
+			}
 			await api(stateUrl('/state', romPath, slot), {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/octet-stream' },

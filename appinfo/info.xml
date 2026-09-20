@@ -5,7 +5,7 @@
 	<name>Nostalgist</name>
 	<summary>Nostalgist for NextCloud</summary>
 	<description>Play retro games directly in NextCloud.</description>
-	<version>0.3.0</version>
+	<version>0.4.0</version>
 	<licence>mit</licence>
 	<author homepage="https://robloach.net">Rob Loach</author>
 	<namespace>Nostalgist</namespace>

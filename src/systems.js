@@ -69,21 +69,25 @@ export function systemById(systemId) {
 
 /**
  * Detect the system from the folders a file is stored in, e.g.
- * "/Games/SNES/NHL 96.zip" is a Super Nintendo game.
+ * "/Games/SNES/NHL 96.zip" is a Super Nintendo game. No-Intro platform
+ * names like "Nintendo - Super Nintendo Entertainment System" match too,
+ * through their dash-separated segments.
  *
  * @param {string} path path of the file
  * @return {?object} the system definition, with its id, or null
  */
 export function systemForFolderPath(path) {
-	const segments = (path || '').split('/').filter(Boolean).slice(0, -1)
-	for (const segment of segments.reverse()) {
-		const normalized = segment.toLowerCase().replace(/[^a-z0-9]/g, '')
-		if (normalized === '') {
-			continue
-		}
-		for (const [id, system] of Object.entries(systems)) {
-			if (normalized === id || (system.aliases ?? []).includes(normalized)) {
-				return { id, ...system }
+	const folders = (path || '').split('/').filter(Boolean).slice(0, -1)
+	for (const folder of folders.reverse()) {
+		for (const candidate of [folder, ...folder.split(/[-–]/)]) {
+			const normalized = candidate.toLowerCase().replace(/[^a-z0-9]/g, '')
+			if (normalized === '') {
+				continue
+			}
+			for (const [id, system] of Object.entries(systems)) {
+				if (normalized === id || (system.aliases ?? []).includes(normalized)) {
+					return { id, ...system }
+				}
 			}
 		}
 	}
