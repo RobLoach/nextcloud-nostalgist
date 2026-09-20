@@ -3,7 +3,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { davUrl, launchRom } from './player.js'
-import { isPlayable, systemLabel } from './systems.js'
+import { isPlayable, systemForFolderPath, systemLabel } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
 const file = loadState('nostalgist', 'file', '')
@@ -115,13 +115,14 @@ async function main() {
 		showMessage(t('nostalgist', 'Unsupported ROM type: {file}', { file: basename }))
 		return
 	}
-	document.title = `${basename} - Nostalgist`
+	document.title = `${basename.replace(/\.[^.]+$/, '')} - Nostalgist`
 	try {
 		const instance = await launchRom({
 			element: canvas,
 			romUrl: davUrl(file),
 			romName: basename,
 			settings,
+			systemHint: systemForFolderPath(file),
 		})
 		attachToolbar({
 			container: document.querySelector('.nostalgist'),

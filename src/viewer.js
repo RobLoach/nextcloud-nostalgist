@@ -1,7 +1,7 @@
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { davUrl, launchRom } from './player.js'
-import { isPlayable, romMimes } from './systems.js'
+import { isPlayable, romMimes, systemForFolderPath } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
 const settings = loadState('nostalgist', 'settings', {})
@@ -87,6 +87,7 @@ const NostalgistViewer = {
 					romUrl: this.source ?? davUrl(this.filename),
 					romName: this.basename,
 					settings,
+					systemHint: systemForFolderPath(this.filename),
 				})
 				this.detachToolbar = attachToolbar({
 					container: this.$el,

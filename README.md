@@ -18,7 +18,9 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
    playing right in the file viewer. Files are recognized both by mimetype
    and by file extension, with a "Play with Nostalgist" action available in
    the file's menu. Zipped ROMs work too, through the same menu action on
-   `.zip` files — the archive is extracted in the browser.
+   `.zip` files — the archive is extracted in the browser, and the system
+   is detected from the file inside or from the folder the game is stored
+   in (`Games/SNES/NHL 96.zip` is recognized as Super Nintendo).
 
 4. The Nostalgist page itself lists the games found in your games library
    folder (`/Games` by default, configurable in the personal settings), so
@@ -30,7 +32,8 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
 ### Player controls
 
 A control bar overlays the bottom of the player with pause/resume, restart,
-a save state menu, mute, fast-forward, screenshot, and fullscreen.
+a save state menu, mute, fast-forward, the RetroArch menu (core options,
+control remapping and more), screenshot, and fullscreen.
 
 The save state menu has six slots per game, each with a screenshot
 thumbnail and timestamp. States are stored per user and per game on the
@@ -73,9 +76,9 @@ npm run cores
 
 Personal settings → Nostalgist lets you configure the player: which libretro
 core is used per system, the games library folder, a thumbnails folder
-(images matched by file name, so `Mario.png` is the thumbnail of
-`Mario.nes`), a screenshots folder, video smoothing, fast-forward ratio,
-and global input capture.
+(images matched by file name and subfolder, so `Thumbs/NES/Mario.png` is
+the thumbnail of `Games/NES/Mario.nes`), a screenshots folder, video
+smoothing, fast-forward ratio, and global input capture.
 
 ### Existing files
 
