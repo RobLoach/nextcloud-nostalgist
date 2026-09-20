@@ -2,6 +2,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { davUrl, launchRom } from './player.js'
 import { coreForSystem, romMimes, systemForFile } from './systems.js'
+import { attachToolbar } from './toolbar.js'
 
 const settings = loadState('nostalgist', 'settings', {})
 
@@ -43,6 +44,7 @@ const NostalgistViewer = {
 			instance: null,
 			started: false,
 			errorMessage: null,
+			detachToolbar: null,
 		}
 	},
 
@@ -65,6 +67,7 @@ const NostalgistViewer = {
 	},
 
 	beforeDestroy() {
+		this.detachToolbar?.()
 		try {
 			this.instance?.exit()
 		} catch (error) {
@@ -86,6 +89,12 @@ const NostalgistViewer = {
 					romName: this.basename,
 					core: coreForSystem(system.id, settings),
 					settings,
+				})
+				this.detachToolbar = attachToolbar({
+					container: this.$el,
+					instance: this.instance,
+					romPath: this.filename,
+					romName: this.basename,
 				})
 			} catch (error) {
 				console.error('Nostalgist failed to start', error)

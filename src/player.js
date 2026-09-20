@@ -1,18 +1,18 @@
 import { Nostalgist } from 'nostalgist'
-import { getCurrentUser } from '@nextcloud/auth'
-import { generateFilePath, generateRemoteUrl } from '@nextcloud/router'
+import { defaultRemoteURL, defaultRootPath } from '@nextcloud/files/dav'
+import { generateFilePath } from '@nextcloud/router'
 
 /**
- * @param {string} path path of the file, relative to the user folder
+ * @param {string} path path of the file, relative to the user folder or,
+ *                      on public share pages, the share root
  * @return {string} the WebDAV URL of the file
  */
 export function davUrl(path) {
-	const user = getCurrentUser()
-	if (user === null) {
-		throw new Error('No user session')
-	}
+	// defaultRemoteURL and defaultRootPath resolve to the public share
+	// endpoint and share token on public pages, and to the regular files
+	// endpoint and user id otherwise.
 	const encoded = path.replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/')
-	return generateRemoteUrl(`dav/files/${user.uid}/`) + encoded
+	return `${defaultRemoteURL}${defaultRootPath}/${encoded}`
 }
 
 /**

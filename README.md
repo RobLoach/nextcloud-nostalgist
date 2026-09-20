@@ -23,6 +23,18 @@ Run emulators of retro consoles directly in NextCloud via [Nostalgist.js](https:
    folder (`/Games` by default, configurable in the personal settings), so
    you can start playing from there too.
 
+5. Games shared through public links play too, when browsing a shared
+   folder with the file viewer.
+
+### Player controls
+
+A control bar overlays the bottom of the player with pause/resume, restart,
+save state, load state, mute, fast-forward, screenshot, and fullscreen.
+
+Save states are stored per user and per game on the server, so every
+Nextcloud user has their own save, even for a shared ROM. Save states are
+not available on public share links.
+
 ### Cores
 
 The default libretro core for each supported system ships with the app:
@@ -71,6 +83,23 @@ occ maintenance:mimetype:update-db
 
 They will still open through the file action either way, matched by their
 file extension.
+
+## Performance
+
+The emulator cores are WebAssembly files of a few megabytes that the browser
+downloads and compiles on every launch. To speed that up, configure the web
+server in front of Nextcloud to:
+
+- serve `.wasm` files with the `application/wasm` mimetype, which lets
+  browsers compile the core while it downloads (streaming compilation);
+- compress `.js` and `.wasm` responses (gzip or brotli roughly cuts the
+  transfer to a third);
+- cache `/apps/nostalgist/img/cores/*` with a long `Cache-Control` lifetime,
+  so a core is only downloaded once per browser.
+
+In the player itself, rewind support (off by default) is the most expensive
+setting — it snapshots the emulator continuously — so only enable it on
+machines with headroom.
 
 ## Content Security Policy
 

@@ -4,6 +4,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { davUrl, launchRom } from './player.js'
 import { coreForSystem, systemForFile, systemLabel } from './systems.js'
+import { attachToolbar } from './toolbar.js'
 
 const file = loadState('nostalgist', 'file', '')
 const settings = loadState('nostalgist', 'settings', {})
@@ -99,12 +100,18 @@ async function main() {
 	}
 	document.title = `${basename} - Nostalgist`
 	try {
-		await launchRom({
+		const instance = await launchRom({
 			element: canvas,
 			romUrl: davUrl(file),
 			romName: basename,
 			core: coreForSystem(system.id, settings),
 			settings,
+		})
+		attachToolbar({
+			container: document.querySelector('.nostalgist'),
+			instance,
+			romPath: file,
+			romName: basename,
 		})
 	} catch (error) {
 		console.error('Nostalgist failed to start', error)
