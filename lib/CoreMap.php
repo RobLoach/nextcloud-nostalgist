@@ -17,6 +17,7 @@ class CoreMap {
 	public const SYSTEMS = [
 		'nes' => [
 			'label' => 'Nintendo Entertainment System',
+			'short' => 'Nintendo',
 			'mime' => 'application/x-nes-rom',
 			'extensions' => ['nes', 'fds', 'unf', 'unif'],
 			'cores' => ['fceumm', 'nestopia', 'quicknes'],
@@ -24,6 +25,7 @@ class CoreMap {
 		],
 		'snes' => [
 			'label' => 'Super Nintendo',
+			'short' => 'Super Nintendo',
 			'mime' => 'application/x-snes-rom',
 			'extensions' => ['sfc', 'smc'],
 			'cores' => ['snes9x', 'snes9x2010', 'snes9x2005', 'snes9x2002'],
@@ -31,6 +33,7 @@ class CoreMap {
 		],
 		'gb' => [
 			'label' => 'Game Boy',
+			'short' => 'Game Boy',
 			'mime' => 'application/x-gameboy-rom',
 			'extensions' => ['gb'],
 			'cores' => ['gambatte', 'gearboy', 'tgbdual', 'mgba'],
@@ -38,6 +41,7 @@ class CoreMap {
 		],
 		'gbc' => [
 			'label' => 'Game Boy Color',
+			'short' => 'Game Boy Color',
 			'mime' => 'application/x-gameboy-color-rom',
 			'extensions' => ['gbc'],
 			'cores' => ['gambatte', 'gearboy', 'tgbdual', 'mgba'],
@@ -45,6 +49,7 @@ class CoreMap {
 		],
 		'gba' => [
 			'label' => 'Game Boy Advance',
+			'short' => 'Game Boy Advance',
 			'mime' => 'application/x-gba-rom',
 			'extensions' => ['gba'],
 			'cores' => ['mgba', 'vba_next'],
@@ -52,6 +57,7 @@ class CoreMap {
 		],
 		'genesis' => [
 			'label' => 'Sega Genesis / Mega Drive',
+			'short' => 'Genesis',
 			'mime' => 'application/x-genesis-rom',
 			'extensions' => ['md', 'gen', 'smd'],
 			'cores' => ['genesis_plus_gx', 'picodrive'],
@@ -59,6 +65,7 @@ class CoreMap {
 		],
 		'sms' => [
 			'label' => 'Sega Master System',
+			'short' => 'Master System',
 			'mime' => 'application/x-sms-rom',
 			'extensions' => ['sms'],
 			'cores' => ['genesis_plus_gx', 'gearsystem', 'picodrive'],
@@ -66,6 +73,7 @@ class CoreMap {
 		],
 		'gamegear' => [
 			'label' => 'Sega Game Gear',
+			'short' => 'Game Gear',
 			'mime' => 'application/x-gamegear-rom',
 			'extensions' => ['gg'],
 			'cores' => ['genesis_plus_gx', 'gearsystem'],
@@ -73,6 +81,7 @@ class CoreMap {
 		],
 		'sega32x' => [
 			'label' => 'Sega 32X',
+			'short' => '32X',
 			'mime' => 'application/x-sega-32x-rom',
 			'extensions' => ['32x'],
 			'cores' => ['picodrive'],
@@ -80,6 +89,7 @@ class CoreMap {
 		],
 		'pce' => [
 			'label' => 'PC Engine / TurboGrafx-16',
+			'short' => 'TurboGrafx-16',
 			'mime' => 'application/x-pc-engine-rom',
 			'extensions' => ['pce'],
 			'cores' => ['mednafen_pce_fast', 'geargrafx'],
@@ -87,6 +97,7 @@ class CoreMap {
 		],
 		'lynx' => [
 			'label' => 'Atari Lynx',
+			'short' => 'Lynx',
 			'mime' => 'application/x-lynx-rom',
 			'extensions' => ['lnx'],
 			'cores' => ['handy', 'mednafen_lynx'],
@@ -94,6 +105,7 @@ class CoreMap {
 		],
 		'ngp' => [
 			'label' => 'Neo Geo Pocket',
+			'short' => 'Neo Geo Pocket',
 			'mime' => 'application/x-neo-geo-pocket-rom',
 			'extensions' => ['ngp', 'ngc'],
 			'cores' => ['mednafen_ngp'],
@@ -101,6 +113,7 @@ class CoreMap {
 		],
 		'wonderswan' => [
 			'label' => 'WonderSwan',
+			'short' => 'WonderSwan',
 			'mime' => 'application/x-wonderswan-rom',
 			'extensions' => ['ws', 'wsc'],
 			'cores' => ['mednafen_wswan'],
@@ -108,6 +121,7 @@ class CoreMap {
 		],
 		'virtualboy' => [
 			'label' => 'Virtual Boy',
+			'short' => 'Virtual Boy',
 			'mime' => 'application/x-virtual-boy-rom',
 			'extensions' => ['vb'],
 			'cores' => ['mednafen_vb'],
@@ -115,6 +129,7 @@ class CoreMap {
 		],
 		'vectrex' => [
 			'label' => 'Vectrex',
+			'short' => 'Vectrex',
 			'mime' => 'application/x-vectrex-rom',
 			'extensions' => ['vec'],
 			'cores' => ['vecx'],
@@ -122,6 +137,7 @@ class CoreMap {
 		],
 		'coleco' => [
 			'label' => 'ColecoVision',
+			'short' => 'ColecoVision',
 			'mime' => 'application/x-colecovision-rom',
 			'extensions' => ['col'],
 			'cores' => ['gearcoleco'],

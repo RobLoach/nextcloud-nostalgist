@@ -9,6 +9,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -74,7 +75,10 @@ class StateController extends Controller {
 		return new JSONResponse(['size' => strlen($state)]);
 	}
 
+	// Thumbnails load through plain <img> tags, which cannot send the CSRF
+	// token header. The route is read-only and still requires a session.
 	#[NoAdminRequired]
+	#[NoCSRFRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/state/thumbnail')]
 	public function getThumbnail(string $file = '', int $slot = 1): Response {
 		if (!$this->isValidRequest($file, $slot)) {

@@ -43,10 +43,10 @@ export function coreForSystem(systemId, settings = {}) {
 
 /**
  * @param {string} systemId the system id
- * @return {string} the human readable name of the system
+ * @return {string} the short display name of the system
  */
 export function systemLabel(systemId) {
-	return systems[systemId]?.label ?? systemId
+	return systems[systemId]?.short ?? systems[systemId]?.label ?? systemId
 }
 
 /**
