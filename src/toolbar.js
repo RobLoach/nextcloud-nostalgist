@@ -12,6 +12,7 @@ const ICONS = {
 	fastForward: 'M13,6V18L21.5,12M4,18L12.5,12L4,6V18Z',
 	screenshot: 'M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z',
 	fullscreen: 'M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z',
+	close: 'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z',
 }
 
 const STYLE_ID = 'nostalgist-toolbar-style'
@@ -281,9 +282,10 @@ function createStatesPanel({ instance, romPath, flash }) {
  * @param {string} options.romPath path identifying the game, for save states
  * @param {string} options.romName file name of the ROM, for screenshots
  * @param {object} options.settings the user settings
+ * @param {string} [options.closeUrl] when set, adds a close button leading there
  * @return {Function} detaches the toolbar again
  */
-export function attachToolbar({ container, instance, romPath, romName, settings = {} }) {
+export function attachToolbar({ container, instance, romPath, romName, settings = {}, closeUrl = '' }) {
 	ensureStyle()
 	container.classList.add('nostalgist-player-container')
 
@@ -387,6 +389,17 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			container.requestFullscreen?.()
 		}
 	})
+
+	if (closeUrl !== '') {
+		button(ICONS.close, t('nostalgist', 'Close'), () => {
+			try {
+				instance.exit()
+			} catch (error) {
+				console.error('Nostalgist failed to exit', error)
+			}
+			window.location.href = closeUrl
+		})
+	}
 
 	toolbar.appendChild(status)
 	container.appendChild(toolbar)
