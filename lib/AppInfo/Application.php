@@ -4,10 +4,18 @@ declare(strict_types=1);
 
 namespace OCA\Nostalgist\AppInfo;
 
+use OCA\Files\Event\LoadAdditionalScriptsEvent;
+use OCA\Nostalgist\CoreMap;
+use OCA\Nostalgist\Listener\CSPListener;
+use OCA\Nostalgist\Listener\LoadFilesScriptsListener;
+use OCA\Nostalgist\Listener\LoadViewerListener;
+use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Files\IMimeTypeDetector;
+use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'nostalgist';
@@ -18,8 +26,21 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function register(IRegistrationContext $context): void {
+		$context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadFilesScriptsListener::class);
+		$context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
+		if (class_exists(LoadViewer::class)) {
+			$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
+		}
 	}
 
 	public function boot(IBootContext $context): void {
+		$context->injectFn(function (IMimeTypeDetector $detector): void {
+			// Load the default mappings first, as registering a type before
+			// they are loaded would prevent them from being loaded at all.
+			$detector->getAllMappings();
+			foreach (CoreMap::extensionMimeMap() as $extension => $mime) {
+				$detector->registerType($extension, $mime);
+			}
+		});
 	}
 }

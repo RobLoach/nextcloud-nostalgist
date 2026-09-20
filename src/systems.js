@@ -1,0 +1,42 @@
+import { loadState } from '@nextcloud/initial-state'
+
+/**
+ * System definitions (extensions, mimetype, cores) provided by lib/CoreMap.php.
+ */
+const systems = loadState('nostalgist', 'systems', {})
+
+/**
+ * @return {string[]} every ROM mimetype the player can handle
+ */
+export function romMimes() {
+	return [...new Set(Object.values(systems).map((system) => system.mime))]
+}
+
+/**
+ * Find the system for a file, by mimetype first and file extension second.
+ *
+ * @param {string} basename the file name
+ * @param {string} [mime] the file mimetype, if known
+ * @return {?object} the system definition, with its id, or null
+ */
+export function systemForFile(basename, mime = '') {
+	const entries = Object.entries(systems)
+	if (mime) {
+		const byMime = entries.find(([, system]) => system.mime === mime)
+		if (byMime) {
+			return { id: byMime[0], ...byMime[1] }
+		}
+	}
+	const extension = (basename || '').split('.').pop().toLowerCase()
+	const byExtension = entries.find(([, system]) => system.extensions.includes(extension))
+	return byExtension ? { id: byExtension[0], ...byExtension[1] } : null
+}
+
+/**
+ * @param {string} systemId the system id
+ * @param {object} settings the user settings
+ * @return {?string} the libretro core to use for a system
+ */
+export function coreForSystem(systemId, settings = {}) {
+	return settings?.cores?.[systemId] ?? systems[systemId]?.cores?.[0] ?? null
+}

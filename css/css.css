@@ -11,3 +11,12 @@
 	height: 100%;
 	object-fit: contain;
 }
+
+.nostalgist .hidden {
+	display: none;
+}
+
+.nostalgist .nostalgist-message {
+	padding: 20px;
+	text-align: center;
+}
