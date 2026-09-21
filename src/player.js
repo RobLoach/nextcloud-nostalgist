@@ -121,15 +121,39 @@ function coreUrl(file) {
  */
 export function recordRecent(romPath) {
 	if (!romPath || getCurrentUser() === null) {
-		return
+		return () => {}
 	}
-	fetch(generateUrl('/apps/nostalgist/recent'), {
+	report(romPath, 0)
+
+	// And how long it was played for, once it is over.
+	const started = Date.now()
+	let reported = false
+	const reportPlayTime = () => {
+		if (reported) {
+			return
+		}
+		reported = true
+		report(romPath, Math.round((Date.now() - started) / 1000))
+	}
+	window.addEventListener('pagehide', reportPlayTime)
+	return () => {
+		window.removeEventListener('pagehide', reportPlayTime)
+		reportPlayTime()
+	}
+}
+
+/**
+ * @param {string} romPath path of the game
+ * @param {number} seconds how long it was played, 0 when starting
+ */
+function report(romPath, seconds) {
+	fetch(generateUrl('/apps/nostalgist/recent?file={file}&seconds={seconds}', {
+		file: romPath,
+		seconds,
+	}), {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-			requesttoken: getRequestToken() ?? '',
-		},
-		body: JSON.stringify({ file: romPath }),
+		headers: { requesttoken: getRequestToken() ?? '' },
+		keepalive: true,
 	}).catch((error) => {
 		console.error('Could not record the game as played', error)
 	})

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Tests\Unit;
 
 use OCA\Nostalgist\Service\SettingsService;
+use OCP\IAppConfig;
 use OCP\IConfig;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +15,7 @@ class SettingsServiceTest extends TestCase {
 	private function service(string $stored = ''): SettingsService {
 		$config = $this->createStub(IConfig::class);
 		$config->method('getUserValue')->willReturn($stored);
-		return new SettingsService($config);
+		return new SettingsService($config, $this->createStub(IAppConfig::class));
 	}
 
 	/**
@@ -29,7 +30,7 @@ class SettingsServiceTest extends TestCase {
 			},
 		);
 		$config->method('getUserValue')->willReturnCallback(static fn (): string => $saved);
-		(new SettingsService($config))->setUserSettings(self::USER, $settings);
+		(new SettingsService($config, $this->createStub(IAppConfig::class)))->setUserSettings(self::USER, $settings);
 		return json_decode($saved, true) ?? [];
 	}
 

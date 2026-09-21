@@ -9,6 +9,8 @@ const VIEW_KEY = 'nostalgist-library-view'
 const PAGE_SIZE_KEY = 'nostalgist-library-page-size'
 
 const ICONS = {
+	star: 'M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z',
+	download: 'M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z',
 	grid: 'M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3',
 	list: 'M3,4H21V8H3V4M3,10H21V14H3V10M3,16H21V20H3V16Z',
 	table: 'M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z',
@@ -44,6 +46,22 @@ const state = {
  */
 function icon(path) {
 	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`
+}
+
+/**
+ * @param {string} url the endpoint
+ * @param {object} params the query to send
+ * @return {Promise<Response>} the response, always ok
+ */
+async function post(url, params) {
+	const response = await fetch(generateUrl(url + '?' + new URLSearchParams(params)), {
+		method: 'POST',
+		headers: { requesttoken: getRequestToken() ?? '' },
+	})
+	if (!response.ok) {
+		throw new Error(`${response.status} ${response.statusText}`)
+	}
+	return response
 }
 
 /**
@@ -115,6 +133,21 @@ function gameSystem(game) {
 }
 
 /**
+ * @param {number} seconds time played
+ * @return {string} that time, in words
+ */
+function formatPlayTime(seconds) {
+	if (!seconds || seconds < 60) {
+		return ''
+	}
+	const hours = Math.floor(seconds / 3600)
+	const minutes = Math.round((seconds % 3600) / 60)
+	return hours > 0
+		? t('nostalgist', '{hours}h {minutes}m played', { hours, minutes })
+		: t('nostalgist', '{minutes}m played', { minutes })
+}
+
+/**
  * @param {object} game the game
  * @return {string} the URL that plays the game
  */
@@ -171,66 +204,88 @@ function thumbnailFor(game, size) {
 }
 
 /**
+ * @param {object} game the game
+ * @param {Function} reload reloads the library
+ * @return {HTMLElement} a card for the game
+ */
+function renderCard(game, reload) {
+	const card = document.createElement('div')
+	card.className = 'nostalgist-library-game'
+
+	const link = document.createElement('a')
+	link.className = 'nostalgist-library-game-link'
+	link.href = gameUrl(game)
+	link.appendChild(thumbnailFor(game, 256))
+
+	const name = document.createElement('span')
+	name.className = 'nostalgist-library-game-name'
+	name.textContent = gameName(game)
+	name.title = game.basename
+	link.appendChild(name)
+
+	const system = document.createElement('span')
+	system.className = 'nostalgist-library-game-system'
+	const played = formatPlayTime(game.seconds)
+	system.textContent = played === '' ? gameSystem(game) : `${gameSystem(game)} · ${played}`
+	link.appendChild(system)
+	card.appendChild(link)
+
+	const favorite = document.createElement('button')
+	favorite.type = 'button'
+	favorite.className = game.favorite ? 'nostalgist-library-favorite active' : 'nostalgist-library-favorite'
+	favorite.title = game.favorite
+		? t('nostalgist', 'Remove from favorites')
+		: t('nostalgist', 'Add to favorites')
+	favorite.setAttribute('aria-label', favorite.title)
+	favorite.setAttribute('aria-pressed', game.favorite ? 'true' : 'false')
+	favorite.innerHTML = icon(ICONS.star)
+	favorite.addEventListener('click', async (event) => {
+		event.preventDefault()
+		try {
+			await post('/apps/nostalgist/favorite', { file: game.path })
+			reload(true)
+		} catch (error) {
+			console.error('Could not change the favorites', error)
+		}
+	})
+	card.appendChild(favorite)
+
+	return card
+}
+
+/**
  * @param {object[]} games the games of the current page
+ * @param {Function} reload reloads the library
  * @return {HTMLElement} the grid of game cards
  */
-function renderGrid(games) {
+function renderGrid(games, reload) {
 	const grid = document.createElement('div')
 	grid.className = 'nostalgist-library-grid'
 	for (const game of games) {
-		const card = document.createElement('a')
-		card.className = 'nostalgist-library-game'
-		card.href = gameUrl(game)
-		card.appendChild(thumbnailFor(game, 256))
-
-		const name = document.createElement('span')
-		name.className = 'nostalgist-library-game-name'
-		name.textContent = gameName(game)
-		name.title = game.basename
-		card.appendChild(name)
-
-		const system = document.createElement('span')
-		system.className = 'nostalgist-library-game-system'
-		system.textContent = gameSystem(game)
-		card.appendChild(system)
-
-		grid.appendChild(card)
+		grid.appendChild(renderCard(game, reload))
 	}
 	return grid
 }
 
 /**
- * @param {object[]} games the games played last
- * @return {HTMLElement} the recently played row
+ * @param {string} title the heading of the row
+ * @param {string} className a class for the row
+ * @param {object[]} games the games in it
+ * @param {Function} reload reloads the library
+ * @return {HTMLElement} a scrollable row of games
  */
-function renderRecent(games) {
+function renderRow(title, className, games, reload) {
 	const section = document.createElement('div')
-	section.className = 'nostalgist-library-recent'
+	section.className = `nostalgist-library-row-section ${className}`
 
 	const heading = document.createElement('h3')
-	heading.textContent = t('nostalgist', 'Recently played')
+	heading.textContent = title
 	section.appendChild(heading)
 
 	const row = document.createElement('div')
 	row.className = 'nostalgist-library-recent-row'
 	for (const game of games) {
-		const card = document.createElement('a')
-		card.className = 'nostalgist-library-game'
-		card.href = gameUrl(game)
-		card.appendChild(thumbnailFor(game, 256))
-
-		const name = document.createElement('span')
-		name.className = 'nostalgist-library-game-name'
-		name.textContent = gameName(game)
-		name.title = game.basename
-		card.appendChild(name)
-
-		const system = document.createElement('span')
-		system.className = 'nostalgist-library-game-system'
-		system.textContent = gameSystem(game)
-		card.appendChild(system)
-
-		row.appendChild(card)
+		row.appendChild(renderCard(game, reload))
 	}
 	section.appendChild(row)
 	return section
@@ -456,7 +511,7 @@ function renderFilters(systems, reload) {
  * @param {Function} setView switches the view without reloading
  * @return {HTMLElement} the header, with the view switcher
  */
-function renderHeader(reload, setView) {
+function renderHeader(reload, setView, onStatus) {
 	const header = document.createElement('div')
 	header.className = 'nostalgist-library-header'
 
@@ -482,6 +537,29 @@ function renderHeader(reload, setView) {
 		button.addEventListener('click', () => setView(view))
 		controls.appendChild(button)
 	}
+
+	const fetchArt = document.createElement('button')
+	fetchArt.type = 'button'
+	fetchArt.title = t('nostalgist', 'Look for missing box art')
+	fetchArt.setAttribute('aria-label', fetchArt.title)
+	fetchArt.innerHTML = icon(ICONS.download)
+	fetchArt.addEventListener('click', async () => {
+		fetchArt.disabled = true
+		onStatus(t('nostalgist', 'Looking for box art …'))
+		try {
+			const response = await post('/apps/nostalgist/thumbnails/fetch', {})
+			const result = await response.json()
+			onStatus(result.missing > 0
+				? t('nostalgist', 'Found {fetched} covers, {missing} to go. Run it again to carry on.', result)
+				: t('nostalgist', 'Found {fetched} covers.', result))
+			reload(true)
+		} catch (error) {
+			console.error('Could not look for box art', error)
+			onStatus(t('nostalgist', 'Could not look for box art. A thumbnails folder has to be set first.'))
+		}
+		fetchArt.disabled = false
+	})
+	controls.appendChild(fetchArt)
 
 	const refresh = document.createElement('button')
 	refresh.type = 'button'
@@ -567,6 +645,13 @@ export async function renderLibrary(container, onError) {
 	}
 
 	const render = (data, force = false) => {
+		// The favorites are known for the whole library, so the flag is put
+		// on whatever is being shown.
+		const favorites = new Set((data.favorites ?? []).map((game) => game.path))
+		for (const game of [...(data.games ?? []), ...(data.recent ?? []), ...(data.favorites ?? [])]) {
+			game.favorite = favorites.has(game.path)
+		}
+
 		// Revalidating usually returns what is already on screen; redrawing
 		// it would only throw away the scroll position.
 		if (!force && shown !== null && JSON.stringify(shown) === JSON.stringify(data)) {
@@ -578,7 +663,13 @@ export async function renderLibrary(container, onError) {
 		const searchWasFocused = container.querySelector('.nostalgist-library-search') === document.activeElement
 
 		container.innerHTML = ''
-		container.appendChild(renderHeader(load, setView))
+		const status = document.createElement('p')
+		status.className = 'nostalgist-library-status'
+		status.setAttribute('aria-live', 'polite')
+		container.appendChild(renderHeader(load, setView, (message) => {
+			status.textContent = message
+		}))
+		container.appendChild(status)
 
 		if (!data.exists || data.libraryTotal === 0) {
 			const hint = document.createElement('p')
@@ -598,10 +689,23 @@ export async function renderLibrary(container, onError) {
 			return
 		}
 
-		// Only on the plain first page: it is a shortcut, not a search result.
-		const recent = data.recent ?? []
-		if (recent.length > 0 && state.search === '' && state.system === '' && state.offset === 0) {
-			container.appendChild(renderRecent(recent))
+		// Only on the plain first page: these are shortcuts, not results.
+		const plainPage = state.search === '' && state.system === '' && state.offset === 0
+		if (plainPage && (data.favorites ?? []).length > 0) {
+			container.appendChild(renderRow(
+				t('nostalgist', 'Favorites'),
+				'nostalgist-library-favorites',
+				data.favorites,
+				load,
+			))
+		}
+		if (plainPage && (data.recent ?? []).length > 0) {
+			container.appendChild(renderRow(
+				t('nostalgist', 'Recently played'),
+				'nostalgist-library-recent',
+				data.recent,
+				load,
+			))
 		}
 
 		const filters = renderFilters(data.systems, load)
@@ -621,7 +725,7 @@ export async function renderLibrary(container, onError) {
 		}
 
 		const views = {
-			grid: () => renderGrid(data.games),
+			grid: () => renderGrid(data.games, load),
 			list: () => renderList(data.games),
 			table: () => renderTable(data.games, () => load()),
 		}

@@ -5,7 +5,7 @@
 	<name>Nostalgist</name>
 	<summary>Nostalgist for NextCloud</summary>
 	<description>Play retro games directly in NextCloud.</description>
-	<version>0.14.0</version>
+	<version>0.15.0</version>
 	<licence>agpl</licence>
 	<author homepage="https://robloach.net">Rob Loach</author>
 	<namespace>Nostalgist</namespace>
@@ -28,6 +28,8 @@
 		<command>OCA\Nostalgist\Command\Cleanup</command>
 	</commands>
 	<settings>
+		<admin>OCA\Nostalgist\Settings\Admin</admin>
+		<admin-section>OCA\Nostalgist\Settings\AdminSection</admin-section>
 		<personal>OCA\Nostalgist\Settings\Personal</personal>
 		<personal-section>OCA\Nostalgist\Settings\PersonalSection</personal-section>
 	</settings>

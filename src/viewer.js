@@ -46,6 +46,7 @@ const NostalgistViewer = {
 			errorMessage: null,
 			detachToolbar: null,
 			stopSramSync: null,
+			stopPlayTime: null,
 		}
 	},
 
@@ -67,7 +68,10 @@ const NostalgistViewer = {
 		}
 	},
 
+	// Vue 2 calls this beforeDestroy, Vue 3 beforeUnmount; both are here so
+	// the handler keeps working if the Viewer ever moves on.
 	beforeDestroy() {
+		this.stopPlayTime?.()
 		this.stopSramSync?.()
 		this.detachToolbar?.()
 		try {
@@ -78,6 +82,11 @@ const NostalgistViewer = {
 	},
 
 	methods: {
+		// Vue 3 renamed the hook; it calls this one instead.
+		beforeUnmount() {
+			this.beforeDestroy()
+		},
+
 		async start() {
 			this.started = true
 			try {
@@ -93,7 +102,7 @@ const NostalgistViewer = {
 					romPath: this.filename,
 				})
 				this.stopSramSync = startSramSync(this.instance, this.filename)
-				recordRecent(this.filename)
+				this.stopPlayTime = recordRecent(this.filename)
 				this.detachToolbar = attachToolbar({
 					container: this.$el,
 					instance: this.instance,

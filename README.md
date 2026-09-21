@@ -17,8 +17,10 @@ from your files and run in the browser.
 - Player controls: pause, restart, mute, fast-forward, the RetroArch menu,
   screenshots, fullscreen, and a virtual gamepad on touch devices.
 - Zipped ROMs, extracted in the browser.
-- Thumbnails for your games, matched from a folder of images, or taken
-  from their own screenshots and save states.
+- Thumbnails for your games, matched from a folder of images, downloaded
+  from the libretro thumbnail server, or taken from their own screenshots
+  and save states.
+- Favorites, and how long each game was played.
 - Works on publicly shared files and folders.
 
 ## Installation
@@ -72,9 +74,15 @@ default). Three views are available and the choice is remembered:
 | List | Compact rows with small thumbnails |
 | Table | Sortable columns: name, system, size, modified |
 
-The games played last are shown in a row above the library, so picking up
-where you left off is one click, whether the game was started here or from
-the Files app.
+Favorites and the games played last are shown in rows above the library, so
+picking up where you left off is one click, whether the game was started
+here or from the Files app. The star on a game card makes it a favorite,
+and how long each game was played is kept alongside it.
+
+The download button in the header looks for the box art of games that have
+none on the libretro thumbnail server and puts what it finds in the
+thumbnails folder. It works through a batch at a time, so on a large
+library it is worth pressing more than once.
 
 Games can be filtered by name and by system, and large libraries are paged
 (24 to 240 games per page). Filtering, sorting and paging all happen over
@@ -89,6 +97,9 @@ listed.
 
 ### Player controls
 
+Space pauses, F goes fullscreen, S opens the save states, and Escape closes
+whatever panel is open.
+
 A control bar overlays the bottom of the player with pause/resume, restart,
 a save state menu, mute, fast-forward, the RetroArch menu (core options,
 control remapping and more), screenshot, and fullscreen. On touch devices a
@@ -100,9 +111,9 @@ newest first, where they can be opened in the Files app or deleted. It needs
 a screenshots folder to be set, since that is where they are kept.
 
 The save state menu has three slots per game, each with a screenshot
-thumbnail and a timestamp; saving or loading a slot closes the menu and returns to the
-game. Closing the player with its own button writes a seventh, automatic
-state first, so a game can always be picked up where it was left; it is the
+thumbnail and a timestamp; saving or loading a slot closes the menu and
+returns to the game. Closing the player with its own button writes the automatic state
+first, so a game can always be picked up where it was left; it is the
 one the player offers to continue from next time. States are stored per user and per game on the server, so every
 NextCloud user has their own saves, even for a shared ROM.
 
@@ -136,6 +147,9 @@ Personal settings → Nostalgist:
 
 Folder settings have a browse button that opens the NextCloud file picker,
 and each core has a button putting all of its options back to the defaults.
+
+Administration settings → Nostalgist sets the folders new users start with;
+everyone can still pick their own afterwards.
 
 Thumbnails are matched by file name. With a thumbnails folder of `Thumbs`,
 `Games/NES/Mario.nes` uses `Thumbs/NES/Mario.png` and falls back to
@@ -276,7 +290,8 @@ lib/AppInfo/Application.php Mimetype registration and event listeners
 lib/Controller/             Page, library, settings and save state endpoints
 lib/Listener/               Files and Viewer script loading, Content Security Policy
 lib/Migration/              Mimetype repair step
-lib/Service/                Settings, save states, thumbnails, recently played
+lib/Command/                The occ cleanup command
+lib/Service/                Settings, library, save states, thumbnails, history
 lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
 src/library.js              Games library views and pagination
@@ -309,11 +324,15 @@ All of them are user-scoped and require a session.
 | GET/POST/DELETE | `/apps/nostalgist/state` | A save state slot |
 | GET/POST | `/apps/nostalgist/state/thumbnail` | The screenshot of a slot |
 | GET/POST | `/apps/nostalgist/sram` | The in-game battery save |
-| POST | `/apps/nostalgist/recent` | Remember a game as played |
+| POST | `/apps/nostalgist/recent` | Remember a game as played, and for how long |
+| POST | `/apps/nostalgist/favorite` | Make a game a favorite, or stop |
+| POST | `/apps/nostalgist/thumbnails/fetch` | Look for missing box art |
 | GET/DELETE | `/apps/nostalgist/screenshots` | The screenshots of a game |
 
 Save states and battery saves are removed along with the game they belong
-to, and with the user they belong to. States written by versions before
+to, and with the user they belong to. `occ nostalgist:cleanup` sweeps up
+what event listeners cannot catch, such as a whole folder of games deleted
+in one go; `--dry-run` reports without removing. States written by versions before
 0.14 live in one flat folder instead of one per user; they are still read,
 and are cleaned up when their game is deleted.
 

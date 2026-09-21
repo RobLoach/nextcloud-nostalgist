@@ -15,6 +15,10 @@ export function createStatesPanel({ instance, romPath, flash, onDone }) {
 	const element = document.createElement('div')
 	element.className = 'nostalgist-states hidden'
 
+	element.setAttribute('role', 'dialog')
+	element.setAttribute('aria-modal', 'false')
+	element.setAttribute('aria-label', t('nostalgist', 'Save states'))
+
 	const heading = document.createElement('h3')
 	heading.textContent = t('nostalgist', 'Save states')
 	element.appendChild(heading)

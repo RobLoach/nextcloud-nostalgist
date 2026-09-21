@@ -83,12 +83,18 @@
 	fill: var(--color-primary-element-text);
 }
 
-.nostalgist .nostalgist-library-recent {
+.nostalgist .nostalgist-library-row-section {
 	margin-bottom: 20px;
 }
 
-.nostalgist .nostalgist-library-recent h3 {
+.nostalgist .nostalgist-library-row-section h3 {
 	margin: 0 0 8px 0;
+}
+
+.nostalgist .nostalgist-library-status {
+	color: var(--color-text-maxcontrast);
+	min-height: 1.2em;
+	margin-bottom: 8px;
 }
 
 .nostalgist .nostalgist-library-recent-row {
@@ -153,6 +159,7 @@
 }
 
 .nostalgist .nostalgist-library-game {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	border-radius: var(--border-radius-large);
@@ -180,6 +187,45 @@
 .nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail-boxart,
 .nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail-logo {
 	object-fit: contain;
+}
+
+.nostalgist .nostalgist-library-game-link {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.nostalgist .nostalgist-library-favorite {
+	position: absolute;
+	top: 4px;
+	inset-inline-end: 4px;
+	width: 32px;
+	height: 32px;
+	padding: 5px;
+	margin: 0;
+	border: none;
+	border-radius: 50%;
+	background-color: rgba(0, 0, 0, 0.45);
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 0.2s;
+	display: flex;
+}
+
+.nostalgist .nostalgist-library-game:hover .nostalgist-library-favorite,
+.nostalgist .nostalgist-library-favorite:focus-visible,
+.nostalgist .nostalgist-library-favorite.active {
+	opacity: 1;
+}
+
+.nostalgist .nostalgist-library-favorite svg {
+	width: 100%;
+	height: 100%;
+	fill: #fff;
+}
+
+.nostalgist .nostalgist-library-favorite.active svg {
+	fill: var(--color-warning, #e9a13b);
 }
 
 .nostalgist .nostalgist-library-game-name {

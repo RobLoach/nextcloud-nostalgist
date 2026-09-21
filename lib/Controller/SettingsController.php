@@ -36,6 +36,13 @@ class SettingsController extends Controller {
 		return new JSONResponse($this->settingsService->getUserSettings($this->userId));
 	}
 
+	#[FrontpageRoute(verb: 'POST', url: '/settings/admin')]
+	public function saveAdmin(): JSONResponse {
+		return new JSONResponse(
+			$this->settingsService->setInstanceDefaults($this->request->getParams()),
+		);
+	}
+
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'POST', url: '/settings')]
 	public function save(): JSONResponse {

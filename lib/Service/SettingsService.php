@@ -6,6 +6,7 @@ namespace OCA\Nostalgist\Service;
 
 use OCA\Nostalgist\AppInfo\Application;
 use OCA\Nostalgist\CoreOptions;
+use OCP\IAppConfig;
 use OCP\IConfig;
 
 class SettingsService {
@@ -19,13 +20,62 @@ class SettingsService {
 
 	public function __construct(
 		private IConfig $config,
+		private IAppConfig $appConfig,
 	) {
+	}
+
+	/** The folder settings an administrator can set for everyone. */
+	public const INSTANCE_DEFAULTS = ['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder'];
+
+	/**
+	 * The defaults of the app, with what the administrator set for the
+	 * instance on top.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function getDefaults(): array {
+		$defaults = $this->appDefaults();
+		foreach (self::INSTANCE_DEFAULTS as $key) {
+			$value = $this->appConfig->getValueString(Application::APP_ID, $key);
+			if ($value !== '') {
+				$defaults[$key] = $value;
+			}
+		}
+		return $defaults;
+	}
+
+	/**
+	 * What an administrator can set for the instance.
+	 *
+	 * @return array<string, string>
+	 */
+	public function getInstanceDefaults(): array {
+		$defaults = [];
+		foreach (self::INSTANCE_DEFAULTS as $key) {
+			$defaults[$key] = $this->appConfig->getValueString(Application::APP_ID, $key);
+		}
+		return $defaults;
+	}
+
+	/**
+	 * @param array<string, mixed> $settings
+	 * @return array<string, string>
+	 */
+	public function setInstanceDefaults(array $settings): array {
+		$sanitized = $this->sanitize($settings);
+		foreach (self::INSTANCE_DEFAULTS as $key) {
+			if (array_key_exists($key, $sanitized)) {
+				$this->appConfig->setValueString(Application::APP_ID, $key, (string)$sanitized[$key]);
+			}
+		}
+		$this->settings = [];
+		return $this->getInstanceDefaults();
 	}
 
 	/**
 	 * @return array<string, mixed>
 	 */
-	public function getDefaults(): array {
+	private function appDefaults(): array {
 		return [
 			'video_smooth' => false,
 			'scale_integer' => false,

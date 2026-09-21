@@ -134,6 +134,8 @@ class LibraryService {
 		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, []);
 		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder'], $folderPath);
 
+		// Only what the list draws is worth keeping: a big library would
+		// otherwise weigh on the memory cache of small instances.
 		$cache->set($key, $games, self::CACHE_TTL);
 		return $games;
 	}

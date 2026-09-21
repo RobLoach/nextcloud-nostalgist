@@ -99,6 +99,7 @@ class PageController extends Controller {
 				'limit' => $limit,
 				'systems' => [],
 				'recent' => [],
+				'favorites' => [],
 				'games' => [],
 			]);
 		}
@@ -106,6 +107,7 @@ class PageController extends Controller {
 		$games = $this->libraryService->getGames($this->userId, $folder, $userFolder, $folderPath, $settings, $refresh);
 		$libraryTotal = count($games);
 		$recent = $this->getRecent($userFolder, $games);
+		$favorites = $this->getFavorites($userFolder, $games);
 		// The systems of the whole library, so the filter keeps offering
 		// them while a filter is active.
 		$systems = array_values(array_unique(array_column($games, 'system')));
@@ -122,6 +124,7 @@ class PageController extends Controller {
 		$page = array_slice($games, $offset, $limit);
 		$this->libraryService->addFallbackImages($this->userId, $page, $userFolder, $settings);
 		$this->libraryService->addFallbackImages($this->userId, $recent, $userFolder, $settings);
+		$this->libraryService->addFallbackImages($this->userId, $favorites, $userFolder, $settings);
 
 		return new JSONResponse([
 			'folder' => $folderPath,
@@ -133,6 +136,7 @@ class PageController extends Controller {
 			'truncated' => $libraryTotal >= LibraryService::MAX_GAMES,
 			'systems' => $systems,
 			'recent' => $recent,
+			'favorites' => $favorites,
 			'games' => $page,
 		]);
 	}
@@ -145,17 +149,38 @@ class PageController extends Controller {
 	 * @return list<array<string, mixed>>
 	 */
 	private function getRecent(Folder $userFolder, array $games): array {
+		return $this->present($this->recentService->get((string)$this->userId), $userFolder, $games);
+	}
+
+	/**
+	 * @param list<array<string, mixed>> $games
+	 * @return list<array<string, mixed>>
+	 */
+	private function getFavorites(Folder $userFolder, array $games): array {
+		$favorites = $this->present($this->recentService->getFavorites((string)$this->userId), $userFolder, $games);
+		// The most played first, which is what a favorite is about.
+		usort($favorites, static fn (array $a, array $b): int => ($b['seconds'] ?? 0) <=> ($a['seconds'] ?? 0));
+		return $favorites;
+	}
+
+	/**
+	 * Fill in what the library knows about remembered games, and drop the
+	 * ones that are gone.
+	 *
+	 * @param list<array<string, mixed>> $entries
+	 * @param list<array<string, mixed>> $games
+	 * @return list<array<string, mixed>>
+	 */
+	private function present(array $entries, Folder $userFolder, array $games): array {
 		$byPath = array_column($games, null, 'path');
-		$recent = [];
-		foreach ($this->recentService->get((string)$this->userId) as $entry) {
+		$present = [];
+		foreach ($entries as $entry) {
 			$path = $entry['path'] ?? '';
 			if ($path === '' || !$userFolder->nodeExists($path)) {
 				continue;
 			}
-			$recent[] = isset($byPath[$path])
-				? [...$byPath[$path], ...$entry]
-				: $entry;
+			$present[] = isset($byPath[$path]) ? [...$byPath[$path], ...$entry] : $entry;
 		}
-		return $recent;
+		return $present;
 	}
 }

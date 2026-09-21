@@ -21,7 +21,7 @@ import { attachTouchControls, isTouchDevice } from './touch.js'
  * @param {string} [options.closeUrl] when set, adds a close button leading there
  * @return {Function} detaches the toolbar again
  */
-export function attachToolbar({ container, instance, romPath, romName, settings = {}, closeUrl = '' }) {
+export function attachToolbar({ container, instance, romPath, romName, settings = {}, closeUrl = '', onClose = null }) {
 	container.classList.add('nostalgist-player-container')
 
 	const toolbar = document.createElement('div')
@@ -53,7 +53,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	}
 
 	let paused = false
-	button(ICONS.pause, t('nostalgist', 'Pause'), (element) => {
+	const pauseButton = button(ICONS.pause, t('nostalgist', 'Pause'), (element) => {
 		paused = !paused
 		if (paused) {
 			instance.pause()
@@ -185,7 +185,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		}
 	})
 
-	button(ICONS.fullscreen, t('nostalgist', 'Fullscreen'), () => {
+	const fullscreenButton = button(ICONS.fullscreen, t('nostalgist', 'Fullscreen'), () => {
 		if (document.fullscreenElement !== null) {
 			document.exitFullscreen()
 		} else {
@@ -201,6 +201,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 				flash(t('nostalgist', 'Saving the game …'))
 				await statesPanel.save(AUTO_SLOT)
 			}
+			onClose?.()
 			try {
 				instance.exit()
 			} catch (error) {
@@ -209,6 +210,36 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			window.location.href = closeUrl
 		})
 	}
+
+	// A handful of keys for what the buttons do, for playing without
+	// reaching for the mouse. Keys the game itself uses are left alone.
+	const shortcuts = {
+		Space: () => pauseButton.click(),
+		KeyF: () => fullscreenButton.click(),
+		KeyS: () => statesButton?.click(),
+		Escape: () => {
+			hideStates()
+			galleryPanel?.element.classList.add('hidden')
+			galleryButton?.classList.remove('active')
+		},
+	}
+	const onKeyDown = (event) => {
+		if (event.ctrlKey || event.altKey || event.metaKey) {
+			return
+		}
+		const target = event.target
+		if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+			return
+		}
+		const shortcut = shortcuts[event.code]
+		if (shortcut !== undefined) {
+			event.preventDefault()
+			event.stopPropagation()
+			shortcut()
+		}
+	}
+	// Ahead of the emulator, which listens on the window for its own keys.
+	document.addEventListener('keydown', onKeyDown, true)
 
 	toolbar.appendChild(status)
 	container.appendChild(toolbar)
@@ -222,6 +253,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	return () => {
 		clearTimeout(statusTimer)
 		document.removeEventListener('visibilitychange', onVisibilityChange)
+		document.removeEventListener('keydown', onKeyDown, true)
 		touchControls?.detach()
 		statesPanel?.element.remove()
 		galleryPanel?.element.remove()

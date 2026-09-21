@@ -45,7 +45,10 @@ async function save() {
 
 	status.textContent = t('nostalgist', 'Saving …')
 	try {
-		const response = await fetch(generateUrl('/apps/nostalgist/settings'), {
+		const url = container.dataset.scope === 'admin'
+			? '/apps/nostalgist/settings/admin'
+			: '/apps/nostalgist/settings'
+		const response = await fetch(generateUrl(url), {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

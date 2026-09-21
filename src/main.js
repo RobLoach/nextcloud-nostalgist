@@ -53,7 +53,7 @@ async function main() {
 			romPath: file,
 		})
 		startSramSync(instance, file)
-		recordRecent(file)
+		const stopPlayTime = recordRecent(file)
 		attachToolbar({
 			container: document.querySelector('.nostalgist'),
 			instance,
@@ -61,6 +61,7 @@ async function main() {
 			romName: basename,
 			settings,
 			closeUrl: generateUrl('/apps/nostalgist/'),
+			onClose: stopPlayTime,
 		})
 	} catch (error) {
 		console.error('Nostalgist failed to start', error)

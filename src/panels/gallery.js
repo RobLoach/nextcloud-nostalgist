@@ -15,6 +15,10 @@ export function createGalleryPanel({ romPath, flash }) {
 	const element = document.createElement('div')
 	element.className = 'nostalgist-gallery hidden'
 
+	element.setAttribute('role', 'dialog')
+	element.setAttribute('aria-modal', 'false')
+	element.setAttribute('aria-label', t('nostalgist', 'Screenshots'))
+
 	const heading = document.createElement('h3')
 	heading.textContent = t('nostalgist', 'Screenshots')
 	element.appendChild(heading)
