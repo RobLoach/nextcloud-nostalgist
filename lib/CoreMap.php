@@ -180,7 +180,7 @@ class CoreMap {
 	/**
 	 * Words that say nothing about which system a folder holds.
 	 */
-	private const NOISE = [
+	public const NOISE = [
 		'rom', 'roms', 'game', 'games', 'iso', 'isos', 'collection', 'collections',
 		'library', 'set', 'sets', 'cart', 'carts', 'cartridge', 'cartridges',
 		'backup', 'backups', 'my', 'the', 'emulation', 'emulator', 'emulators',
@@ -192,7 +192,7 @@ class CoreMap {
 	 * system does. "Nintendo - Game Boy Advance" and "Nintendo Game Boy
 	 * Advance" are the same shelf.
 	 */
-	private const VENDORS = [
+	public const VENDORS = [
 		'nintendo', 'sega', 'snk', 'nec', 'atari', 'bandai', 'coleco', 'gce',
 		'hudson',
 	];

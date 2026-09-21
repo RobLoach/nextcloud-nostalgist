@@ -111,23 +111,19 @@ export function systemForFolderPath(path) {
 	return null
 }
 
-/** Words that say nothing about which system a folder holds. */
-const NOISE = [
-	'rom', 'roms', 'game', 'games', 'iso', 'isos', 'collection', 'collections',
-	'library', 'set', 'sets', 'cart', 'carts', 'cartridge', 'cartridges',
-	'backup', 'backups', 'my', 'the', 'emulation', 'emulator', 'emulators',
-	'nointro', 'redump', 'tosec', 'goodset', 'usa', 'europe', 'japan', 'world',
-]
-
-/** Makers, whose name in front of a system says no more than the system. */
-const VENDORS = [
-	'nintendo', 'sega', 'snk', 'nec', 'atari', 'bandai', 'coleco', 'gce',
-	'hudson', 'smithengineering',
-]
+/**
+ * The words that say nothing about which system a folder holds, and the
+ * makers whose name in front of one says no more than the system does.
+ * Both come from CoreMap, so there is one list of each.
+ */
+const folderWords = loadState('arcade', 'folderWords', { noise: [], vendors: [] })
+const NOISE = folderWords.noise ?? []
+const VENDORS = folderWords.vendors ?? []
 
 /**
- * The normalized forms of a folder name worth looking up. Mirrors
- * CoreMap::folderCandidates, which does the same on the server.
+ * The normalized forms of a folder name worth looking up. The same shape
+ * as CoreMap::folderCandidates, working on the same words, which come from
+ * there.
  *
  * @param {string} name the folder name
  * @return {string[]} what to look for, in the order worth trying

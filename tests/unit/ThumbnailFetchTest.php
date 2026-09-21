@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
+use OCA\Arcade\Service\SettingsService;
 use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -64,7 +65,7 @@ class ThumbnailFetchTest extends TestCase {
 		$cacheFactory->method('createDistributed')->willReturn($cache);
 
 		unset($response);
-		return new ThumbnailFetchService($clientService, $cacheFactory, $this->createStub(LoggerInterface::class));
+		return new ThumbnailFetchService($clientService, $cacheFactory, $this->settingsService(), $this->createStub(LoggerInterface::class));
 	}
 
 	/**
@@ -114,6 +115,13 @@ class ThumbnailFetchTest extends TestCase {
 		return ['path' => "/Games/$basename", 'basename' => $basename, 'system' => $system];
 	}
 
+	/** An instance that lets the server go looking. */
+	private function settingsService(): SettingsService {
+		$settings = $this->createStub(SettingsService::class);
+		$settings->method('getDefaults')->willReturn(['fetch_enabled' => true]);
+		return $settings;
+	}
+
 	public function testBoxArtIsStoredWhereTheMatchingLooksForIt(): void {
 		$this->server['Mario (USA)'] = 'the picture';
 
@@ -125,6 +133,22 @@ class ThumbnailFetchTest extends TestCase {
 			$this->stored['Nintendo - Nintendo Entertainment System/Named_Boxarts/Mario.png'] ?? null,
 			'filed under the platform and the name of the game as the user has it',
 		);
+	}
+
+	public function testAnInstanceThatSaysNoIsNotAskedAgain(): void {
+		$settings = $this->createStub(SettingsService::class);
+		$settings->method('getDefaults')->willReturn(['fetch_enabled' => false]);
+		$service = new ThumbnailFetchService(
+			$this->createStub(IClientService::class),
+			$this->createStub(ICacheFactory::class),
+			$settings,
+			$this->createStub(LoggerInterface::class),
+		);
+
+		$result = $service->fetch(self::USER, [$this->game('Mario.nes')], $this->folder(), 10);
+
+		$this->assertSame(0, $result['tried'], 'the server is never asked');
+		$this->assertSame([], $this->asked);
 	}
 
 	public function testAGameThatIsNowhereIsCountedAndLetGo(): void {

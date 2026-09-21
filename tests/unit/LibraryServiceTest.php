@@ -7,19 +7,50 @@ namespace OCA\Arcade\Tests\Unit;
 use OCA\Arcade\Service\LibraryService;
 use OCA\Arcade\Service\StateService;
 use OCA\Arcade\Service\ThumbnailService;
+use OCP\Files\Folder;
 use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
 
 class LibraryServiceTest extends TestCase {
 	private LibraryService $service;
+	private StateService $stateService;
 
 	protected function setUp(): void {
+		$this->stateService = $this->createStub(StateService::class);
 		$this->service = new LibraryService(
 			$this->createStub(ICacheFactory::class),
 			new ThumbnailService(),
-			$this->createStub(StateService::class),
+			$this->stateService,
 			$this->createStub(IFilesMetadataManager::class),
+		);
+	}
+
+	public function testEveryListOnThePageIsGivenItsFallbacks(): void {
+		// The page, the recently played and the favorites are separate
+		// lists holding the same games, and all of them are filled in.
+		$this->stateService->method('thumbnailIndex')->willReturn([
+			'/Games/Mario.nes' => ['slot' => 1, 'mtime' => 100],
+		]);
+		$game = ['id' => 1, 'path' => '/Games/Mario.nes', 'basename' => 'Mario.nes', 'system' => 'nes'];
+		$page = [$game];
+		$recent = [$game];
+		$favorites = [];
+
+		$this->service->addFallbackImages(
+			'alice',
+			$this->createStub(Folder::class),
+			['screenshots_folder' => '', 'saves_folder' => ''],
+			$page,
+			$recent,
+			$favorites,
+		);
+
+		$this->assertSame(['type' => 'state', 'slot' => 1], $page[0]['fallback'] ?? null);
+		$this->assertSame(
+			['type' => 'state', 'slot' => 1],
+			$recent[0]['fallback'] ?? null,
+			'the second list is filled in too, not just the first',
 		);
 	}
 

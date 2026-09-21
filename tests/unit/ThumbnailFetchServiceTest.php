@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
+use OCA\Arcade\Service\SettingsService;
 use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
@@ -17,8 +18,16 @@ class ThumbnailFetchServiceTest extends TestCase {
 		$this->service = new ThumbnailFetchService(
 			$this->createStub(IClientService::class),
 			$this->createStub(ICacheFactory::class),
+			$this->settingsService(),
 			$this->createStub(LoggerInterface::class),
 		);
+	}
+
+	/** An instance that lets the server go looking. */
+	private function settingsService(): SettingsService {
+		$settings = $this->createStub(SettingsService::class);
+		$settings->method('getDefaults')->willReturn(['fetch_enabled' => true]);
+		return $settings;
 	}
 
 	public function testTheNameOfTheGameComesFirst(): void {

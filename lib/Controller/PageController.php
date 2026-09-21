@@ -50,6 +50,13 @@ class PageController extends Controller {
 	public function index(string $file = ''): TemplateResponse {
 		$this->initialState->provideInitialState('file', $file);
 		$this->initialState->provideInitialState('systems', CoreMap::SYSTEMS);
+		// The words that say nothing about a system, so the browser can
+		// read a folder name the way the server does without keeping a
+		// copy of the lists.
+		$this->initialState->provideInitialState('folderWords', [
+			'noise' => CoreMap::NOISE,
+			'vendors' => CoreMap::VENDORS,
+		]);
 		$this->initialState->provideInitialState(
 			'settings',
 			$this->userId === null
@@ -131,9 +138,7 @@ class PageController extends Controller {
 		// Only for what is about to be shown, and outside the cached scan:
 		// screenshots and save states change as games are played.
 		$page = array_slice($games, $offset, $limit);
-		$this->libraryService->addFallbackImages($this->userId, $page, $userFolder, $settings);
-		$this->libraryService->addFallbackImages($this->userId, $recent, $userFolder, $settings);
-		$this->libraryService->addFallbackImages($this->userId, $favorites, $userFolder, $settings);
+		$this->libraryService->addFallbackImages($this->userId, $userFolder, $settings, $page, $recent, $favorites);
 
 		return new JSONResponse([
 			'folder' => $folderPath,

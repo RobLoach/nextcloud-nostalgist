@@ -52,11 +52,24 @@ class LibraryService {
 	 * most recent of the screenshots taken of them and the screenshots of
 	 * their save states.
 	 *
-	 * @param list<array<string, mixed>> $games
 	 * @param array<string, mixed> $settings
+	 * @param list<array<string, mixed>> ...$lists every list the page shows,
+	 *                                             so a game is worked out once
 	 */
-	public function addFallbackImages(string $userId, array &$games, Folder $userFolder, array $settings): void {
-		$missing = array_filter($games, static fn (array $game): bool => empty($game['thumbnails']));
+	public function addFallbackImages(
+		string $userId,
+		Folder $userFolder,
+		array $settings,
+		array &...$lists,
+	): void {
+		$missing = [];
+		foreach ($lists as $games) {
+			foreach ($games as $game) {
+				if (empty($game['thumbnails'])) {
+					$missing[$game['path']] = $game;
+				}
+			}
+		}
 		if ($missing === []) {
 			return;
 		}
@@ -65,12 +78,11 @@ class LibraryService {
 		// played and the favorites -- and the folder cannot change in
 		// between, so it is walked once.
 		$screenshots = $this->screenshots[$userId] ??= $this->indexScreenshots($userFolder, $settings);
-		$states = $this->stateService->thumbnailIndex($userId, array_column($missing, 'path'));
+		$states = $this->stateService->thumbnailIndex($userId, array_keys($missing));
 
-		foreach ($games as &$game) {
-			if (!empty($game['thumbnails'])) {
-				continue;
-			}
+		// Worked out once per game, however many of the lists it is in.
+		$fallbacks = [];
+		foreach ($missing as $path => $game) {
 			$screenshot = null;
 			foreach ($this->thumbnailService->screenshotKeys($game['basename']) as $key) {
 				if (isset($screenshots[$key])) {
@@ -78,13 +90,22 @@ class LibraryService {
 					break;
 				}
 			}
-			$state = $states[$game['path']] ?? null;
+			$state = $states[$path] ?? null;
 
 			if ($screenshot !== null && ($state === null || $screenshot['mtime'] >= $state['mtime'])) {
-				$game['fallback'] = ['type' => 'screenshot', 'fileId' => $screenshot['id']];
+				$fallbacks[$path] = ['type' => 'screenshot', 'fileId' => $screenshot['id']];
 			} elseif ($state !== null) {
-				$game['fallback'] = ['type' => 'state', 'slot' => $state['slot']];
+				$fallbacks[$path] = ['type' => 'state', 'slot' => $state['slot']];
 			}
+		}
+
+		foreach ($lists as &$games) {
+			foreach ($games as &$game) {
+				if (empty($game['thumbnails']) && isset($fallbacks[$game['path']])) {
+					$game['fallback'] = $fallbacks[$game['path']];
+				}
+			}
+			unset($game);
 		}
 	}
 

@@ -72,7 +72,7 @@ class RefreshMetadata extends QueuedJob {
 		}
 
 		$userFolder = $this->rootFolder->getUserFolder($userId);
-		foreach (array_slice($missing, 0, self::BATCH) as $id) {
+		foreach ($missing as $id) {
 			$node = $userFolder->getFirstNodeById($id);
 			if ($node === null) {
 				continue;
@@ -82,13 +82,23 @@ class RefreshMetadata extends QueuedJob {
 			$this->metadataManager->refreshMetadata($node, IFilesMetadataManager::PROCESS_LIVE);
 		}
 
-		if (count($missing) > self::BATCH) {
+		// A full batch means the looking stopped early, so there is more.
+		if (count($missing) >= self::BATCH) {
 			$this->jobList->add(self::class, ['userId' => $userId]);
 		}
 	}
 
 	/**
-	 * The ids of the games nothing is known about yet.
+	 * How many games are asked after in one go. Asking after every game of
+	 * a library at once would mean thousands of ids in one query, and all
+	 * that is wanted is the next batch of them.
+	 */
+	private const CHUNK = 500;
+
+	/**
+	 * The ids of the games nothing is known about yet, up to a batch of
+	 * them: the library is walked a chunk at a time and the walking stops
+	 * as soon as there is enough to be getting on with.
 	 *
 	 * @return list<int>
 	 */
@@ -113,18 +123,26 @@ class RefreshMetadata extends QueuedJob {
 			false,
 		);
 		$ids = array_values(array_filter(array_column($games, 'id')));
-		if ($ids === []) {
-			return [];
-		}
 
-		$known = [];
-		foreach ($this->metadataManager->getMetadataForFiles($ids) as $id => $metadata) {
-			// The system is set the moment a game is looked at, so a game
-			// without it has never been looked at.
-			if ($metadata->getString(MetadataListener::SYSTEM) !== '') {
-				$known[(int)$id] = true;
+		$missing = [];
+		foreach (array_chunk($ids, self::CHUNK) as $chunk) {
+			$known = [];
+			foreach ($this->metadataManager->getMetadataForFiles($chunk) as $id => $metadata) {
+				// The system is set the moment a game is looked at, so a
+				// game without it has never been looked at.
+				if ($metadata->getString(MetadataListener::SYSTEM) !== '') {
+					$known[(int)$id] = true;
+				}
+			}
+			foreach ($chunk as $id) {
+				if (!isset($known[$id])) {
+					$missing[] = $id;
+				}
+			}
+			if (count($missing) >= self::BATCH) {
+				return array_slice($missing, 0, self::BATCH);
 			}
 		}
-		return array_values(array_filter($ids, static fn (int $id): bool => !isset($known[$id])));
+		return $missing;
 	}
 }

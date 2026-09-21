@@ -422,6 +422,11 @@ class StateService {
 			return [];
 		}
 		$gameFolders = $this->gameFolders[$userId] ??= $this->gameFoldersIn($saves);
+		// The names the screenshots of the slots are written under.
+		$slotsByName = [];
+		foreach ($this->slots() as $slot) {
+			$slotsByName[$this->slotName($slot) . '.png'] = $slot;
+		}
 
 		$found = [];
 		foreach ($romPaths as $path) {
@@ -431,12 +436,8 @@ class StateService {
 				continue;
 			}
 			foreach ($folder->getDirectoryListing() as $node) {
-				$name = $node->getName();
-				if ($name === $this->slotName(self::AUTO_SLOT) . '.png') {
-					$slot = self::AUTO_SLOT;
-				} elseif (preg_match('/^Slot (\d+)\.png$/', $name, $matches) === 1) {
-					$slot = (int)$matches[1];
-				} else {
+				$slot = $slotsByName[$node->getName()] ?? null;
+				if ($slot === null) {
 					continue;
 				}
 				$mtime = $node->getMTime();

@@ -1,6 +1,6 @@
-import { getRequestToken } from '@nextcloud/auth'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
+import { api } from './api.js'
 import { keyLabel, retroarchKey } from './keys.js'
 
 const container = document.getElementById('arcade-settings')
@@ -67,17 +67,11 @@ async function save() {
 		const url = container.dataset.scope === 'admin'
 			? '/apps/arcade/settings/admin'
 			: '/apps/arcade/settings'
-		const response = await fetch(generateUrl(url), {
+		await api(generateUrl(url), {
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				requesttoken: getRequestToken() ?? '',
-			},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(settings),
 		})
-		if (!response.ok) {
-			throw new Error(`${response.status} ${response.statusText}`)
-		}
 		status.textContent = t('arcade', 'Saved')
 	} catch (error) {
 		console.error('Could not save Arcade settings', error)
@@ -189,13 +183,7 @@ async function fetchThumbnails() {
 	try {
 		// Saving first, so a folder just typed in is the one used.
 		await save()
-		const response = await fetch(generateUrl('/apps/arcade/thumbnails/fetch'), {
-			method: 'POST',
-			headers: { requesttoken: getRequestToken() ?? '' },
-		})
-		if (!response.ok) {
-			throw new Error(`${response.status} ${response.statusText}`)
-		}
+		await api(generateUrl('/apps/arcade/thumbnails/fetch'), { method: 'POST' })
 		status.textContent = t('arcade', 'Looking for box art in the background. It carries on without this page.')
 	} catch (error) {
 		console.error('Could not look for box art', error)
@@ -213,10 +201,7 @@ async function showFetchStatus() {
 		return
 	}
 	try {
-		const response = await fetch(generateUrl('/apps/arcade/thumbnails/fetch'), {
-			headers: { requesttoken: getRequestToken() ?? '' },
-		})
-		const result = await response.json()
+		const result = await (await api(generateUrl('/apps/arcade/thumbnails/fetch'))).json()
 		if (result.message) {
 			status.textContent = result.queued
 				? t('arcade', '{message}, still going', result)

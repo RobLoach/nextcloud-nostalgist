@@ -43,6 +43,8 @@ class FetchThumbnailsTest extends TestCase {
 		$this->libraryExists = true;
 		$this->status = '';
 		$this->fetchService = $this->createMock(ThumbnailFetchService::class);
+		// The instance lets the server go looking, unless a test says not.
+		$this->fetchService->method('isAllowed')->willReturn(true);
 		$this->jobList = $this->createMock(IJobList::class);
 	}
 

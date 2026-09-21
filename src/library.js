@@ -499,9 +499,7 @@ function renderFilters(systems, reload) {
 	for (const system of systems) {
 		const option = document.createElement('option')
 		option.value = system
-		option.textContent = system === 'zip'
-			? t('arcade', 'ZIP archive')
-			: systemLabel(system)
+		option.textContent = gameSystem({ system })
 		option.selected = system === state.system
 		systemFilter.appendChild(option)
 	}

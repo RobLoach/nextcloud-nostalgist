@@ -7,6 +7,7 @@ namespace OCA\Arcade\Controller;
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\BackgroundJob\FetchThumbnails;
 use OCA\Arcade\Service\SettingsService;
+use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -30,6 +31,7 @@ class ThumbnailController extends Controller {
 		IRequest $request,
 		private SettingsService $settingsService,
 		private IJobList $jobList,
+		private ThumbnailFetchService $fetchService,
 		private IUserConfig $userConfig,
 		private ?string $userId,
 	) {
@@ -43,7 +45,7 @@ class ThumbnailController extends Controller {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
 		}
 		$settings = $this->settingsService->getUserSettings($this->userId);
-		if (!($settings['fetch_enabled'] ?? true)) {
+		if (!$this->fetchService->isAllowed()) {
 			return new JSONResponse(
 				['message' => 'Looking up box art is turned off for this instance'],
 				Http::STATUS_FORBIDDEN,

@@ -32,6 +32,13 @@ class LoadViewerListener implements IEventListener {
 			return;
 		}
 		$this->initialState->provideInitialState('systems', CoreMap::SYSTEMS);
+		// The words that say nothing about a system, so the browser can
+		// read a folder name the way the server does without keeping a
+		// copy of the lists.
+		$this->initialState->provideInitialState('folderWords', [
+			'noise' => CoreMap::NOISE,
+			'vendors' => CoreMap::VENDORS,
+		]);
 		$user = $this->userSession->getUser();
 		$this->initialState->provideInitialState(
 			'settings',

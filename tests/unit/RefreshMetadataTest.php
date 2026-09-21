@@ -140,13 +140,16 @@ class RefreshMetadataTest extends TestCase {
 		$this->assertSame([RefreshMetadata::class], $this->queued, 'and it comes back for the rest');
 	}
 
-	public function testAJobThatFinishesTheLibraryDoesNotComeBack(): void {
+	public function testAFullBatchComesBackToSeeWhetherThereIsMore(): void {
+		// The looking stops as soon as there is a batch, so a full batch
+		// cannot tell whether the library is done. The run that finds
+		// nothing left is the one that stops.
 		$this->library(RefreshMetadata::BATCH);
 
 		$this->runJob();
 
 		$this->assertCount(RefreshMetadata::BATCH, $this->refreshed);
-		$this->assertSame([], $this->queued);
+		$this->assertSame([RefreshMetadata::class], $this->queued);
 	}
 
 	public function testAGameThatIsNoLongerThereIsSkipped(): void {

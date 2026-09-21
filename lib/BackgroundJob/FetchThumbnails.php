@@ -69,7 +69,7 @@ class FetchThumbnails extends QueuedJob {
 		$settings = $this->settingsService->getUserSettings($userId);
 		// An administrator can turn the looking up off for the instance,
 		// and a job queued before that must not go anyway.
-		if (!($settings['fetch_enabled'] ?? true)) {
+		if (!$this->fetchService->isAllowed()) {
 			$this->report($userId, 'Looking up box art is turned off for this instance');
 			return;
 		}

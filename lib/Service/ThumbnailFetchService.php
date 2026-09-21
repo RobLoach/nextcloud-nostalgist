@@ -35,8 +35,17 @@ class ThumbnailFetchService {
 	public function __construct(
 		private IClientService $clientService,
 		private ICacheFactory $cacheFactory,
+		private SettingsService $settingsService,
 		private LoggerInterface $logger,
 	) {
+	}
+
+	/**
+	 * Whether an instance lets its server go asking the thumbnail server at
+	 * all. Asked here, where the asking happens, so no caller can forget.
+	 */
+	public function isAllowed(): bool {
+		return (bool)$this->settingsService->getDefaults()['fetch_enabled'];
 	}
 
 	/**
@@ -46,6 +55,9 @@ class ThumbnailFetchService {
 	 * @return array{fetched: int, missing: int, tried: int}
 	 */
 	public function fetch(string $userId, array $games, Folder $thumbnails, int $limit): array {
+		if (!$this->isAllowed()) {
+			return ['fetched' => 0, 'tried' => 0, 'missing' => count($games)];
+		}
 		$cache = $this->cacheFactory->createDistributed(Application::APP_ID . '_fetch');
 		$client = $this->clientService->newClient();
 
