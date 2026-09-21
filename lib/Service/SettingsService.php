@@ -20,8 +20,13 @@ class SettingsService {
 	public function getDefaults(): array {
 		return [
 			'video_smooth' => false,
-			'fastforward_ratio' => 2,
+			'scale_integer' => false,
+			'fastforward_ratio' => 3,
+			'audio_volume' => 0,
+			'audio_latency' => 64,
 			'respond_to_global_events' => true,
+			'pause_when_hidden' => true,
+			'autosave_on_close' => true,
 			'library_folder' => '/Games',
 			'thumbnails_folder' => '',
 			'screenshots_folder' => '',
@@ -64,15 +69,28 @@ class SettingsService {
 	 */
 	private function sanitize(array $settings): array {
 		$sanitized = [];
-		foreach (['video_smooth', 'respond_to_global_events'] as $key) {
+		foreach ([
+			'video_smooth',
+			'scale_integer',
+			'respond_to_global_events',
+			'pause_when_hidden',
+			'autosave_on_close',
+		] as $key) {
 			if (array_key_exists($key, $settings)) {
 				$sanitized[$key] = filter_var($settings[$key], FILTER_VALIDATE_BOOLEAN);
 			}
 		}
+		// Clamping can hand back the bound itself, so the types are forced
+		// to stay the same.
 		if (array_key_exists('fastforward_ratio', $settings) && is_numeric($settings['fastforward_ratio'])) {
-			// 0 means unlimited in RetroArch. Clamping can hand back the
-			// bound itself, so the type is forced to stay the same.
-			$sanitized['fastforward_ratio'] = (float)max(0, min(50, (float)$settings['fastforward_ratio']));
+			$sanitized['fastforward_ratio'] = (float)max(1, min(5, (float)$settings['fastforward_ratio']));
+		}
+		if (array_key_exists('audio_volume', $settings) && is_numeric($settings['audio_volume'])) {
+			// RetroArch takes a gain in decibels, where 0 is as recorded.
+			$sanitized['audio_volume'] = (float)max(-20, min(10, (float)$settings['audio_volume']));
+		}
+		if (array_key_exists('audio_latency', $settings) && is_numeric($settings['audio_latency'])) {
+			$sanitized['audio_latency'] = max(16, min(256, (int)$settings['audio_latency']));
 		}
 		// An empty folder means the feature is disabled; the library folder
 		// always has one.

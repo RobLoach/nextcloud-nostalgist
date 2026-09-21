@@ -150,7 +150,8 @@ class StateController extends Controller {
 	private function isValidRequest(string $file, int $slot): bool {
 		return $this->userId !== null
 			&& $file !== ''
-			&& $slot >= 1
+			// Slot 0 is the one written when a game is closed.
+			&& $slot >= StateService::AUTO_SLOT
 			&& $slot <= StateService::SLOTS;
 	}
 

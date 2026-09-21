@@ -85,7 +85,10 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 		respondToGlobalEvents: settings.respond_to_global_events !== false,
 		retroarchConfig: {
 			video_smooth: settings.video_smooth === true,
-			fastforward_ratio: Number(settings.fastforward_ratio ?? 2),
+			video_scale_integer: settings.scale_integer === true,
+			fastforward_ratio: Number(settings.fastforward_ratio ?? 3),
+			audio_volume: Number(settings.audio_volume ?? 0),
+			audio_latency: Number(settings.audio_latency ?? 64),
 		},
 		retroarchCoreConfig: settings.core_options?.[coreForSystem(system.id)] ?? {},
 		resolveCoreJs(coreName) {

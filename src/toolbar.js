@@ -4,6 +4,9 @@ import { generateUrl } from '@nextcloud/router'
 import { davUrl } from './player.js'
 import { attachTouchControls, isTouchDevice } from './touch.js'
 
+// Written when the player is closed; StateService knows it as AUTO_SLOT.
+const AUTO_SLOT = 0
+
 const ICONS = {
 	pause: 'M14,19H18V5H14M6,19H10V5H6V19Z',
 	play: 'M8,5.14V19.14L19,12.14L8,5.14Z',
@@ -214,10 +217,10 @@ function ensureStyle() {
  * @param {number} [slot] the save state slot
  * @return {string} the endpoint URL
  */
-function stateUrl(route, romPath, slot = 0) {
-	return slot > 0
-		? generateUrl(`/apps/nostalgist${route}?file={file}&slot={slot}`, { file: romPath, slot })
-		: generateUrl(`/apps/nostalgist${route}?file={file}`, { file: romPath })
+function stateUrl(route, romPath, slot = null) {
+	return slot === null
+		? generateUrl(`/apps/nostalgist${route}?file={file}`, { file: romPath })
+		: generateUrl(`/apps/nostalgist${route}?file={file}&slot={slot}`, { file: romPath, slot })
 }
 
 /**
@@ -292,7 +295,9 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 					body: thumbnail,
 				}).catch(() => {})
 			}
-			flash(t('nostalgist', 'State saved to slot {slot}', { slot }))
+			flash(slot === AUTO_SLOT
+				? t('nostalgist', 'Game saved')
+				: t('nostalgist', 'State saved to slot {slot}', { slot }))
 			onDone()
 		} catch (error) {
 			console.error('Could not save the state', error)
@@ -304,7 +309,9 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 		try {
 			const response = await api(stateUrl('/state', romPath, slot))
 			await instance.loadState(await response.blob())
-			flash(t('nostalgist', 'State loaded from slot {slot}', { slot }))
+			flash(slot === AUTO_SLOT
+				? t('nostalgist', 'Game restored')
+				: t('nostalgist', 'State loaded from slot {slot}', { slot }))
 			onDone()
 		} catch (error) {
 			console.error('Could not load the state', error)
@@ -333,7 +340,7 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 		}
 		const bySlot = new Map(data.states.map((state) => [state.slot, state]))
 		slotsContainer.innerHTML = ''
-		for (let slot = 1; slot <= data.slots; slot++) {
+		for (let slot = bySlot.has(AUTO_SLOT) ? AUTO_SLOT : 1; slot <= data.slots; slot++) {
 			const state = bySlot.get(slot)
 			const row = document.createElement('div')
 			row.className = 'nostalgist-states-slot'
@@ -348,15 +355,20 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 
 			const label = document.createElement('span')
 			label.className = 'nostalgist-states-label'
-			label.textContent = state === undefined
-				? t('nostalgist', 'Slot {slot} — empty', { slot })
-				: t('nostalgist', 'Slot {slot} — {date}', {
-					slot,
-					date: new Date(state.mtime * 1000).toLocaleString(),
-				})
+			const when = state === undefined ? '' : new Date(state.mtime * 1000).toLocaleString()
+			if (slot === AUTO_SLOT) {
+				label.textContent = t('nostalgist', 'When closing — {date}', { date: when })
+			} else {
+				label.textContent = state === undefined
+					? t('nostalgist', 'Slot {slot} — empty', { slot })
+					: t('nostalgist', 'Slot {slot} — {date}', { slot, date: when })
+			}
 			row.appendChild(label)
 
-			row.appendChild(smallButton(t('nostalgist', 'Save'), () => save(slot)))
+			// The automatic slot is written by the player itself.
+			if (slot !== AUTO_SLOT) {
+				row.appendChild(smallButton(t('nostalgist', 'Save'), () => save(slot)))
+			}
 			row.appendChild(smallButton(t('nostalgist', 'Load'), () => load(slot), state === undefined))
 			if (state !== undefined) {
 				row.appendChild(smallButton(t('nostalgist', 'Delete'), () => remove(slot)))
@@ -365,7 +377,7 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 		}
 	}
 
-	return { element, refresh, load }
+	return { element, refresh, load, save }
 }
 
 /**
@@ -581,6 +593,22 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		element.classList.toggle('active', paused)
 	})
 
+	// A game left in a background tab keeps the processor busy for nothing.
+	let pausedByTab = false
+	const onVisibilityChange = () => {
+		if (settings.pause_when_hidden === false) {
+			return
+		}
+		if (document.hidden && !paused) {
+			instance.pause()
+			pausedByTab = true
+		} else if (!document.hidden && pausedByTab) {
+			instance.resume()
+			pausedByTab = false
+		}
+	}
+	document.addEventListener('visibilitychange', onVisibilityChange)
+
 	button(ICONS.restart, t('nostalgist', 'Restart'), () => {
 		instance.restart()
 		flash(t('nostalgist', 'Restarted'))
@@ -693,7 +721,13 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	})
 
 	if (closeUrl !== '') {
-		button(ICONS.close, t('nostalgist', 'Close'), () => {
+		button(ICONS.close, t('nostalgist', 'Close'), async (element) => {
+			element.disabled = true
+			// Leave the game where it was, so it can be picked up again.
+			if (settings.autosave_on_close !== false && statesPanel !== null) {
+				flash(t('nostalgist', 'Saving the game …'))
+				await statesPanel.save(AUTO_SLOT)
+			}
 			try {
 				instance.exit()
 			} catch (error) {
@@ -714,6 +748,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 
 	return () => {
 		clearTimeout(statusTimer)
+		document.removeEventListener('visibilitychange', onVisibilityChange)
 		touchControls?.detach()
 		statesPanel?.element.remove()
 		galleryPanel?.element.remove()

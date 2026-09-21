@@ -22,10 +22,40 @@ $systemsByCore = $_['systemsByCore'];
 		<label for="nostalgist-global-events"><?php p($l->t('Capture gamepad and keyboard input for the whole page while playing')); ?></label>
 	</p>
 	<p>
-		<label for="nostalgist-fastforward"><?php p($l->t('Fast-forward ratio (0 for unlimited)')); ?></label><br>
-		<input type="number" id="nostalgist-fastforward" class="nostalgist-setting"
-			data-setting="fastforward_ratio" min="0" max="50" step="0.5"
+		<input type="checkbox" id="nostalgist-scale-integer" class="checkbox nostalgist-setting"
+			data-setting="scale_integer" <?php if ($settings['scale_integer']) { p('checked'); } ?>>
+		<label for="nostalgist-scale-integer"><?php p($l->t('Pixel-perfect scaling (whole pixels, with borders)')); ?></label>
+	</p>
+	<p>
+		<input type="checkbox" id="nostalgist-pause-hidden" class="checkbox nostalgist-setting"
+			data-setting="pause_when_hidden" <?php if ($settings['pause_when_hidden']) { p('checked'); } ?>>
+		<label for="nostalgist-pause-hidden"><?php p($l->t('Pause the game while the tab is in the background')); ?></label>
+	</p>
+	<p>
+		<input type="checkbox" id="nostalgist-autosave" class="checkbox nostalgist-setting"
+			data-setting="autosave_on_close" <?php if ($settings['autosave_on_close']) { p('checked'); } ?>>
+		<label for="nostalgist-autosave"><?php p($l->t('Save the game automatically when closing the player')); ?></label>
+	</p>
+	<p>
+		<label for="nostalgist-fastforward"><?php p($l->t('Fast-forward speed')); ?></label><br>
+		<input type="range" id="nostalgist-fastforward" class="nostalgist-setting nostalgist-range"
+			data-setting="fastforward_ratio" data-unit="×" min="1" max="5" step="0.5"
 			value="<?php p($settings['fastforward_ratio']); ?>">
+		<output for="nostalgist-fastforward"><?php p($settings['fastforward_ratio']); ?>×</output>
+	</p>
+	<p>
+		<label for="nostalgist-volume"><?php p($l->t('Volume, in decibels, 0 is as recorded')); ?></label><br>
+		<input type="range" id="nostalgist-volume" class="nostalgist-setting nostalgist-range"
+			data-setting="audio_volume" data-unit=" dB" min="-20" max="10" step="1"
+			value="<?php p($settings['audio_volume']); ?>">
+		<output for="nostalgist-volume"><?php p($settings['audio_volume']); ?> dB</output>
+	</p>
+	<p>
+		<label for="nostalgist-audio-latency"><?php p($l->t('Audio latency, raise it if the sound crackles')); ?></label><br>
+		<input type="range" id="nostalgist-audio-latency" class="nostalgist-setting nostalgist-range"
+			data-setting="audio_latency" data-unit=" ms" min="16" max="256" step="16"
+			value="<?php p($settings['audio_latency']); ?>">
+		<output for="nostalgist-audio-latency"><?php p($settings['audio_latency']); ?> ms</output>
 	</p>
 
 	<h3><?php p($l->t('Folders')); ?></h3>

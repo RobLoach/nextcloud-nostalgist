@@ -79,8 +79,23 @@ function resetCore(core) {
 	save()
 }
 
+/**
+ * Keep the value next to a slider in step with it.
+ *
+ * @param {HTMLInputElement} range the slider
+ */
+function showRangeValue(range) {
+	const output = container.querySelector(`output[for="${CSS.escape(range.id)}"]`)
+	if (output !== null) {
+		output.textContent = range.value + (range.dataset.unit ?? '')
+	}
+}
+
 if (container !== null) {
 	document.getElementById('nostalgist-save').addEventListener('click', save)
+	container.querySelectorAll('.nostalgist-range').forEach((range) => {
+		range.addEventListener('input', () => showRangeValue(range))
+	})
 	container.querySelectorAll('.nostalgist-core-reset').forEach((button) => {
 		button.addEventListener('click', () => resetCore(button.dataset.core))
 	})

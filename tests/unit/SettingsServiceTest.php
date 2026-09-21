@@ -36,7 +36,11 @@ class SettingsServiceTest extends TestCase {
 	public function testDefaultsAreReturnedWithoutStoredSettings(): void {
 		$settings = $this->service()->getUserSettings(self::USER);
 		$this->assertFalse($settings['video_smooth']);
-		$this->assertSame(2, $settings['fastforward_ratio']);
+		$this->assertSame(3, $settings['fastforward_ratio']);
+		$this->assertSame(0, $settings['audio_volume']);
+		$this->assertSame(64, $settings['audio_latency']);
+		$this->assertTrue($settings['pause_when_hidden']);
+		$this->assertTrue($settings['autosave_on_close']);
 		$this->assertTrue($settings['respond_to_global_events']);
 		$this->assertSame('/Games', $settings['library_folder']);
 		$this->assertSame('', $settings['saves_folder']);
@@ -56,7 +60,7 @@ class SettingsServiceTest extends TestCase {
 		$this->assertTrue($settings['video_smooth']);
 		$this->assertSame('/Roms', $settings['library_folder']);
 		// Untouched settings keep their default.
-		$this->assertSame(2, $settings['fastforward_ratio']);
+		$this->assertSame(3, $settings['fastforward_ratio']);
 	}
 
 	public function testFoldersAreNormalized(): void {
@@ -83,10 +87,32 @@ class SettingsServiceTest extends TestCase {
 
 	public function testFastForwardRatioIsClamped(): void {
 		// Stored as JSON, where a round number comes back as an integer.
-		$this->assertEquals(50, $this->save(['fastforward_ratio' => 1000])['fastforward_ratio']);
-		$this->assertEquals(0, $this->save(['fastforward_ratio' => -5])['fastforward_ratio']);
+		$this->assertEquals(5, $this->save(['fastforward_ratio' => 1000])['fastforward_ratio']);
+		$this->assertEquals(1, $this->save(['fastforward_ratio' => -5])['fastforward_ratio']);
 		$this->assertEquals(2.5, $this->save(['fastforward_ratio' => '2.5'])['fastforward_ratio']);
 		$this->assertArrayNotHasKey('fastforward_ratio', $this->save(['fastforward_ratio' => 'fast']));
+	}
+
+	public function testAudioSettingsAreClamped(): void {
+		$this->assertEquals(10, $this->save(['audio_volume' => 100])['audio_volume']);
+		$this->assertEquals(-20, $this->save(['audio_volume' => -100])['audio_volume']);
+		$this->assertEquals(-6, $this->save(['audio_volume' => '-6'])['audio_volume']);
+		$this->assertArrayNotHasKey('audio_volume', $this->save(['audio_volume' => 'loud']));
+
+		$this->assertSame(256, $this->save(['audio_latency' => 5000])['audio_latency']);
+		$this->assertSame(16, $this->save(['audio_latency' => 0])['audio_latency']);
+		$this->assertSame(96, $this->save(['audio_latency' => '96'])['audio_latency']);
+	}
+
+	public function testPlayerTogglesAreStoredAsBooleans(): void {
+		$saved = $this->save([
+			'scale_integer' => 'true',
+			'pause_when_hidden' => '0',
+			'autosave_on_close' => false,
+		]);
+		$this->assertTrue($saved['scale_integer']);
+		$this->assertFalse($saved['pause_when_hidden']);
+		$this->assertFalse($saved['autosave_on_close']);
 	}
 
 	public function testUnknownSettingsAreDropped(): void {

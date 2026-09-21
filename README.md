@@ -100,7 +100,9 @@ a screenshots folder to be set, since that is where they are kept.
 
 The save state menu has six slots per game, each with a screenshot thumbnail
 and a timestamp; saving or loading a slot closes the menu and returns to the
-game. States are stored per user and per game on the server, so every
+game. Closing the player with its own button writes a seventh, automatic
+state first, so a game can always be picked up where it was left; it is the
+one the player offers to continue from next time. States are stored per user and per game on the server, so every
 NextCloud user has their own saves, even for a shared ROM.
 
 In-game battery saves (SRAM) are restored when a game starts, and uploaded
@@ -118,8 +120,13 @@ Personal settings → Nostalgist:
 | Setting | Default | Description |
 | --- | --- | --- |
 | Smooth video filtering | Off | Bilinear filtering instead of sharp pixels |
+| Pixel-perfect scaling | Off | Scale by whole pixels, with borders |
 | Capture input globally | On | Send gamepad and keyboard input to the game while playing |
-| Fast-forward ratio | 2 | Speed multiplier of the fast-forward button, 0 for unlimited |
+| Pause in the background | On | Stop the game while its tab is hidden |
+| Save when closing | On | Write a save state when the player is closed |
+| Fast-forward speed | 3× | Speed of the fast-forward button, 1× to 5× |
+| Volume | 0 dB | Gain in decibels, -20 to 10 |
+| Audio latency | 64 ms | Raise it if the sound crackles |
 | Games library folder | `/Games` | Scanned for the games library page |
 | Saves folder | empty | Save states and their screenshots, in your own files |
 | Screenshots folder | empty | Where the screenshot button saves images |
@@ -167,8 +174,9 @@ before Japan. Names containing `&*/:` and friends match
 the underscores libretro-thumbnails replaces them with.
 
 With a saves folder set, save states are written to your own files as
-`Saves/Mario/Slot 1.state` with `Slot 1.png` next to it, and the battery save
-as `Saves/Mario/Mario.srm`, so they sync to your devices. Left empty, they
+`Saves/Mario/Slot 1.state` with `Slot 1.png` next to it, the automatic one
+as `Saves/Mario/Auto.state`, and the battery save as `Saves/Mario/Mario.srm`,
+so they sync to your devices. Left empty, they
 are kept in the app's internal storage instead. Switching the setting does
 not move existing saves.
 

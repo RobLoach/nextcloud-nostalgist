@@ -24,6 +24,8 @@ use OCP\Files\SimpleFS\ISimpleFolder;
  */
 class StateService {
 	public const SLOTS = 6;
+	/** The slot written when a game is closed, kept apart from the numbered ones. */
+	public const AUTO_SLOT = 0;
 
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
@@ -35,7 +37,7 @@ class StateService {
 	public function save(string $userId, string $romPath, int $slot, string $data): void {
 		$folder = $this->getGameFolder($userId, $romPath, true);
 		if ($folder !== null) {
-			$this->writeNode($folder, "Slot $slot.state", $data);
+			$this->writeNode($folder, $this->slotName($slot) . '.state', $data);
 			return;
 		}
 		$this->writeAppData($this->stateName($userId, $romPath, $slot), $data);
@@ -44,7 +46,7 @@ class StateService {
 	public function saveThumbnail(string $userId, string $romPath, int $slot, string $data): void {
 		$folder = $this->getGameFolder($userId, $romPath, true);
 		if ($folder !== null) {
-			$this->writeNode($folder, "Slot $slot.png", $data);
+			$this->writeNode($folder, $this->slotName($slot) . '.png', $data);
 			return;
 		}
 		$this->writeAppData($this->thumbnailName($userId, $romPath, $slot), $data);
@@ -53,7 +55,7 @@ class StateService {
 	public function load(string $userId, string $romPath, int $slot): ?string {
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null) {
-			return $this->readNode($folder, "Slot $slot.state");
+			return $this->readNode($folder, $this->slotName($slot) . '.state');
 		}
 		return $this->readAppData($this->stateName($userId, $romPath, $slot));
 	}
@@ -61,7 +63,7 @@ class StateService {
 	public function loadThumbnail(string $userId, string $romPath, int $slot): ?string {
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null) {
-			return $this->readNode($folder, "Slot $slot.png");
+			return $this->readNode($folder, $this->slotName($slot) . '.png');
 		}
 		return $this->readAppData($this->thumbnailName($userId, $romPath, $slot));
 	}
@@ -97,8 +99,8 @@ class StateService {
 	public function delete(string $userId, string $romPath, int $slot): bool {
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null) {
-			$this->deleteNode($folder, "Slot $slot.png");
-			return $this->deleteNode($folder, "Slot $slot.state");
+			$this->deleteNode($folder, $this->slotName($slot) . '.png');
+			return $this->deleteNode($folder, $this->slotName($slot) . '.state');
 		}
 		$appDataFolder = $this->getStatesFolder();
 		try {
@@ -121,23 +123,24 @@ class StateService {
 		$states = [];
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null || $this->savesFolderPath($userId) !== '') {
-			for ($slot = 1; $slot <= self::SLOTS; $slot++) {
-				if ($folder === null || !$folder->nodeExists("Slot $slot.state")) {
+			foreach ($this->slots() as $slot) {
+				$name = $this->slotName($slot) . '.state';
+				if ($folder === null || !$folder->nodeExists($name)) {
 					continue;
 				}
-				$file = $folder->get("Slot $slot.state");
+				$file = $folder->get($name);
 				$states[] = [
 					'slot' => $slot,
 					'size' => (int)$file->getSize(),
 					'mtime' => $file->getMTime(),
-					'hasThumbnail' => $folder->nodeExists("Slot $slot.png"),
+					'hasThumbnail' => $folder->nodeExists($this->slotName($slot) . '.png'),
 				];
 			}
 			return $states;
 		}
 
 		$appDataFolder = $this->getStatesFolder();
-		for ($slot = 1; $slot <= self::SLOTS; $slot++) {
+		foreach ($this->slots() as $slot) {
 			try {
 				$file = $appDataFolder->getFile($this->stateName($userId, $romPath, $slot));
 			} catch (NotFoundException) {
@@ -182,7 +185,7 @@ class StateService {
 		$found = [];
 		foreach ($romPaths as $path) {
 			$key = $this->key($userId, $path);
-			for ($slot = 1; $slot <= self::SLOTS; $slot++) {
+			foreach ($this->slots() as $slot) {
 				$mtime = $mtimes["$key-$slot.png"] ?? null;
 				if ($mtime !== null && ($found[$path]['mtime'] ?? -1) < $mtime) {
 					$found[$path] = ['slot' => $slot, 'mtime' => $mtime];
@@ -204,12 +207,17 @@ class StateService {
 				continue;
 			}
 			foreach ($folder->getDirectoryListing() as $node) {
-				if (preg_match('/^Slot (\d+)\.png$/', $node->getName(), $matches) !== 1) {
+				$name = $node->getName();
+				if ($name === $this->slotName(self::AUTO_SLOT) . '.png') {
+					$slot = self::AUTO_SLOT;
+				} elseif (preg_match('/^Slot (\d+)\.png$/', $name, $matches) === 1) {
+					$slot = (int)$matches[1];
+				} else {
 					continue;
 				}
 				$mtime = $node->getMTime();
 				if (($found[$path]['mtime'] ?? -1) < $mtime) {
-					$found[$path] = ['slot' => (int)$matches[1], 'mtime' => $mtime];
+					$found[$path] = ['slot' => $slot, 'mtime' => $mtime];
 				}
 			}
 		}
@@ -312,6 +320,22 @@ class StateService {
 		} catch (NotFoundException) {
 			return $appData->newFolder('states');
 		}
+	}
+
+	/**
+	 * The slots a game can have, the automatic one first.
+	 *
+	 * @return list<int>
+	 */
+	private function slots(): array {
+		return [self::AUTO_SLOT, ...range(1, self::SLOTS)];
+	}
+
+	/**
+	 * How a slot is named in the user's saves folder.
+	 */
+	private function slotName(int $slot): string {
+		return $slot === self::AUTO_SLOT ? 'Auto' : "Slot $slot";
 	}
 
 	private function stateName(string $userId, string $romPath, int $slot): string {
