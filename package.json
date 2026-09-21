@@ -1,6 +1,6 @@
 {
   "name": "@robloach/nextcloud-nostalgist",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "AGPL-3.0-or-later",
   "engines": {
     "node": "^22.0.0",
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "precores": "git submodule update --init --recursive",
-    "cores": "mkdir -p img/cores && for zip in 3rdparty/retroarch-emscripten-build/retroarch/*_libretro.zip; do unzip -o -q \"$zip\" -d img/cores; done",
+    "cores": "mkdir -p img/cores && for core in fceumm snes9x gambatte mgba genesis_plus_gx picodrive mednafen_pce_fast handy mednafen_ngp mednafen_wswan mednafen_vb vecx gearcoleco; do unzip -o -q \"3rdparty/retroarch-emscripten-build/retroarch/${core}_libretro.zip\" -d img/cores; done",
     "postcores": "cp 3rdparty/retroarch-emscripten-build/license img/cores/license",
     "build": "NODE_ENV=production webpack --config webpack.js --progress",
     "dev": "NODE_ENV=development webpack --config webpack.js --progress",

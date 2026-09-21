@@ -34,11 +34,10 @@ export function systemForFile(basename, mime = '') {
 
 /**
  * @param {string} systemId the system id
- * @param {object} settings the user settings
- * @return {?string} the libretro core to use for a system
+ * @return {?string} the libretro core that runs this system
  */
-export function coreForSystem(systemId, settings = {}) {
-	return settings?.cores?.[systemId] ?? systems[systemId]?.cores?.[0] ?? null
+export function coreForSystem(systemId) {
+	return systems[systemId]?.core ?? null
 }
 
 /**

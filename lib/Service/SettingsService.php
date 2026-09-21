@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Service;
 
 use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\CoreMap;
 use OCP\IConfig;
 
 class SettingsService {
@@ -19,7 +18,6 @@ class SettingsService {
 	 */
 	public function getDefaults(): array {
 		return [
-			'cores' => CoreMap::defaultCores(),
 			'video_smooth' => false,
 			'fastforward_ratio' => 2,
 			'respond_to_global_events' => true,
@@ -43,9 +41,7 @@ class SettingsService {
 		if (!is_array($settings)) {
 			return $defaults;
 		}
-		$settings = $this->sanitize($settings);
-		$settings['cores'] = array_merge($defaults['cores'], $settings['cores'] ?? []);
-		return array_merge($defaults, $settings);
+		return array_merge($defaults, $this->sanitize($settings));
 	}
 
 	/**
@@ -87,15 +83,6 @@ class SettingsService {
 			} elseif ($folder !== '' && !str_contains($folder, '..')) {
 				$sanitized[$key] = '/' . $folder;
 			}
-		}
-		if (isset($settings['cores']) && is_array($settings['cores'])) {
-			$cores = [];
-			foreach ($settings['cores'] as $system => $core) {
-				if (isset(CoreMap::SYSTEMS[$system]) && in_array($core, CoreMap::SYSTEMS[$system]['cores'], true)) {
-					$cores[$system] = $core;
-				}
-			}
-			$sanitized['cores'] = $cores;
 		}
 		return $sanitized;
 	}

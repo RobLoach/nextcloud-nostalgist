@@ -29,14 +29,11 @@ async function pickFolder(input) {
 
 async function save() {
 	const status = document.getElementById('nostalgist-save-status')
-	const settings = { cores: {} }
+	const settings = {}
 	container.querySelectorAll('.nostalgist-setting').forEach((element) => {
 		settings[element.dataset.setting] = element.type === 'checkbox'
 			? element.checked
 			: element.value
-	})
-	container.querySelectorAll('.nostalgist-core').forEach((element) => {
-		settings.cores[element.dataset.system] = element.value
 	})
 
 	status.textContent = t('nostalgist', 'Saving …')

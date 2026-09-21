@@ -72,7 +72,9 @@ default). Three views are available and the choice is remembered:
 
 Games can be filtered by name and by system, and large libraries are paged
 (24 to 240 games per page). Filtering, sorting and paging all happen over
-the whole library, not just the page being shown.
+the whole library, not just the page being shown. Pages are kept for the
+tab, so switching views, paging back and returning from a game are drawn
+from what was already loaded and revalidated in the background.
 
 The scan of the library folder is cached and keyed on the folder's ETag, so
 it is only walked again when something in it changes; the refresh button in
@@ -113,7 +115,6 @@ Personal settings → Nostalgist:
 | Saves folder | empty | Save states and their screenshots, in your own files |
 | Screenshots folder | empty | Where the screenshot button saves images |
 | Thumbnails folder | empty | Images used as game thumbnails |
-| Emulator cores | see below | The libretro core used for each system |
 
 Folder settings have a browse button that opens the NextCloud file picker.
 
@@ -134,8 +135,15 @@ Thumbs/Nintendo - Nintendo Entertainment System/Named_Logos/Mario.png
 Platform folders are matched by their No-Intro name as above, or by a short
 name like `SNES`. The library picks the image that suits the size it is
 drawing: box art in the grid, logos in the list and table, falling back to
-title screens and screenshots. Names containing `&*/:` and friends match the
-underscores libretro-thumbnails replaces them with.
+title screens and screenshots.
+
+Matching is forgiving. An identical file name wins, and otherwise region and
+revision tags, articles, punctuation and accents are ignored, so
+`Batman Returns.zip` finds `Batman Returns (USA).png` and
+`The Legend of Zelda.nes` finds `Legend of Zelda, The (USA) (Rev 1).png`.
+When several images fit, the most widely released one is used — World before
+USA before Europe before Japan. Names containing `&*/:` and friends match
+the underscores libretro-thumbnails replaces them with.
 
 With a saves folder set, save states are written to your own files as
 `Saves/Mario/Slot 1.state` with `Slot 1.png` next to it, and the battery save
@@ -145,7 +153,8 @@ not move existing saves.
 
 ### Cores
 
-The default libretro core for each supported system ships with the app:
+One proven libretro core is used per system, and they all ship with the app,
+so there is nothing to choose or install:
 
 | System | Core |
 | --- | --- |
@@ -163,9 +172,7 @@ The default libretro core for each supported system ships with the app:
 | Vectrex | vecx |
 | ColecoVision | gearcoleco |
 
-To also extract the alternative cores (`nestopia`, `quicknes`, `snes9x2010`,
-`gearboy`, `picodrive`, …) that can then be selected per system in the
-settings, run:
+To extract them again from the submodule, run:
 
 ```sh
 npm run cores

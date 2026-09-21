@@ -77,7 +77,7 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 
 	return await Nostalgist.launch({
 		element,
-		core: coreForSystem(system.id, settings),
+		core: coreForSystem(system.id),
 		rom,
 		// Only set when there is one: an undefined value is still a present
 		// key, which Nostalgist would try to resolve as a file.

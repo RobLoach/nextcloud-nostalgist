@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Settings;
 
 use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\CoreMap;
 use OCA\Nostalgist\Service\SettingsService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -27,12 +26,10 @@ class Personal implements ISettings {
 			? $this->settingsService->getDefaults()
 			: $this->settingsService->getUserSettings($user->getUID());
 		$this->initialState->provideInitialState('settings', $settings);
-		$this->initialState->provideInitialState('systems', CoreMap::SYSTEMS);
 		Util::addScript(Application::APP_ID, 'nostalgist-settings');
 
 		return new TemplateResponse(Application::APP_ID, 'settings', [
 			'settings' => $settings,
-			'systems' => CoreMap::SYSTEMS,
 		]);
 	}
 

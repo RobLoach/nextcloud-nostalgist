@@ -21,7 +21,7 @@ class CoreMap {
 			'platform' => 'Nintendo - Nintendo Entertainment System',
 			'mime' => 'application/x-nes-rom',
 			'extensions' => ['nes', 'fds', 'unf', 'unif'],
-			'cores' => ['fceumm', 'nestopia', 'quicknes'],
+			'core' => 'fceumm',
 			'aliases' => ['nes', 'famicom', 'fc', 'nintendoentertainmentsystem', 'fds', 'famicomdisksystem', 'familycomputerdisksystem'],
 		],
 		'snes' => [
@@ -30,7 +30,7 @@ class CoreMap {
 			'platform' => 'Nintendo - Super Nintendo Entertainment System',
 			'mime' => 'application/x-snes-rom',
 			'extensions' => ['sfc', 'smc'],
-			'cores' => ['snes9x', 'snes9x2010', 'snes9x2005', 'snes9x2002'],
+			'core' => 'snes9x',
 			'aliases' => ['snes', 'sfc', 'superfamicom', 'supernintendo', 'supernes', 'supernintendoentertainmentsystem'],
 		],
 		'gb' => [
@@ -39,7 +39,7 @@ class CoreMap {
 			'platform' => 'Nintendo - Game Boy',
 			'mime' => 'application/x-gameboy-rom',
 			'extensions' => ['gb'],
-			'cores' => ['gambatte', 'gearboy', 'tgbdual', 'mgba'],
+			'core' => 'gambatte',
 			'aliases' => ['gb', 'gameboy'],
 		],
 		'gbc' => [
@@ -48,7 +48,7 @@ class CoreMap {
 			'platform' => 'Nintendo - Game Boy Color',
 			'mime' => 'application/x-gameboy-color-rom',
 			'extensions' => ['gbc'],
-			'cores' => ['gambatte', 'gearboy', 'tgbdual', 'mgba'],
+			'core' => 'gambatte',
 			'aliases' => ['gbc', 'gameboycolor'],
 		],
 		'gba' => [
@@ -57,7 +57,7 @@ class CoreMap {
 			'platform' => 'Nintendo - Game Boy Advance',
 			'mime' => 'application/x-gba-rom',
 			'extensions' => ['gba'],
-			'cores' => ['mgba', 'vba_next'],
+			'core' => 'mgba',
 			'aliases' => ['gba', 'gameboyadvance'],
 		],
 		'genesis' => [
@@ -66,7 +66,7 @@ class CoreMap {
 			'platform' => 'Sega - Mega Drive - Genesis',
 			'mime' => 'application/x-genesis-rom',
 			'extensions' => ['md', 'gen', 'smd'],
-			'cores' => ['genesis_plus_gx', 'picodrive'],
+			'core' => 'genesis_plus_gx',
 			'aliases' => ['genesis', 'gen', 'md', 'megadrive', 'segagenesis', 'segamegadrive'],
 		],
 		'sms' => [
@@ -75,7 +75,7 @@ class CoreMap {
 			'platform' => 'Sega - Master System - Mark III',
 			'mime' => 'application/x-sms-rom',
 			'extensions' => ['sms'],
-			'cores' => ['genesis_plus_gx', 'gearsystem', 'picodrive'],
+			'core' => 'genesis_plus_gx',
 			'aliases' => ['sms', 'mastersystem', 'segamastersystem', 'markiii', 'mark3'],
 		],
 		'gamegear' => [
@@ -84,7 +84,7 @@ class CoreMap {
 			'platform' => 'Sega - Game Gear',
 			'mime' => 'application/x-gamegear-rom',
 			'extensions' => ['gg'],
-			'cores' => ['genesis_plus_gx', 'gearsystem'],
+			'core' => 'genesis_plus_gx',
 			'aliases' => ['gg', 'gamegear', 'segagamegear'],
 		],
 		'sega32x' => [
@@ -93,7 +93,7 @@ class CoreMap {
 			'platform' => 'Sega - 32X',
 			'mime' => 'application/x-sega-32x-rom',
 			'extensions' => ['32x'],
-			'cores' => ['picodrive'],
+			'core' => 'picodrive',
 			'aliases' => ['32x', 'sega32x'],
 		],
 		'pce' => [
@@ -102,7 +102,7 @@ class CoreMap {
 			'platform' => 'NEC - PC Engine - TurboGrafx 16',
 			'mime' => 'application/x-pc-engine-rom',
 			'extensions' => ['pce'],
-			'cores' => ['mednafen_pce_fast', 'geargrafx'],
+			'core' => 'mednafen_pce_fast',
 			'aliases' => ['pce', 'pcengine', 'turbografx', 'turbografx16', 'tg16'],
 		],
 		'lynx' => [
@@ -111,7 +111,7 @@ class CoreMap {
 			'platform' => 'Atari - Lynx',
 			'mime' => 'application/x-lynx-rom',
 			'extensions' => ['lnx'],
-			'cores' => ['handy', 'mednafen_lynx'],
+			'core' => 'handy',
 			'aliases' => ['lynx', 'atarilynx'],
 		],
 		'ngp' => [
@@ -120,7 +120,7 @@ class CoreMap {
 			'platform' => 'SNK - Neo Geo Pocket',
 			'mime' => 'application/x-neo-geo-pocket-rom',
 			'extensions' => ['ngp', 'ngc'],
-			'cores' => ['mednafen_ngp'],
+			'core' => 'mednafen_ngp',
 			'aliases' => ['ngp', 'ngpc', 'neogeopocket', 'neogeopocketcolor'],
 		],
 		'wonderswan' => [
@@ -129,7 +129,7 @@ class CoreMap {
 			'platform' => 'Bandai - WonderSwan',
 			'mime' => 'application/x-wonderswan-rom',
 			'extensions' => ['ws', 'wsc'],
-			'cores' => ['mednafen_wswan'],
+			'core' => 'mednafen_wswan',
 			'aliases' => ['ws', 'wsc', 'wonderswan', 'wonderswancolor'],
 		],
 		'virtualboy' => [
@@ -138,7 +138,7 @@ class CoreMap {
 			'platform' => 'Nintendo - Virtual Boy',
 			'mime' => 'application/x-virtual-boy-rom',
 			'extensions' => ['vb'],
-			'cores' => ['mednafen_vb'],
+			'core' => 'mednafen_vb',
 			'aliases' => ['vb', 'virtualboy'],
 		],
 		'vectrex' => [
@@ -147,7 +147,7 @@ class CoreMap {
 			'platform' => 'GCE - Vectrex',
 			'mime' => 'application/x-vectrex-rom',
 			'extensions' => ['vec'],
-			'cores' => ['vecx'],
+			'core' => 'vecx',
 			'aliases' => ['vectrex'],
 		],
 		'coleco' => [
@@ -156,7 +156,7 @@ class CoreMap {
 			'platform' => 'Coleco - ColecoVision',
 			'mime' => 'application/x-colecovision-rom',
 			'extensions' => ['col'],
-			'cores' => ['gearcoleco'],
+			'core' => 'gearcoleco',
 			'aliases' => ['coleco', 'colecovision'],
 		],
 	];
@@ -209,14 +209,4 @@ class CoreMap {
 		return $map;
 	}
 
-	/**
-	 * @return array<string, string> system id => default core
-	 */
-	public static function defaultCores(): array {
-		$cores = [];
-		foreach (self::SYSTEMS as $id => $system) {
-			$cores[$id] = $system['cores'][0];
-		}
-		return $cores;
-	}
 }

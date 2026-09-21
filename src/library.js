@@ -23,6 +23,11 @@ const THUMBNAIL_PREFERENCE = {
 	small: ['logo', 'plain', 'boxart', 'title', 'snap'],
 }
 
+// Pages are cached for the tab, so coming back from a game paints the
+// library immediately while it is revalidated in the background.
+const CACHE_PREFIX = 'nostalgist-library-page:'
+const CACHE_TTL = 60 * 1000
+
 const state = {
 	view: localStorage.getItem(VIEW_KEY) ?? 'grid',
 	pageSize: Number(localStorage.getItem(PAGE_SIZE_KEY)) || 60,
@@ -39,6 +44,40 @@ const state = {
  */
 function icon(path) {
 	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`
+}
+
+/**
+ * @return {string} the cache key of the page being shown
+ */
+function cacheKey() {
+	return CACHE_PREFIX + JSON.stringify([
+		state.offset, state.pageSize, state.sort, state.order, state.search, state.system,
+	])
+}
+
+/**
+ * @param {string} key the cache key
+ * @return {?object} the cached page, when still fresh
+ */
+function readCache(key) {
+	try {
+		const cached = JSON.parse(sessionStorage.getItem(key) ?? 'null')
+		return cached !== null && Date.now() - cached.time < CACHE_TTL ? cached.data : null
+	} catch (error) {
+		return null
+	}
+}
+
+/**
+ * @param {string} key the cache key
+ * @param {object} data the page to cache
+ */
+function writeCache(key, data) {
+	try {
+		sessionStorage.setItem(key, JSON.stringify({ time: Date.now(), data }))
+	} catch (error) {
+		// A full or unavailable session storage only costs us the cache.
+	}
 }
 
 /**
@@ -99,6 +138,7 @@ function thumbnailFor(game, size) {
 		})
 		image.alt = ''
 		image.loading = 'lazy'
+		image.decoding = 'async'
 		return image
 	}
 	const placeholder = document.createElement('div')
@@ -353,9 +393,10 @@ function renderFilters(systems, reload) {
 
 /**
  * @param {Function} reload reloads the library with new parameters
+ * @param {Function} setView switches the view without reloading
  * @return {HTMLElement} the header, with the view switcher
  */
-function renderHeader(reload) {
+function renderHeader(reload, setView) {
 	const header = document.createElement('div')
 	header.className = 'nostalgist-library-header'
 
@@ -378,11 +419,7 @@ function renderHeader(reload) {
 		button.title = labels[view]
 		button.setAttribute('aria-label', labels[view])
 		button.innerHTML = icon(ICONS[view])
-		button.addEventListener('click', () => {
-			state.view = view
-			localStorage.setItem(VIEW_KEY, view)
-			reload()
-		})
+		button.addEventListener('click', () => setView(view))
 		controls.appendChild(button)
 	}
 
@@ -405,7 +442,23 @@ function renderHeader(reload) {
  * @param {Function} onError called with a message when the library fails to load
  */
 export async function renderLibrary(container, onError) {
+	let shown = null
+	let pending = null
+
 	const load = async (refresh = false) => {
+		const key = cacheKey()
+		if (!refresh) {
+			const cached = readCache(key)
+			if (cached !== null) {
+				render(cached)
+			}
+		}
+
+		// Typing in the search field fires several loads; only the last one
+		// is of interest.
+		pending?.abort()
+		pending = new AbortController()
+
 		let data
 		try {
 			const response = await fetch(generateUrl(
@@ -420,25 +473,52 @@ export async function renderLibrary(container, onError) {
 					system: state.system,
 					refresh: refresh ? 1 : 0,
 				},
-			), { headers: { requesttoken: getRequestToken() ?? '' } })
+			), {
+				headers: { requesttoken: getRequestToken() ?? '' },
+				signal: pending.signal,
+			})
 			if (!response.ok) {
 				throw new Error(`${response.status} ${response.statusText}`)
 			}
 			data = await response.json()
 		} catch (error) {
+			if (error.name === 'AbortError') {
+				return
+			}
 			console.error('Could not load the games library', error)
-			onError(t('nostalgist', 'Could not load the games library.'))
+			if (shown === null) {
+				onError(t('nostalgist', 'Could not load the games library.'))
+			}
 			return
 		}
+		writeCache(key, data)
 		render(data)
 	}
 
-	const render = (data) => {
+	const setView = (view) => {
+		state.view = view
+		localStorage.setItem(VIEW_KEY, view)
+		if (shown !== null) {
+			// The page is already here, no need to ask for it again.
+			render(shown, true)
+		} else {
+			load()
+		}
+	}
+
+	const render = (data, force = false) => {
+		// Revalidating usually returns what is already on screen; redrawing
+		// it would only throw away the scroll position.
+		if (!force && shown !== null && JSON.stringify(shown) === JSON.stringify(data)) {
+			return
+		}
+		shown = data
+
 		// Typing in the search field re-renders, so put the caret back.
 		const searchWasFocused = container.querySelector('.nostalgist-library-search') === document.activeElement
 
 		container.innerHTML = ''
-		container.appendChild(renderHeader(load))
+		container.appendChild(renderHeader(load, setView))
 
 		if (!data.exists || data.libraryTotal === 0) {
 			const hint = document.createElement('p')

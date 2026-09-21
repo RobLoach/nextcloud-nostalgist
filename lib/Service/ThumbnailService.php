@@ -48,11 +48,15 @@ class ThumbnailService {
 	/**
 	 * The images of a game, by type: boxart, title, snap, logo or plain.
 	 *
-	 * @param array{paths: array<string, array<string, array<string, int>>>, systems: array<string, string>} $index
+	 * An exact file name match wins. Failing that, a loose match ignores
+	 * region and revision tags, articles and punctuation, so that
+	 * "Batman Returns.zip" finds "Batman Returns (USA).png".
+	 *
 	 * @return array<string, int> type => file id
 	 */
 	public function forGame(array $index, string $systemId, string $subfolder, string $basename): array {
-		$stem = $this->stemKey($basename);
+		$exact = $this->stemKey($basename);
+		$loose = $this->looseKey($basename);
 
 		// The platform folder of the system first, then the folder the game
 		// itself is in, then the root of the thumbnails folder.
@@ -70,8 +74,13 @@ class ThumbnailService {
 		$thumbnails = [];
 		foreach ($candidates as $candidate) {
 			foreach ($index['paths'][$candidate] ?? [] as $type => $images) {
-				if (!isset($thumbnails[$type]) && isset($images[$stem])) {
-					$thumbnails[$type] = $images[$stem];
+				if (isset($thumbnails[$type])) {
+					continue;
+				}
+				if (isset($images['exact'][$exact])) {
+					$thumbnails[$type] = $images['exact'][$exact];
+				} elseif ($loose !== '' && isset($images['loose'][$loose])) {
+					$thumbnails[$type] = $images['loose'][$loose]['id'];
 				}
 			}
 		}
@@ -89,7 +98,7 @@ class ThumbnailService {
 			$name = $node->getName();
 			if (!$node instanceof Folder) {
 				if ($this->isImage($name)) {
-					$index['paths'][$path]['plain'][$this->stemKey($name)] = $node->getId();
+					$this->addImage($index['paths'][$path]['plain'], $name, $node->getId());
 				}
 				continue;
 			}
@@ -99,6 +108,7 @@ class ThumbnailService {
 				$index['paths'][$path][$type] = $this->indexImages($node);
 				continue;
 			}
+			unset($type);
 
 			$childPath = $path === '' ? $this->normalize($name) : $path . '/' . $this->normalize($name);
 			// "Nintendo - Super Nintendo Entertainment System" and "SNES"
@@ -112,16 +122,71 @@ class ThumbnailService {
 	}
 
 	/**
-	 * @return array<string, int> file name stem => file id
+	 * @return array{exact: array<string, int>, loose: array<string, array{id: int, rank: int, length: int}>}
 	 */
 	private function indexImages(Folder $folder): array {
-		$images = [];
+		$images = ['exact' => [], 'loose' => []];
 		foreach ($folder->getDirectoryListing() as $node) {
 			if (!$node instanceof Folder && $this->isImage($node->getName())) {
-				$images[$this->stemKey($node->getName())] = $node->getId();
+				$this->addImage($images, $node->getName(), $node->getId());
 			}
 		}
 		return $images;
+	}
+
+	/**
+	 * @param array{exact: array<string, int>, loose: array<string, array{id: int, rank: int, length: int}>} $images
+	 */
+	private function addImage(?array &$images, string $name, int $id): void {
+		$images ??= ['exact' => [], 'loose' => []];
+		$images['exact'][$this->stemKey($name)] = $id;
+
+		$loose = $this->looseKey($name);
+		if ($loose === '') {
+			return;
+		}
+		// Several files can share a loose key, such as the USA and the
+		// Europe release. Keep the most widely useful one, so the choice
+		// does not depend on the order the folder is read in.
+		$candidate = [
+			'id' => $id,
+			'rank' => $this->regionRank($name),
+			'length' => mb_strlen($name),
+		];
+		$current = $images['loose'][$loose] ?? null;
+		if ($current === null
+			|| $candidate['rank'] < $current['rank']
+			|| ($candidate['rank'] === $current['rank'] && $candidate['length'] < $current['length'])) {
+			$images['loose'][$loose] = $candidate;
+		}
+	}
+
+	/**
+	 * How preferable the release a file name refers to is, lower is better.
+	 */
+	private function regionRank(string $name): int {
+		$lower = mb_strtolower($name);
+		foreach (['(world)' => 0, '(usa' => 1, '(u)' => 1, '(europe' => 2, '(e)' => 2, '(japan' => 3, '(j)' => 3] as $needle => $rank) {
+			if (str_contains($lower, $needle)) {
+				return $rank;
+			}
+		}
+		return 4;
+	}
+
+	/**
+	 * A forgiving match key: no extension, no "(USA)" or "[!]" tags, no
+	 * leading or trailing article, no punctuation, so "The Legend of
+	 * Zelda.nes" and "Legend of Zelda, The (USA) (Rev 1).png" both become
+	 * "legend of zelda".
+	 */
+	private function looseKey(string $name): string {
+		$value = $this->transliterate(mb_strtolower(pathinfo($name, PATHINFO_FILENAME)));
+		$value = preg_replace('/[(\[][^)\]]*[)\]]/u', ' ', $value) ?? $value;
+		$value = preg_replace('/,\s*(the|a|an)\s*$/u', '', trim($value)) ?? $value;
+		$value = preg_replace('/^(the|a|an)\s+/u', '', $value) ?? $value;
+		$value = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $value) ?? $value;
+		return trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
 	}
 
 	private function isImage(string $name): bool {
@@ -141,5 +206,23 @@ class ThumbnailService {
 
 	private function normalize(string $value): string {
 		return mb_strtolower(trim($value));
+	}
+
+	/**
+	 * Accents are written both ways in collections, so "Pokémon" and
+	 * "Pokemon" have to end up as the same key.
+	 */
+	private function transliterate(string $value): string {
+		if (!preg_match('/[^\x00-\x7F]/', $value)) {
+			return $value;
+		}
+		if (function_exists('transliterator_transliterate')) {
+			$transliterated = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $value);
+			if (is_string($transliterated)) {
+				return $transliterated;
+			}
+		}
+		$transliterated = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+		return is_string($transliterated) ? mb_strtolower($transliterated) : $value;
 	}
 }

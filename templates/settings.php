@@ -2,7 +2,6 @@
 /** @var array $_ */
 /** @var \OCP\IL10N $l */
 $settings = $_['settings'];
-$systems = $_['systems'];
 ?>
 
 <div id="nostalgist-settings" class="section">
@@ -64,22 +63,6 @@ $systems = $_['systems'];
 		<button type="button" class="nostalgist-folder-picker"
 			data-target="nostalgist-screenshots-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
-
-	<h3><?php p($l->t('Emulator cores')); ?></h3>
-	<p class="settings-hint"><?php p($l->t('Choose which libretro core is used for each system.')); ?></p>
-	<?php foreach ($systems as $id => $system): ?>
-		<p>
-			<label for="nostalgist-core-<?php p($id); ?>"><?php p($system['label']); ?></label><br>
-			<select id="nostalgist-core-<?php p($id); ?>" class="nostalgist-core"
-				data-system="<?php p($id); ?>" <?php if (count($system['cores']) === 1) { p('disabled'); } ?>>
-				<?php foreach ($system['cores'] as $core): ?>
-					<option value="<?php p($core); ?>" <?php if (($settings['cores'][$id] ?? '') === $core) { p('selected'); } ?>>
-						<?php p($core); ?>
-					</option>
-				<?php endforeach; ?>
-			</select>
-		</p>
-	<?php endforeach; ?>
 
 	<p>
 		<button id="nostalgist-save" class="primary"><?php p($l->t('Save')); ?></button>
