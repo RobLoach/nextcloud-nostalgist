@@ -25,17 +25,20 @@ from your files and run in the browser.
 
 ## Installation
 
-Nextcloud 34 or 35, on PHP 8.2 or newer — Nextcloud 35 asks for 8.3 itself.
-A browser with WebAssembly, which is every current one.
+1. Validate dependencies
+   - NextCloud >= 34
+   - PHP >= 8.2
 
-1. Download the app
+2. Download the app
 
 	```sh
 	cd /path/to/nextcloud/apps
 	git clone https://github.com/robloach/nextcloud-arcade.git arcade
 	```
 
-2. Enable the Arcade app
+3. Enable the Arcade app
+
+## Update
 
 Updating is `git pull` in that folder: the built JavaScript and the emulator
 cores are committed, so nothing needs to be built on the server.
