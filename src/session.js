@@ -1,0 +1,55 @@
+import { loadState } from '@nextcloud/initial-state'
+import { davUrl, launchRom, recordRecent, startSramSync } from './player.js'
+import { systemForFolderPath } from './systems.js'
+import { attachToolbar } from './toolbar.js'
+
+const settings = loadState('nostalgist', 'settings', {})
+
+/**
+ * Start a game and everything that goes with it: the save data, the
+ * control bar, and what the library remembers of it.
+ *
+ * Everything the emulator needs is imported here rather than where the
+ * player is registered, so the weight only lands when a game is opened.
+ *
+ * @param {object} options options
+ * @param {HTMLCanvasElement} options.canvas the canvas to render into
+ * @param {HTMLElement} options.container the element holding the canvas
+ * @param {string} options.filename path of the game in the user folder
+ * @param {string} options.basename file name of the game
+ * @param {string} [options.source] URL to read the game from instead
+ * @param {string} [options.closeUrl] where the close button leads
+ * @return {Promise<Function>} stops the game and puts everything away
+ */
+export async function startSession({ canvas, container, filename, basename, source, closeUrl = '' }) {
+	const instance = await launchRom({
+		element: canvas,
+		romUrl: source ?? davUrl(filename),
+		romName: basename,
+		settings,
+		systemHint: systemForFolderPath(filename),
+		romPath: filename,
+	})
+	const stopSramSync = startSramSync(instance, filename)
+	const stopPlayTime = recordRecent(filename)
+	const detachToolbar = attachToolbar({
+		container,
+		instance,
+		romPath: filename,
+		romName: basename,
+		settings,
+		closeUrl,
+		onClose: stopPlayTime,
+	})
+
+	return () => {
+		stopPlayTime()
+		stopSramSync()
+		detachToolbar()
+		try {
+			instance.exit()
+		} catch (error) {
+			console.error('Nostalgist failed to exit', error)
+		}
+	}
+}

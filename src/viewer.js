@@ -1,15 +1,16 @@
-import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
-import { davUrl, launchRom, recordRecent, startSramSync } from './player.js'
-import { isPlayable, romMimes, systemForFolderPath } from './systems.js'
-import { attachToolbar } from './toolbar.js'
-
-const settings = loadState('nostalgist', 'settings', {})
+import { isPlayable, romMimes } from './systems.js'
 
 /**
- * Viewer handler component. Written as a plain options object with a render
- * function so it works with the Viewer's own Vue instance without needing a
- * template compiler.
+ * The player, as the Viewer app shows it.
+ *
+ * This script is loaded on every page of the Files app, so it carries no
+ * more than the shell: the emulator, a few hundred kilobytes of it, is
+ * fetched the first time a game is opened.
+ *
+ * Written as a plain options object with a render function so it works with
+ * the Viewer's own Vue instance without needing a template compiler, and so
+ * the Viewer can apply its own mixin to it.
  */
 const NostalgistViewer = {
 	name: 'NostalgistViewer',
@@ -41,12 +42,9 @@ const NostalgistViewer = {
 
 	data() {
 		return {
-			instance: null,
 			started: false,
 			errorMessage: null,
-			detachToolbar: null,
-			stopSramSync: null,
-			stopPlayTime: null,
+			stopSession: null,
 		}
 	},
 
@@ -54,8 +52,6 @@ const NostalgistViewer = {
 		active(isActive) {
 			if (isActive && !this.started) {
 				this.start()
-			} else if (this.instance !== null) {
-				isActive ? this.instance.resume() : this.instance.pause()
 			}
 		},
 	},
@@ -71,18 +67,10 @@ const NostalgistViewer = {
 	// Vue 2 calls this beforeDestroy, Vue 3 beforeUnmount; both are here so
 	// the handler keeps working if the Viewer ever moves on.
 	beforeDestroy() {
-		this.stopPlayTime?.()
-		this.stopSramSync?.()
-		this.detachToolbar?.()
-		try {
-			this.instance?.exit()
-		} catch (error) {
-			console.error('Nostalgist failed to exit', error)
-		}
+		this.stopSession?.()
 	},
 
 	methods: {
-		// Vue 3 renamed the hook; it calls this one instead.
 		beforeUnmount() {
 			this.beforeDestroy()
 		},
@@ -93,22 +81,13 @@ const NostalgistViewer = {
 				if (!isPlayable(this.basename, this.mime)) {
 					throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: this.basename }))
 				}
-				this.instance = await launchRom({
-					element: this.$refs.canvas,
-					romUrl: this.source ?? davUrl(this.filename),
-					romName: this.basename,
-					settings,
-					systemHint: systemForFolderPath(this.filename),
-					romPath: this.filename,
-				})
-				this.stopSramSync = startSramSync(this.instance, this.filename)
-				this.stopPlayTime = recordRecent(this.filename)
-				this.detachToolbar = attachToolbar({
+				const { startSession } = await import(/* webpackChunkName: 'player' */ './session.js')
+				this.stopSession = await startSession({
+					canvas: this.$refs.canvas,
 					container: this.$el,
-					instance: this.instance,
-					romPath: this.filename,
-					romName: this.basename,
-					settings,
+					filename: this.filename,
+					basename: this.basename,
+					source: this.source,
 				})
 			} catch (error) {
 				console.error('Nostalgist failed to start', error)

@@ -64,6 +64,14 @@ async function resolveRom(blob, romName, systemHint) {
  * @return {Promise<Nostalgist>} the running Nostalgist instance
  */
 export async function launchRom({ element, romUrl, romName, settings = {}, systemHint = null, romPath = '' }) {
+	// The core is a few megabytes of its own. Warming it in the browser
+	// cache now means it is there when Nostalgist asks, instead of being
+	// fetched after the ROM.
+	const core = coreForSystem(systemForFile(romName)?.id ?? systemHint?.id ?? '')
+	if (core !== null) {
+		prefetchCore(core)
+	}
+
 	// Fetch the ROM here so the request carries the Nextcloud session.
 	const response = await fetch(romUrl, { credentials: 'same-origin' })
 	if (!response.ok) {
@@ -98,6 +106,20 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 			return coreUrl(`${coreName}_libretro.wasm`)
 		},
 	})
+}
+
+/**
+ * Ask for the files of a core without waiting for them.
+ *
+ * @param {string} core name of the libretro core
+ */
+function prefetchCore(core) {
+	for (const file of [`${core}_libretro.js`, `${core}_libretro.wasm`]) {
+		fetch(coreUrl(file), { credentials: 'same-origin', priority: 'high' })
+			.catch(() => {
+				// Only a warm cache was at stake.
+			})
+	}
 }
 
 /**

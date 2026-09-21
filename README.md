@@ -42,15 +42,15 @@ cores are committed, so nothing needs to be built on the server.
 ### From the Files app
 
 Open a ROM (for example a `.nes` file) and it starts playing in the file
-viewer. Files are recognized both by mimetype and by file extension, and a
-"Play with Nostalgist" action is available in the file's menu.
+viewer, which is what the app registers itself with. ROMs are recognized by
+their mimetype, which the app teaches Nextcloud for every system it runs.
 
-Zipped ROMs work through the same menu action on `.zip` files. The system is
-detected from the file inside the archive, or from the folder the game is
-stored in — short names and No-Intro platform names both work, so
-`Games/SNES/NHL 96.zip` and
-`Games/Nintendo - Super Nintendo Entertainment System/NHL 96.zip` are both
-recognized as Super Nintendo.
+Zipped ROMs are played from the Nostalgist page rather than from Files,
+since a `.zip` says nothing about what is in it. The system is then detected
+from the file inside the archive, or from the folder the game is stored in —
+short names and No-Intro platform names both work, so `Games/SNES/NHL 96.zip`
+and `Games/Nintendo - Super Nintendo Entertainment System/NHL 96.zip` are
+both recognized as Super Nintendo.
 
 ROMs uploaded before the app was enabled keep their generic mimetype until
 the mimetype repair step runs, which happens on install and on upgrades. It
@@ -61,7 +61,8 @@ occ maintenance:repair
 occ maintenance:mimetype:update-db
 ```
 
-They still open through the file action either way, matched by extension.
+Until then they open from the Nostalgist page, which goes by the file
+extension.
 
 ### From the Nostalgist page
 
@@ -253,6 +254,12 @@ location ~ ^/apps/nostalgist/img/cores/ {
 A memory cache (Redis or APCu) makes the games library page faster, since
 that is where the scanned library is cached.
 
+The script the Files app loads carries no more than what it takes to
+register the player with the file viewer; the emulator itself is fetched
+the first time a game is opened. The core of a system is asked for as soon
+as a game starts, rather than after the ROM has been read, so the two
+downloads overlap.
+
 ## Content Security Policy
 
 The app adds the allowances Nostalgist.js needs — WebAssembly compilation
@@ -297,14 +304,14 @@ lib/Service/                Settings, library, save states, thumbnails, history
 lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
 src/library.js              Games library views and pagination
-src/player.js               Shared launcher, ROM fetching, zip extraction, SRAM
+src/viewer.js               The Viewer handler, loaded on every Files page
+src/session.js              Everything a running game needs, loaded on demand
+src/player.js               Launcher, ROM fetching, zip extraction, SRAM
 src/toolbar.js              Player control bar
 src/panels/                 Save states, screenshots and resume panels
 src/api.js                  Save state endpoints shared by the panels
 src/icons.js                The icons of the player
 src/touch.js                Virtual gamepad
-src/files.js                Files app actions
-src/viewer.js               Viewer handler
 src/settings.js             Personal settings page
 src/systems.js              System lookup shared by the frontend
 tests/unit/                 Unit tests of the logic that has no dependencies

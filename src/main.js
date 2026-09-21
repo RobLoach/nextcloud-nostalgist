@@ -2,12 +2,9 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { renderLibrary } from './library.js'
-import { davUrl, launchRom, recordRecent, startSramSync } from './player.js'
-import { isPlayable, systemForFolderPath } from './systems.js'
-import { attachToolbar } from './toolbar.js'
+import { isPlayable } from './systems.js'
 
 const file = loadState('nostalgist', 'file', '')
-const settings = loadState('nostalgist', 'settings', {})
 
 const canvas = document.querySelector('.nostalgist canvas')
 const message = document.querySelector('.nostalgist .nostalgist-message')
@@ -44,24 +41,13 @@ async function main() {
 	}
 	document.title = `${basename.replace(/\.[^.]+$/, '')} - Nostalgist`
 	try {
-		const instance = await launchRom({
-			element: canvas,
-			romUrl: davUrl(file),
-			romName: basename,
-			settings,
-			systemHint: systemForFolderPath(file),
-			romPath: file,
-		})
-		startSramSync(instance, file)
-		const stopPlayTime = recordRecent(file)
-		attachToolbar({
+		const { startSession } = await import('./session.js')
+		await startSession({
+			canvas,
 			container: document.querySelector('.nostalgist'),
-			instance,
-			romPath: file,
-			romName: basename,
-			settings,
+			filename: file,
+			basename,
 			closeUrl: generateUrl('/apps/nostalgist/'),
-			onClose: stopPlayTime,
 		})
 	} catch (error) {
 		console.error('Nostalgist failed to start', error)

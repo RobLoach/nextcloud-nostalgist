@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace OCA\Nostalgist\AppInfo;
 
-use OCA\Files\Event\LoadAdditionalScriptsEvent;
 use OCA\Nostalgist\CoreMap;
 use OCA\Nostalgist\Listener\CleanupListener;
 use OCA\Nostalgist\Listener\CSPListener;
-use OCA\Nostalgist\Listener\LoadFilesScriptsListener;
 use OCA\Nostalgist\Listener\LoadViewerListener;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
@@ -29,7 +27,6 @@ class Application extends App implements IBootstrap {
 	}
 
 	public function register(IRegistrationContext $context): void {
-		$context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadFilesScriptsListener::class);
 		$context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
 		// Save states have no owner of their own, so they are removed with
 		// the game or the user they belong to.

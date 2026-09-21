@@ -160,6 +160,9 @@
 
 .nostalgist .nostalgist-library-game {
 	position: relative;
+	/* Cards below the fold are laid out when they are scrolled to. */
+	content-visibility: auto;
+	contain-intrinsic-size: auto 220px;
 	display: flex;
 	flex-direction: column;
 	border-radius: var(--border-radius-large);
@@ -225,7 +228,7 @@
 }
 
 .nostalgist .nostalgist-library-favorite.active svg {
-	fill: var(--color-warning, #e9a13b);
+	fill: #e9a13b;
 }
 
 .nostalgist .nostalgist-library-game-name {

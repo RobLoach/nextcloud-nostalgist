@@ -4,7 +4,7 @@
 	AddType application/wasm .wasm
 </IfModule>
 <IfModule mod_headers.c>
-	Header set Cache-Control "public, max-age=604800"
+	Header set Cache-Control "public, max-age=604800, immutable"
 </IfModule>
 <IfModule mod_deflate.c>
 	AddOutputFilterByType DEFLATE application/wasm application/javascript
