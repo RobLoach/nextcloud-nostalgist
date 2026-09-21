@@ -21,9 +21,17 @@ use OCP\ICacheFactory;
  * changes, which makes the cache correct without a lifetime to guess at.
  */
 class LibraryService {
+	/**
+	 * What a library is walked to, unless an administrator says otherwise.
+	 * The stored settings carry the instance values, so the limits arrive
+	 * with everything else a scan is given.
+	 */
 	public const MAX_GAMES = 5000;
 	public const MAX_DEPTH = 6;
 	private const CACHE_TTL = 24 * 3600;
+
+	/** @var array{games: int, depth: int} the limits of the scan under way */
+	private array $limits = ['games' => self::MAX_GAMES, 'depth' => self::MAX_DEPTH];
 	/** Bumped when the shape of a cached entry changes. */
 	private const CACHE_VERSION = 5;
 
@@ -122,6 +130,8 @@ class LibraryService {
 			$folder->getEtag(),
 			$settings['thumbnails_folder'],
 			$this->folderEtag($userFolder, $settings['thumbnails_folder']),
+			(string)($settings['max_games'] ?? self::MAX_GAMES),
+			(string)($settings['max_depth'] ?? self::MAX_DEPTH),
 		]);
 		if (!$refresh) {
 			$cached = $cache->get($key);
@@ -134,12 +144,16 @@ class LibraryService {
 		$extensionMap = CoreMap::extensionSystemMap();
 		// Zipped ROMs are extracted in the browser when launched.
 		$extensionMap['zip'] = 'zip';
+		$this->limits = [
+			'games' => (int)($settings['max_games'] ?? self::MAX_GAMES),
+			'depth' => (int)($settings['max_depth'] ?? self::MAX_DEPTH),
+		];
 		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, []);
 		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder'], $folderPath);
 
 		// Only what the list draws is worth keeping: a big library would
 		// otherwise weigh on the memory cache of small instances.
-		$cache->set($key, $games, self::CACHE_TTL);
+		$cache->set($key, $games, (int)($settings['cache_ttl'] ?? self::CACHE_TTL));
 		return $games;
 	}
 
@@ -245,11 +259,11 @@ class LibraryService {
 	 * @param list<string> $parents folder names between the library root and here
 	 */
 	private function findRoms(Folder $folder, Folder $userFolder, array $extensionMap, array &$games, int $depth, array $parents): void {
-		if ($depth > self::MAX_DEPTH || count($games) >= self::MAX_GAMES) {
+		if ($depth > $this->limits['depth'] || count($games) >= $this->limits['games']) {
 			return;
 		}
 		foreach ($folder->getDirectoryListing() as $node) {
-			if (count($games) >= self::MAX_GAMES) {
+			if (count($games) >= $this->limits['games']) {
 				return;
 			}
 			if ($node instanceof Folder) {

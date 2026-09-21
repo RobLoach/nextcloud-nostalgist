@@ -207,6 +207,7 @@ Personal settings → Arcade:
 | Screenshots folder | empty | Where the screenshot button saves images |
 | Thumbnails folder | empty | Images used as game thumbnails |
 | System folder | empty | Where BIOS files are read from |
+| Picture shown for each system | Box art | Box art, title screen, screenshot or logo, per system |
 | Controls | see above | The key of every button and of the player itself |
 
 Folder settings have a browse button that opens the NextCloud file picker.
@@ -216,11 +217,28 @@ after the page is closed, and says how it went when the page is opened
 again.
 
 Administration settings → Arcade holds what is the same for everybody:
-the folders new users start with, which each of them can still change, and
-the options of the emulator cores, which they cannot — an option of a core
-belongs to the core rather than to whoever is playing. Each system also
-picks the kind of picture it is shown with there: box art, title screen,
-screenshot or logo, which is the `Named_*` folder it is taken from.
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| Folder defaults | as above | What new users start with, and each can still change |
+| Look up box art | On | Whether the server may ask the libretro thumbnail server at all |
+| Games listed at most | 5000 | How many games one library scan lists |
+| Folders deep at most | 6 | How far into a library folder the scan goes |
+| Seconds a scan is kept | 86400 | How long the result of a scan is cached |
+| Core options | Core default | Options of the emulator cores, which users cannot change |
+| Picture each system starts out shown with | Box art | The default for the personal setting of the same name |
+
+An option of a core belongs to the core rather than to whoever is playing,
+so those are the administrator's alone. Looking up box art is the only thing
+in the app that has the server itself fetch from the internet, which is why
+it can be turned off for the instance: with it off, the button is gone from
+the personal settings and the endpoint refuses. The kind of picture a system
+is shown with is a matter of taste, so the administration page only sets
+where everybody starts.
+
+Box art, title screen, screenshot and logo are the `Named_*` folders a
+picture is taken from, so a system shown with title screens is matched
+against `Named_Titles` rather than `Named_Boxarts`.
 
 ### BIOS files
 

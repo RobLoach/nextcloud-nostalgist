@@ -15,8 +15,31 @@ class SettingsService {
 	/** The kinds of image a libretro thumbnail pack holds. */
 	public const THUMBNAIL_TYPES = ['boxart', 'title', 'snap', 'logo'];
 
+	/** The same, as they are offered in the settings. */
+	public const THUMBNAIL_LABELS = [
+		'boxart' => 'Box art',
+		'title' => 'Title screen',
+		'snap' => 'Screenshot',
+		'logo' => 'Logo',
+	];
+
 	/** How often a game may save itself, in seconds. 0 leaves it to you. */
 	public const AUTOSAVE_INTERVALS = [0, 30, 60, 120, 300, 600];
+
+	/**
+	 * What only an administrator sets, and every user is held to: how far
+	 * a library is walked, how long the walk is kept, and whether the box
+	 * art of the libretro server may be asked for at all -- the one thing
+	 * in the app that has the server itself talk to the internet.
+	 *
+	 * @var array<string, array{min: int, max: int}|bool>
+	 */
+	public const INSTANCE_ONLY = [
+		'fetch_enabled' => true,
+		'max_games' => ['min' => 100, 'max' => 100000],
+		'max_depth' => ['min' => 1, 'max' => 12],
+		'cache_ttl' => ['min' => 60, 'max' => 7 * 24 * 3600],
+	];
 
 	/** The folder settings an administrator can set for everyone. */
 	public const INSTANCE_DEFAULTS = [
@@ -55,8 +78,17 @@ class SettingsService {
 				$defaults[$key] = $value;
 			}
 		}
-		// The options of a core are the same for everybody playing it, and
-		// so is the kind of picture a system is shown with.
+		foreach (array_keys(self::INSTANCE_ONLY) as $key) {
+			$value = $this->appConfig->getValueString(Application::APP_ID, $key);
+			if ($value !== '') {
+				$defaults[$key] = is_bool($defaults[$key])
+					? filter_var($value, FILTER_VALIDATE_BOOLEAN)
+					: (int)$value;
+			}
+		}
+		// The options of a core are the same for everybody playing it. The
+		// kind of picture a system is shown with is only where a user
+		// starts: it is a matter of taste, so it can be changed.
 		$defaults['core_options'] = $this->getCoreOptions();
 		$defaults['thumbnail_types'] = $this->getThumbnailTypes();
 		return $defaults;
@@ -110,6 +142,13 @@ class SettingsService {
 		foreach (self::INSTANCE_DEFAULTS as $key) {
 			$defaults[$key] = $this->appConfig->getValueString(Application::APP_ID, $key);
 		}
+		$app = $this->appDefaults();
+		foreach (array_keys(self::INSTANCE_ONLY) as $key) {
+			$stored = $this->appConfig->getValueString(Application::APP_ID, $key);
+			$defaults[$key] = $stored === '' ? $app[$key] : (
+				is_bool($app[$key]) ? filter_var($stored, FILTER_VALIDATE_BOOLEAN) : (int)$stored
+			);
+		}
 		return $defaults;
 	}
 
@@ -122,6 +161,15 @@ class SettingsService {
 		foreach (self::INSTANCE_DEFAULTS as $key) {
 			if (array_key_exists($key, $sanitized)) {
 				$this->appConfig->setValueString(Application::APP_ID, $key, (string)$sanitized[$key]);
+			}
+		}
+		foreach (array_keys(self::INSTANCE_ONLY) as $key) {
+			if (array_key_exists($key, $sanitized)) {
+				$this->appConfig->setValueString(
+					Application::APP_ID,
+					$key,
+					is_bool($sanitized[$key]) ? ($sanitized[$key] ? '1' : '0') : (string)$sanitized[$key],
+				);
 			}
 		}
 		foreach (['core_options', 'thumbnail_types'] as $key) {
@@ -154,6 +202,10 @@ class SettingsService {
 			'saves_folder' => '',
 			'system_folder' => '',
 			'core_options' => [],
+			'fetch_enabled' => true,
+			'max_games' => 5000,
+			'max_depth' => 6,
+			'cache_ttl' => 24 * 3600,
 			'buttons' => Controls::defaultButtons(),
 			'hotkeys' => Controls::defaultHotkeys(),
 		];
@@ -188,8 +240,13 @@ class SettingsService {
 	 */
 	public function setUserSettings(string $userId, array $settings): array {
 		$sanitized = $this->sanitize($settings);
-		// Those belong to the instance, not to whoever is playing.
-		unset($sanitized['core_options'], $sanitized['thumbnail_types']);
+		// The options of a core belong to the core, and the rest of these
+		// to the instance. The kind of picture a system is shown with is
+		// not among them: that one is a matter of taste.
+		unset($sanitized['core_options']);
+		foreach (array_keys(self::INSTANCE_ONLY) as $key) {
+			unset($sanitized[$key]);
+		}
 		$this->userConfig->setValueString($userId, Application::APP_ID, 'settings', json_encode($sanitized));
 		unset($this->settings[$userId]);
 		return $this->getUserSettings($userId);
@@ -231,6 +288,16 @@ class SettingsService {
 		}
 		if (array_key_exists('audio_latency', $settings) && is_numeric($settings['audio_latency'])) {
 			$sanitized['audio_latency'] = max(16, min(256, (int)$settings['audio_latency']));
+		}
+		foreach (self::INSTANCE_ONLY as $key => $bounds) {
+			if (!array_key_exists($key, $settings)) {
+				continue;
+			}
+			if (is_bool($bounds)) {
+				$sanitized[$key] = filter_var($settings[$key], FILTER_VALIDATE_BOOLEAN);
+			} elseif (is_numeric($settings[$key])) {
+				$sanitized[$key] = max($bounds['min'], min($bounds['max'], (int)$settings[$key]));
+			}
 		}
 		// An empty folder means the feature is disabled; the library folder
 		// always has one.

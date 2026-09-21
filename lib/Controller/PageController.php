@@ -142,7 +142,7 @@ class PageController extends Controller {
 			'libraryTotal' => $libraryTotal,
 			'offset' => $offset,
 			'limit' => $limit,
-			'truncated' => $libraryTotal >= LibraryService::MAX_GAMES,
+			'truncated' => $libraryTotal >= (int)($settings['max_games'] ?? LibraryService::MAX_GAMES),
 			'systems' => $systems,
 			'recent' => $recent,
 			'favorites' => $favorites,

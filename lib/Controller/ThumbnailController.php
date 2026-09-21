@@ -42,7 +42,14 @@ class ThumbnailController extends Controller {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
 		}
-		if ($this->settingsService->getUserSettings($this->userId)['thumbnails_folder'] === '') {
+		$settings = $this->settingsService->getUserSettings($this->userId);
+		if (!($settings['fetch_enabled'] ?? true)) {
+			return new JSONResponse(
+				['message' => 'Looking up box art is turned off for this instance'],
+				Http::STATUS_FORBIDDEN,
+			);
+		}
+		if ($settings['thumbnails_folder'] === '') {
 			return new JSONResponse(
 				['message' => 'Set a thumbnails folder first'],
 				Http::STATUS_PRECONDITION_FAILED,

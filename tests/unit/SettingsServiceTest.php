@@ -56,6 +56,29 @@ class SettingsServiceTest extends TestCase {
 		return json_decode($saved, true) ?? [];
 	}
 
+	/**
+	 * @return array<string, mixed> the instance settings as they are stored
+	 */
+	private function saveInstanceValues(array $settings): array {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$saved = [];
+		$appConfig->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$saved): bool {
+				$saved[$key] = $value;
+				return true;
+			},
+		);
+		// By reference: an arrow function would capture the empty array.
+		$appConfig->method('getValueString')->willReturnCallback(
+			function (string $app, string $key) use (&$saved): string {
+				return $saved[$key] ?? '';
+			},
+		);
+		$service = new SettingsService($this->createStub(IUserConfig::class), $appConfig);
+		$service->setInstanceDefaults($settings);
+		return $service->getInstanceDefaults();
+	}
+
 	public function testDefaultsAreReturnedWithoutStoredSettings(): void {
 		$settings = $this->service()->getUserSettings(self::USER);
 		$this->assertFalse($settings['video_smooth']);
@@ -167,6 +190,41 @@ class SettingsServiceTest extends TestCase {
 		$this->assertSame('KeyM', $saved['buttons']['a'], 'the key that was set');
 		$this->assertSame('KeyZ', $saved['buttons']['b'], 'and the rest as they were');
 		$this->assertArrayNotHasKey('made_up', $saved['buttons']);
+	}
+
+	public function testTheKindOfPictureIsAUsersToSet(): void {
+		// It is a matter of taste, unlike the options of a core: the
+		// administration page only says where everybody starts.
+		$saved = $this->save(['thumbnail_types' => ['nes' => 'title', 'snes' => 'made up']]);
+		$this->assertSame(['nes' => 'title'], $saved['thumbnail_types'] ?? null);
+	}
+
+	public function testWhatBelongsToTheInstanceIsNotAUsersToSet(): void {
+		$saved = $this->save([
+			'fetch_enabled' => false,
+			'max_games' => 10,
+			'max_depth' => 99,
+			'cache_ttl' => 1,
+		]);
+		foreach (['fetch_enabled', 'max_games', 'max_depth', 'cache_ttl'] as $key) {
+			$this->assertArrayNotHasKey($key, $saved);
+		}
+	}
+
+	public function testTheLimitsOfAScanAreHeldToWhatIsSensible(): void {
+		$saved = $this->saveInstanceValues([
+			'max_games' => 10_000_000,
+			'max_depth' => 0,
+			'cache_ttl' => 30,
+		]);
+		$this->assertSame(100000, $saved['max_games']);
+		$this->assertSame(1, $saved['max_depth']);
+		$this->assertSame(60, $saved['cache_ttl']);
+	}
+
+	public function testLookingUpBoxArtCanBeTurnedOffForEverybody(): void {
+		$this->assertFalse($this->saveInstanceValues(['fetch_enabled' => false])['fetch_enabled']);
+		$this->assertTrue($this->saveInstanceValues(['fetch_enabled' => true])['fetch_enabled']);
 	}
 
 	public function testCoreOptionsAreNotAUsersToSet(): void {

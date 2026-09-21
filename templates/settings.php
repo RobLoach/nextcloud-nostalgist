@@ -4,6 +4,8 @@
 $settings = $_['settings'];
 $buttons = $_['buttons'];
 $hotkeys = $_['hotkeys'];
+$systems = $_['systems'];
+$thumbnailTypes = $_['thumbnailTypes'];
 ?>
 
 <div id="arcade-settings" class="section">
@@ -138,9 +140,31 @@ $hotkeys = $_['hotkeys'];
 			value="<?php p($settings['thumbnails_folder']); ?>">
 		<button type="button" class="arcade-folder-picker"
 			data-target="arcade-thumbnails-folder"><?php p($l->t('Browse …')); ?></button>
-		<button type="button" id="arcade-fetch-thumbnails"><?php p($l->t('Look for missing box art')); ?></button>
-		<span id="arcade-fetch-status" aria-live="polite"></span>
+		<?php if ($settings['fetch_enabled']): ?>
+			<button type="button" id="arcade-fetch-thumbnails"><?php p($l->t('Look for missing box art')); ?></button>
+			<span id="arcade-fetch-status" aria-live="polite"></span>
+		<?php endif; ?>
 	</p>
+	<details class="arcade-section">
+		<summary><?php p($l->t('Picture shown for each system')); ?></summary>
+		<p class="settings-hint">
+			<?php p($l->t('Which of the pictures in your thumbnails folder a system is shown with, when it has more than one.')); ?>
+		</p>
+		<?php foreach ($systems as $systemId => $system): ?>
+			<p>
+				<label for="arcade-thumbnail-<?php p($systemId); ?>"><?php p($system['short']); ?></label><br>
+				<select id="arcade-thumbnail-<?php p($systemId); ?>" class="arcade-thumbnail-type"
+					data-system="<?php p($systemId); ?>">
+					<?php foreach ($thumbnailTypes as $type => $label): ?>
+						<option value="<?php p($type); ?>"
+							<?php if (($settings['thumbnail_types'][$systemId] ?? 'boxart') === $type) { p('selected'); } ?>>
+							<?php p($label); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</p>
+		<?php endforeach; ?>
+	</details>
 	<p>
 		<label for="arcade-saves-folder"><?php p($l->t('Saves folder')); ?></label><br>
 		<em><?php p($l->t('Save states and battery saves are stored here, under the system and the game. Without a folder, a game cannot be saved at all and the player says so.')); ?></em><br>

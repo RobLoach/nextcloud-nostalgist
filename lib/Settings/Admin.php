@@ -32,12 +32,7 @@ class Admin implements ISettings {
 			'systemsByCore' => CoreOptions::systemsByCore(),
 			'storedCoreOptions' => $this->settingsService->getCoreOptions(),
 			'systems' => CoreMap::SYSTEMS,
-			'thumbnailTypes' => [
-				'boxart' => 'Box art',
-				'title' => 'Title screen',
-				'snap' => 'Screenshot',
-				'logo' => 'Logo',
-			],
+			'thumbnailTypes' => SettingsService::THUMBNAIL_LABELS,
 			'storedThumbnailTypes' => $this->settingsService->getThumbnailTypes(),
 		]);
 	}

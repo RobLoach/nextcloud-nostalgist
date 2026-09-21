@@ -66,6 +66,10 @@ msgid "BIOS files are read from this folder, by the name the core expects, such 
 msgstr ""
 
 #: templates/admin.php
+msgid "Box art"
+msgstr ""
+
+#: templates/admin.php
 #: templates/settings.php
 msgid "Browse …"
 msgstr ""
@@ -184,6 +188,10 @@ msgstr ""
 msgid "Folders"
 msgstr ""
 
+#: templates/admin.php
+msgid "Folders deep at most"
+msgstr ""
+
 #: src/toolbar.js
 msgid "Fullscreen"
 msgstr ""
@@ -209,6 +217,10 @@ msgstr ""
 msgid "Games library folder"
 msgstr ""
 
+#: templates/admin.php
+msgid "Games listed at most"
+msgstr ""
+
 #: src/library.js
 msgid "Games per page"
 msgstr ""
@@ -217,8 +229,20 @@ msgstr ""
 msgid "Grid view"
 msgstr ""
 
+#: templates/admin.php
+msgid "How far a games library folder is walked, and how long the result is kept."
+msgstr ""
+
 #: templates/settings.php
 msgid "Images in this folder are used as game thumbnails, matched by file name: Mario.png is the thumbnail of Mario.nes. Leave empty to disable."
+msgstr ""
+
+#: templates/admin.php
+msgid "Let users look up box art on the libretro thumbnail server"
+msgstr ""
+
+#: templates/admin.php
+msgid "Library scanning"
 msgstr ""
 
 #: src/library.js
@@ -294,7 +318,11 @@ msgid "Pause the game while the tab is in the background"
 msgstr ""
 
 #: templates/admin.php
-msgid "Picture shown for %s"
+msgid "Picture %s starts out shown with"
+msgstr ""
+
+#: templates/settings.php
+msgid "Picture shown for each system"
 msgstr ""
 
 #: templates/settings.php
@@ -423,6 +451,10 @@ msgstr ""
 msgid "Search games …"
 msgstr ""
 
+#: templates/admin.php
+msgid "Seconds a scan is kept"
+msgstr ""
+
 #: src/panels/gallery.js
 msgid "Set a screenshots folder in the Arcade settings to keep your screenshots."
 msgstr ""
@@ -487,6 +519,10 @@ msgstr ""
 msgid "The games library folder {folder} does not exist. Create it, or pick another folder in the Arcade personal settings."
 msgstr ""
 
+#: templates/admin.php
+msgid "This is the only thing the app has the server itself fetch from the internet. Turned off, the button is gone and games are shown with the pictures in your own files."
+msgstr ""
+
 #: src/settings.js
 msgid "This key works a button of the controller, so the game gets it instead"
 msgstr ""
@@ -508,6 +544,10 @@ msgstr ""
 
 #: templates/settings.php
 msgid "Volume, in decibels, 0 is as recorded"
+msgstr ""
+
+#: templates/settings.php
+msgid "Which of the pictures in your thumbnails folder a system is shown with, when it has more than one."
 msgstr ""
 
 #: src/library.js

@@ -30,6 +30,33 @@ $storedTypes = $_['storedThumbnailTypes'];
 		</p>
 	<?php endforeach; ?>
 
+	<h3><?php p($l->t('Box art')); ?></h3>
+	<p>
+		<input type="checkbox" id="arcade-fetch-enabled" class="checkbox arcade-setting"
+			data-setting="fetch_enabled" <?php if ($defaults['fetch_enabled']) { p('checked'); } ?>>
+		<label for="arcade-fetch-enabled">
+			<?php p($l->t('Let users look up box art on the libretro thumbnail server')); ?>
+		</label>
+	</p>
+	<p class="settings-hint">
+		<?php p($l->t('This is the only thing the app has the server itself fetch from the internet. Turned off, the button is gone and games are shown with the pictures in your own files.')); ?>
+	</p>
+
+	<h3><?php p($l->t('Library scanning')); ?></h3>
+	<p class="settings-hint"><?php p($l->t('How far a games library folder is walked, and how long the result is kept.')); ?></p>
+	<?php foreach ([
+		'max_games' => [$l->t('Games listed at most'), 100, 100000],
+		'max_depth' => [$l->t('Folders deep at most'), 1, 12],
+		'cache_ttl' => [$l->t('Seconds a scan is kept'), 60, 604800],
+	] as $key => [$label, $min, $max]): ?>
+		<p>
+			<label for="arcade-<?php p($key); ?>"><?php p($label); ?></label><br>
+			<input type="number" id="arcade-<?php p($key); ?>" class="arcade-setting"
+				data-setting="<?php p($key); ?>" min="<?php p($min); ?>" max="<?php p($max); ?>"
+				value="<?php p($defaults[$key]); ?>">
+		</p>
+	<?php endforeach; ?>
+
 	<h3><?php p($l->t('Core options')); ?></h3>
 	<p class="settings-hint"><?php p($l->t('Options of the emulator cores themselves. Left on "Core default", the core decides.')); ?></p>
 	<?php foreach ($coreOptions as $core => $options): ?>
@@ -60,7 +87,7 @@ $storedTypes = $_['storedThumbnailTypes'];
 				<?php if ($system['core'] !== $core) { continue; } ?>
 				<p>
 					<label for="arcade-thumbnail-<?php p($systemId); ?>">
-						<?php p($l->t('Picture shown for %s', [$system['short']])); ?>
+						<?php p($l->t('Picture %s starts out shown with', [$system['short']])); ?>
 					</label><br>
 					<select id="arcade-thumbnail-<?php p($systemId); ?>" class="arcade-thumbnail-type"
 						data-system="<?php p($systemId); ?>">
