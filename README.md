@@ -218,7 +218,7 @@ required.
 npm install
 npm run build     # production bundles into js/
 npm run watch     # rebuild on change
-npm run cores     # extract every core from the submodule
+npm run cores     # extract the cores from the submodule
 ```
 
 The built bundles in `js/` are committed, so rebuild and commit them along
