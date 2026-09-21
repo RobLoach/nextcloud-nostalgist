@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Service;
 
 use OCA\Nostalgist\AppInfo\Application;
+use OCA\Nostalgist\CoreOptions;
 use OCP\IConfig;
 
 class SettingsService {
@@ -25,6 +26,7 @@ class SettingsService {
 			'thumbnails_folder' => '',
 			'screenshots_folder' => '',
 			'saves_folder' => '',
+			'core_options' => [],
 		];
 	}
 
@@ -82,6 +84,33 @@ class SettingsService {
 				$sanitized[$key] = '';
 			} elseif ($folder !== '' && !str_contains($folder, '..')) {
 				$sanitized[$key] = '/' . $folder;
+			}
+		}
+		if (isset($settings['core_options']) && is_array($settings['core_options'])) {
+			$sanitized['core_options'] = $this->sanitizeCoreOptions($settings['core_options']);
+		}
+		return $sanitized;
+	}
+
+	/**
+	 * Keep only known cores, options and values. An empty value means the
+	 * core decides, so it is dropped rather than stored.
+	 *
+	 * @param array<string, mixed> $coreOptions
+	 * @return array<string, array<string, string>>
+	 */
+	private function sanitizeCoreOptions(array $coreOptions): array {
+		$sanitized = [];
+		foreach ($coreOptions as $core => $options) {
+			if (!isset(CoreOptions::OPTIONS[$core]) || !is_array($options)) {
+				continue;
+			}
+			foreach ($options as $key => $value) {
+				if (isset(CoreOptions::OPTIONS[$core][$key])
+					&& is_string($value)
+					&& isset(CoreOptions::OPTIONS[$core][$key]['values'][$value])) {
+					$sanitized[$core][$key] = $value;
+				}
 			}
 		}
 		return $sanitized;

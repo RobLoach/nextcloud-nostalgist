@@ -108,7 +108,10 @@ function gameName(game) {
  * @return {string} the name of the game's system
  */
 function gameSystem(game) {
-	return game.system === 'zip' ? t('nostalgist', 'ZIP archive') : systemLabel(game.system)
+	if (game.system === 'zip' || !game.system) {
+		return t('nostalgist', 'ZIP archive')
+	}
+	return systemLabel(game.system)
 }
 
 /**
@@ -174,6 +177,43 @@ function renderGrid(games) {
 		grid.appendChild(card)
 	}
 	return grid
+}
+
+/**
+ * @param {object[]} games the games played last
+ * @return {HTMLElement} the recently played row
+ */
+function renderRecent(games) {
+	const section = document.createElement('div')
+	section.className = 'nostalgist-library-recent'
+
+	const heading = document.createElement('h3')
+	heading.textContent = t('nostalgist', 'Recently played')
+	section.appendChild(heading)
+
+	const row = document.createElement('div')
+	row.className = 'nostalgist-library-recent-row'
+	for (const game of games) {
+		const card = document.createElement('a')
+		card.className = 'nostalgist-library-game'
+		card.href = gameUrl(game)
+		card.appendChild(thumbnailFor(game, 256))
+
+		const name = document.createElement('span')
+		name.className = 'nostalgist-library-game-name'
+		name.textContent = gameName(game)
+		name.title = game.basename
+		card.appendChild(name)
+
+		const system = document.createElement('span')
+		system.className = 'nostalgist-library-game-system'
+		system.textContent = gameSystem(game)
+		card.appendChild(system)
+
+		row.appendChild(card)
+	}
+	section.appendChild(row)
+	return section
 }
 
 /**
@@ -536,6 +576,12 @@ export async function renderLibrary(container, onError) {
 				)
 			container.appendChild(hint)
 			return
+		}
+
+		// Only on the plain first page: it is a shortcut, not a search result.
+		const recent = data.recent ?? []
+		if (recent.length > 0 && state.search === '' && state.system === '' && state.offset === 0) {
+			container.appendChild(renderRecent(recent))
 		}
 
 		const filters = renderFilters(data.systems, load)

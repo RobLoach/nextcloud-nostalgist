@@ -2,6 +2,8 @@
 /** @var array $_ */
 /** @var \OCP\IL10N $l */
 $settings = $_['settings'];
+$coreOptions = $_['coreOptions'];
+$systemsByCore = $_['systemsByCore'];
 ?>
 
 <div id="nostalgist-settings" class="section">
@@ -63,6 +65,32 @@ $settings = $_['settings'];
 		<button type="button" class="nostalgist-folder-picker"
 			data-target="nostalgist-screenshots-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
+
+	<h3><?php p($l->t('Core options')); ?></h3>
+	<p class="settings-hint"><?php p($l->t('Options of the emulator cores themselves. Left on "Core default", the core decides.')); ?></p>
+	<?php foreach ($coreOptions as $core => $options): ?>
+		<details class="nostalgist-core-options">
+			<summary>
+				<?php p($core); ?>
+				<em><?php p(implode(', ', $systemsByCore[$core] ?? [])); ?></em>
+			</summary>
+			<?php foreach ($options as $key => $option): ?>
+				<p>
+					<label for="nostalgist-option-<?php p($key); ?>"><?php p($l->t($option['label'])); ?></label><br>
+					<select id="nostalgist-option-<?php p($key); ?>" class="nostalgist-core-option"
+						data-core="<?php p($core); ?>" data-option="<?php p($key); ?>">
+						<option value=""><?php p($l->t('Core default')); ?></option>
+						<?php foreach ($option['values'] as $value => $label): ?>
+							<option value="<?php p($value); ?>"
+								<?php if (($settings['core_options'][$core][$key] ?? '') === (string)$value) { p('selected'); } ?>>
+								<?php p($l->t($label)); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+			<?php endforeach; ?>
+		</details>
+	<?php endforeach; ?>
 
 	<p>
 		<button id="nostalgist-save" class="primary"><?php p($l->t('Save')); ?></button>

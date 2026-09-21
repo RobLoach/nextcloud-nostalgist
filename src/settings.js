@@ -35,6 +35,13 @@ async function save() {
 			? element.checked
 			: element.value
 	})
+	settings.core_options = {}
+	container.querySelectorAll('.nostalgist-core-option').forEach((element) => {
+		if (element.value !== '') {
+			settings.core_options[element.dataset.core] ??= {}
+			settings.core_options[element.dataset.core][element.dataset.option] = element.value
+		}
+	})
 
 	status.textContent = t('nostalgist', 'Saving …')
 	try {

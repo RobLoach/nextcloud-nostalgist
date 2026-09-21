@@ -83,6 +83,34 @@
 	fill: var(--color-primary-element-text);
 }
 
+.nostalgist .nostalgist-library-recent {
+	margin-bottom: 20px;
+}
+
+.nostalgist .nostalgist-library-recent h3 {
+	margin: 0 0 8px 0;
+}
+
+.nostalgist .nostalgist-library-recent-row {
+	display: flex;
+	gap: 16px;
+	overflow-x: auto;
+	padding-bottom: 8px;
+	scroll-snap-type: x proximity;
+}
+
+.nostalgist .nostalgist-library-recent-row .nostalgist-library-game {
+	flex: 0 0 140px;
+	scroll-snap-align: start;
+}
+
+.nostalgist .nostalgist-library-recent-row .nostalgist-library-thumbnail {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: contain;
+	background-color: var(--color-background-dark);
+}
+
 .nostalgist .nostalgist-library-filters {
 	display: flex;
 	gap: 8px;

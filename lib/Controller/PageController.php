@@ -6,6 +6,7 @@ namespace OCA\Nostalgist\Controller;
 
 use OCA\Nostalgist\AppInfo\Application;
 use OCA\Nostalgist\CoreMap;
+use OCA\Nostalgist\Service\RecentService;
 use OCA\Nostalgist\Service\SettingsService;
 use OCA\Nostalgist\Service\ThumbnailService;
 use OCP\AppFramework\Controller;
@@ -41,6 +42,7 @@ class PageController extends Controller {
 		private IRootFolder $rootFolder,
 		private ICacheFactory $cacheFactory,
 		private ThumbnailService $thumbnailService,
+		private RecentService $recentService,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -103,12 +105,14 @@ class PageController extends Controller {
 				'offset' => 0,
 				'limit' => $limit,
 				'systems' => [],
+				'recent' => [],
 				'games' => [],
 			]);
 		}
 
 		$games = $this->getGames($folder, $userFolder, $folderPath, $settings, $refresh);
 		$libraryTotal = count($games);
+		$recent = $this->getRecent($userFolder, $games);
 		// The systems of the whole library, so the filter keeps offering
 		// them while a filter is active.
 		$systems = array_values(array_unique(array_column($games, 'system')));
@@ -129,8 +133,31 @@ class PageController extends Controller {
 			'limit' => $limit,
 			'truncated' => $libraryTotal >= self::LIBRARY_MAX_GAMES,
 			'systems' => $systems,
+			'recent' => $recent,
 			'games' => array_slice($games, $offset, $limit),
 		]);
+	}
+
+	/**
+	 * The games played last, with the thumbnails of the library when they
+	 * are part of it, and without the ones that are gone.
+	 *
+	 * @param list<array<string, mixed>> $games
+	 * @return list<array<string, mixed>>
+	 */
+	private function getRecent(Folder $userFolder, array $games): array {
+		$byPath = array_column($games, null, 'path');
+		$recent = [];
+		foreach ($this->recentService->get((string)$this->userId) as $entry) {
+			$path = $entry['path'] ?? '';
+			if ($path === '' || !$userFolder->nodeExists($path)) {
+				continue;
+			}
+			$recent[] = isset($byPath[$path])
+				? [...$byPath[$path], 'time' => $entry['time'] ?? 0]
+				: $entry;
+		}
+		return $recent;
 	}
 
 	/**

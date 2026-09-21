@@ -1,6 +1,6 @@
 import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
-import { davUrl, launchRom, startSramSync } from './player.js'
+import { davUrl, launchRom, recordRecent, startSramSync } from './player.js'
 import { isPlayable, romMimes, systemForFolderPath } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
@@ -93,6 +93,7 @@ const NostalgistViewer = {
 					romPath: this.filename,
 				})
 				this.stopSramSync = startSramSync(this.instance, this.filename)
+				recordRecent(this.filename)
 				this.detachToolbar = attachToolbar({
 					container: this.$el,
 					instance: this.instance,

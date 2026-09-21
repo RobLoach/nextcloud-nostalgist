@@ -2,7 +2,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { renderLibrary } from './library.js'
-import { davUrl, launchRom, startSramSync } from './player.js'
+import { davUrl, launchRom, recordRecent, startSramSync } from './player.js'
 import { isPlayable, systemForFolderPath } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
@@ -53,6 +53,7 @@ async function main() {
 			romPath: file,
 		})
 		startSramSync(instance, file)
+		recordRecent(file)
 		attachToolbar({
 			container: document.querySelector('.nostalgist'),
 			instance,

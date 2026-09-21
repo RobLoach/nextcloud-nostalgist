@@ -87,6 +87,7 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 			video_smooth: settings.video_smooth === true,
 			fastforward_ratio: Number(settings.fastforward_ratio ?? 2),
 		},
+		retroarchCoreConfig: settings.core_options?.[coreForSystem(system.id)] ?? {},
 		resolveCoreJs(coreName) {
 			return coreUrl(`${coreName}_libretro.js`)
 		},
@@ -108,6 +109,27 @@ function coreUrl(file) {
 		generateFilePath('nostalgist', 'img', `cores/${file}`),
 		window.location.origin,
 	).href
+}
+
+/**
+ * Remember a game as played, for the library's recently played row.
+ *
+ * @param {string} romPath path of the game
+ */
+export function recordRecent(romPath) {
+	if (!romPath || getCurrentUser() === null) {
+		return
+	}
+	fetch(generateUrl('/apps/nostalgist/recent'), {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			requesttoken: getRequestToken() ?? '',
+		},
+		body: JSON.stringify({ file: romPath }),
+	}).catch((error) => {
+		console.error('Could not record the game as played', error)
+	})
 }
 
 /**

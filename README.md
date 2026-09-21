@@ -70,6 +70,10 @@ default). Three views are available and the choice is remembered:
 | List | Compact rows with small thumbnails |
 | Table | Sortable columns: name, system, size, modified |
 
+The games played last are shown in a row above the library, so picking up
+where you left off is one click, whether the game was started here or from
+the Files app.
+
 Games can be filtered by name and by system, and large libraries are paged
 (24 to 240 games per page). Filtering, sorting and paging all happen over
 the whole library, not just the page being shown. Pages are kept for the
@@ -115,6 +119,7 @@ Personal settings → Nostalgist:
 | Saves folder | empty | Save states and their screenshots, in your own files |
 | Screenshots folder | empty | Where the screenshot button saves images |
 | Thumbnails folder | empty | Images used as game thumbnails |
+| Core options | core defaults | Options of the emulator cores, per core |
 
 Folder settings have a browse button that opens the NextCloud file picker.
 
@@ -154,7 +159,10 @@ not move existing saves.
 ### Cores
 
 One proven libretro core is used per system, and they all ship with the app,
-so there is nothing to choose or install:
+so there is nothing to choose or install. Each core has its own options in
+the personal settings — palettes, region, sprite limits, video filters and
+the like — which apply to every game that core runs. Left alone, the core's
+own defaults are used.
 
 | System | Core |
 | --- | --- |
@@ -229,11 +237,12 @@ with any change to `src/`.
 ```
 appinfo/info.xml            App metadata, repair steps, settings registration
 lib/CoreMap.php             Systems: extensions, mimetypes, cores, folder aliases
+lib/CoreOptions.php         The core options offered in the settings
 lib/AppInfo/Application.php Mimetype registration and event listeners
 lib/Controller/             Page, library, settings and save state endpoints
 lib/Listener/               Files and Viewer script loading, Content Security Policy
 lib/Migration/              Mimetype repair step
-lib/Service/                Settings, save state storage, thumbnail matching
+lib/Service/                Settings, save states, thumbnails, recently played
 lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
 src/library.js              Games library views and pagination
@@ -261,6 +270,7 @@ All of them are user-scoped and require a session.
 | GET/POST/DELETE | `/apps/nostalgist/state` | A save state slot |
 | GET/POST | `/apps/nostalgist/state/thumbnail` | The screenshot of a slot |
 | GET/POST | `/apps/nostalgist/sram` | The in-game battery save |
+| POST | `/apps/nostalgist/recent` | Remember a game as played |
 
 ## Credits
 

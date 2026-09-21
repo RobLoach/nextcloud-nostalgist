@@ -1,0 +1,33 @@
+#nostalgist-settings em {
+	color: var(--color-text-maxcontrast);
+}
+
+#nostalgist-settings .nostalgist-core-options {
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius-large);
+	margin-bottom: 8px;
+	max-width: 500px;
+}
+
+#nostalgist-settings .nostalgist-core-options summary {
+	padding: 10px 12px;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+#nostalgist-settings .nostalgist-core-options summary em {
+	font-weight: normal;
+	margin-inline-start: 6px;
+}
+
+#nostalgist-settings .nostalgist-core-options[open] summary {
+	border-bottom: 1px solid var(--color-border);
+}
+
+#nostalgist-settings .nostalgist-core-options p {
+	padding: 0 12px;
+}
+
+#nostalgist-settings .nostalgist-core-options p:last-child {
+	padding-bottom: 12px;
+}
