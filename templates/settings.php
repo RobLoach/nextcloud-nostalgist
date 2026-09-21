@@ -76,14 +76,17 @@ $systemsByCore = $_['systemsByCore'];
 			</summary>
 			<?php foreach ($options as $key => $option): ?>
 				<p>
-					<label for="nostalgist-option-<?php p($key); ?>"><?php p($l->t($option['label'])); ?></label><br>
+					<?php /* Not through $l->t(): these come from CoreOptions, so they are
+					        not translatable anyway, and a "%" in them would be taken for
+					        a format specifier. */ ?>
+					<label for="nostalgist-option-<?php p($key); ?>"><?php p($option['label']); ?></label><br>
 					<select id="nostalgist-option-<?php p($key); ?>" class="nostalgist-core-option"
 						data-core="<?php p($core); ?>" data-option="<?php p($key); ?>">
 						<option value=""><?php p($l->t('Core default')); ?></option>
 						<?php foreach ($option['values'] as $value => $label): ?>
 							<option value="<?php p($value); ?>"
 								<?php if (($settings['core_options'][$core][$key] ?? '') === (string)$value) { p('selected'); } ?>>
-								<?php p($l->t($label)); ?>
+								<?php p($label); ?>
 							</option>
 						<?php endforeach; ?>
 					</select>

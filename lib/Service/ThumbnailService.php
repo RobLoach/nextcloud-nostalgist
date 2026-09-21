@@ -21,6 +21,15 @@ use OCP\Files\Node;
  *
  * The whole folder is indexed in one pass, so matching a game is a lookup
  * instead of a query per candidate file.
+ *
+ * @psalm-type Images = array{
+ *     exact: array<string, int>,
+ *     loose: array<string, array{id: int, rank: int, length: int}>
+ * }
+ * @psalm-type Index = array{
+ *     paths: array<string, array<string, Images>>,
+ *     systems: array<string, string>
+ * }
  */
 class ThumbnailService {
 	private const MAX_DEPTH = 3;
@@ -37,7 +46,7 @@ class ThumbnailService {
 	/**
 	 * Index every image of a thumbnails folder, by folder path and type.
 	 *
-	 * @return array{paths: array<string, array<string, array<string, int>>>, systems: array<string, string>}
+	 * @return Index
 	 */
 	public function buildIndex(Folder $folder): array {
 		$index = ['paths' => [], 'systems' => []];
@@ -52,6 +61,7 @@ class ThumbnailService {
 	 * region and revision tags, articles and punctuation, so that
 	 * "Batman Returns.zip" finds "Batman Returns (USA).png".
 	 *
+	 * @param Index $index
 	 * @return array<string, int> type => file id
 	 */
 	public function forGame(array $index, string $systemId, string $subfolder, string $basename): array {
@@ -88,7 +98,7 @@ class ThumbnailService {
 	}
 
 	/**
-	 * @param array{paths: array<string, array<string, array<string, int>>>, systems: array<string, string>} $index
+	 * @param Index $index
 	 */
 	private function indexFolder(Folder $folder, string $path, array &$index, int $depth): void {
 		if ($depth > self::MAX_DEPTH) {
@@ -98,6 +108,7 @@ class ThumbnailService {
 			$name = $node->getName();
 			if (!$node instanceof Folder) {
 				if ($this->isImage($name)) {
+					$index['paths'][$path]['plain'] ??= ['exact' => [], 'loose' => []];
 					$this->addImage($index['paths'][$path]['plain'], $name, $node->getId());
 				}
 				continue;
@@ -122,7 +133,7 @@ class ThumbnailService {
 	}
 
 	/**
-	 * @return array{exact: array<string, int>, loose: array<string, array{id: int, rank: int, length: int}>}
+	 * @return Images
 	 */
 	private function indexImages(Folder $folder): array {
 		$images = ['exact' => [], 'loose' => []];
@@ -135,10 +146,9 @@ class ThumbnailService {
 	}
 
 	/**
-	 * @param array{exact: array<string, int>, loose: array<string, array{id: int, rank: int, length: int}>} $images
+	 * @param Images $images
 	 */
-	private function addImage(?array &$images, string $name, int $id): void {
-		$images ??= ['exact' => [], 'loose' => []];
+	private function addImage(array &$images, string $name, int $id): void {
 		$images['exact'][$this->stemKey($name)] = $id;
 
 		$loose = $this->looseKey($name);

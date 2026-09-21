@@ -8,6 +8,7 @@ use OCA\Nostalgist\AppInfo\Application;
 use OCA\Nostalgist\CoreMap;
 use OCA\Nostalgist\Service\RecentService;
 use OCA\Nostalgist\Service\SettingsService;
+use OCA\Nostalgist\Service\StateService;
 use OCA\Nostalgist\Service\ThumbnailService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -43,6 +44,7 @@ class PageController extends Controller {
 		private ICacheFactory $cacheFactory,
 		private ThumbnailService $thumbnailService,
 		private RecentService $recentService,
+		private StateService $stateService,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -171,7 +173,7 @@ class PageController extends Controller {
 		}
 		$states = $this->stateService->thumbnailIndex(
 			(string)$this->userId,
-			array_values(array_column($missing, 'path')),
+			array_column($missing, 'path'),
 		);
 
 		foreach ($games as &$game) {

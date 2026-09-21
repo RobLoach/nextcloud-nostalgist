@@ -6,6 +6,7 @@
 
 /.php-cs-fixer.cache
 /tests/.phpunit.cache
+/.psalm-cache/
 
 /node_modules/
 #/js/

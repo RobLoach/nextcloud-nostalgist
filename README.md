@@ -246,12 +246,13 @@ npm run cores     # extract the cores from the submodule
 
 composer install
 composer test     # the unit test suite
+composer psalm    # static analysis
 ```
 
 Every push and pull request runs the same through GitHub Actions: PHP
-linting on 8.2 to 8.4, the test suite, the JavaScript build, and a check
-that `appinfo/info.xml` validates against the app store schema and agrees
-with `package.json` on the version.
+linting on 8.2 to 8.4, the test suite, static analysis, the JavaScript
+build, and a check that `appinfo/info.xml` validates against the app store
+schema and agrees with `package.json` on the version.
 
 The built bundles in `js/` are committed, so rebuild and commit them along
 with any change to `src/`.
