@@ -94,6 +94,10 @@ control remapping and more), screenshot, and fullscreen. On touch devices a
 virtual gamepad is overlaid too — a D-pad with diagonals, A/B/X/Y, L/R,
 Start and Select — toggleable from the control bar.
 
+A screenshots button opens a gallery of every screenshot taken of the game,
+newest first, where they can be opened in the Files app or deleted. It needs
+a screenshots folder to be set, since that is where they are kept.
+
 The save state menu has six slots per game, each with a screenshot thumbnail
 and a timestamp; saving or loading a slot closes the menu and returns to the
 game. States are stored per user and per game on the server, so every
@@ -122,7 +126,8 @@ Personal settings → Nostalgist:
 | Thumbnails folder | empty | Images used as game thumbnails |
 | Core options | core defaults | Options of the emulator cores, per core |
 
-Folder settings have a browse button that opens the NextCloud file picker.
+Folder settings have a browse button that opens the NextCloud file picker,
+and each core has a button putting all of its options back to the defaults.
 
 Thumbnails are matched by file name. With a thumbnails folder of `Thumbs`,
 `Games/NES/Mario.nes` uses `Thumbs/NES/Mario.png` and falls back to
@@ -238,7 +243,15 @@ npm install
 npm run build     # production bundles into js/
 npm run watch     # rebuild on change
 npm run cores     # extract the cores from the submodule
+
+composer install
+composer test     # the unit test suite
 ```
+
+Every push and pull request runs the same through GitHub Actions: PHP
+linting on 8.2 to 8.4, the test suite, the JavaScript build, and a check
+that `appinfo/info.xml` validates against the app store schema and agrees
+with `package.json` on the version.
 
 The built bundles in `js/` are committed, so rebuild and commit them along
 with any change to `src/`.
@@ -264,6 +277,7 @@ src/files.js                Files app actions
 src/viewer.js               Viewer handler
 src/settings.js             Personal settings page
 src/systems.js              System lookup shared by the frontend
+tests/unit/                 Unit tests of the logic that has no dependencies
 templates/                  App page and settings markup
 img/cores/                  Emulator cores
 ```
@@ -282,6 +296,7 @@ All of them are user-scoped and require a session.
 | GET/POST | `/apps/nostalgist/state/thumbnail` | The screenshot of a slot |
 | GET/POST | `/apps/nostalgist/sram` | The in-game battery save |
 | POST | `/apps/nostalgist/recent` | Remember a game as played |
+| GET/DELETE | `/apps/nostalgist/screenshots` | The screenshots of a game |
 
 ## Credits
 

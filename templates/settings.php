@@ -89,6 +89,10 @@ $systemsByCore = $_['systemsByCore'];
 					</select>
 				</p>
 			<?php endforeach; ?>
+			<p>
+				<button type="button" class="nostalgist-core-reset"
+					data-core="<?php p($core); ?>"><?php p($l->t('Reset this core to defaults')); ?></button>
+			</p>
 		</details>
 	<?php endforeach; ?>
 

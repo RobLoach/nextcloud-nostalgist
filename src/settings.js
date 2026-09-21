@@ -66,8 +66,24 @@ async function save() {
 	}, 3000)
 }
 
+/**
+ * Put every option of a core back to "Core default".
+ *
+ * @param {string} core the core to reset
+ */
+function resetCore(core) {
+	container.querySelectorAll(`.nostalgist-core-option[data-core="${CSS.escape(core)}"]`)
+		.forEach((element) => {
+			element.value = ''
+		})
+	save()
+}
+
 if (container !== null) {
 	document.getElementById('nostalgist-save').addEventListener('click', save)
+	container.querySelectorAll('.nostalgist-core-reset').forEach((button) => {
+		button.addEventListener('click', () => resetCore(button.dataset.core))
+	})
 	container.querySelectorAll('.nostalgist-folder-picker').forEach((button) => {
 		button.addEventListener('click', () => {
 			pickFolder(document.getElementById(button.dataset.target))

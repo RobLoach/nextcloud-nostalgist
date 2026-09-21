@@ -70,8 +70,9 @@ class SettingsService {
 			}
 		}
 		if (array_key_exists('fastforward_ratio', $settings) && is_numeric($settings['fastforward_ratio'])) {
-			// 0 means unlimited in RetroArch.
-			$sanitized['fastforward_ratio'] = max(0, min(50, (float)$settings['fastforward_ratio']));
+			// 0 means unlimited in RetroArch. Clamping can hand back the
+			// bound itself, so the type is forced to stay the same.
+			$sanitized['fastforward_ratio'] = (float)max(0, min(50, (float)$settings['fastforward_ratio']));
 		}
 		// An empty folder means the feature is disabled; the library folder
 		// always has one.

@@ -250,6 +250,34 @@ class ThumbnailService {
 		return array_values(array_filter([$this->stemKey($basename), $this->looseKey($basename)]));
 	}
 
+	/**
+	 * Every screenshot of a game, most recent first.
+	 *
+	 * @return list<array{fileId: int, basename: string, mtime: int}>
+	 */
+	public function screenshotsFor(Folder $folder, string $basename): array {
+		$keys = $this->screenshotKeys($basename);
+		$screenshots = [];
+		foreach ($folder->getDirectoryListing() as $node) {
+			if ($node instanceof Folder || !$this->isImage($node->getName())) {
+				continue;
+			}
+			$stem = pathinfo($node->getName(), PATHINFO_FILENAME);
+			$stem = preg_replace('/\s\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/', '', $stem) ?? $stem;
+			if (!in_array($this->stemToKey($stem), $keys, true)
+				&& !in_array($this->looseStemKey($stem), $keys, true)) {
+				continue;
+			}
+			$screenshots[] = [
+				'fileId' => $node->getId(),
+				'basename' => $node->getName(),
+				'mtime' => $node->getMTime(),
+			];
+		}
+		usort($screenshots, static fn (array $a, array $b): int => $b['mtime'] <=> $a['mtime']);
+		return $screenshots;
+	}
+
 	private function looseStemKey(string $stem): string {
 		return $this->looseKey($stem . '.png');
 	}

@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OCA\Nostalgist\Tests\Unit;
+
+use OCA\Nostalgist\CoreMap;
+use OCA\Nostalgist\CoreOptions;
+use PHPUnit\Framework\TestCase;
+
+class CoreOptionsTest extends TestCase {
+	public function testOptionsOnlyTargetCoresThatAreUsed(): void {
+		$cores = array_column(CoreMap::SYSTEMS, 'core');
+		foreach (array_keys(CoreOptions::OPTIONS) as $core) {
+			$this->assertContains($core, $cores, "$core runs no system");
+		}
+	}
+
+	/**
+	 * The prefix each core gives its options. The mednafen cores use the
+	 * name of the system rather than the name of the core.
+	 */
+	private const PREFIXES = [
+		'fceumm' => 'fceumm_',
+		'snes9x' => 'snes9x_',
+		'gambatte' => 'gambatte_',
+		'mgba' => 'mgba_',
+		'genesis_plus_gx' => 'genesis_plus_gx_',
+		'picodrive' => 'picodrive_',
+		'mednafen_pce_fast' => 'pce_',
+		'handy' => 'handy_',
+		'mednafen_ngp' => 'ngp_',
+		'mednafen_wswan' => 'wswan_',
+		'mednafen_vb' => 'vb_',
+		'vecx' => 'vecx_',
+		'gearcoleco' => 'gearcoleco_',
+	];
+
+	public function testEveryOptionIsUsable(): void {
+		foreach (CoreOptions::OPTIONS as $core => $options) {
+			$this->assertArrayHasKey($core, self::PREFIXES, "$core has no known option prefix");
+			foreach ($options as $key => $option) {
+				$this->assertStringStartsWith(
+					self::PREFIXES[$core],
+					$key,
+					"$key does not look like an option of $core",
+				);
+				$this->assertArrayHasKey('label', $option, "$key misses its label");
+				$this->assertNotEmpty($option['values'], "$key has no values");
+				foreach ($option['values'] as $value => $label) {
+					$this->assertIsString($label, "$key has a value without a label");
+					// An empty value is reserved for "leave it to the core".
+					$this->assertNotSame('', (string)$value, "$key has an empty value");
+				}
+			}
+		}
+	}
+
+	public function testSystemsAreListedForEveryCoreWithOptions(): void {
+		$systems = CoreOptions::systemsByCore();
+		foreach (array_keys(CoreOptions::OPTIONS) as $core) {
+			$this->assertNotEmpty($systems[$core] ?? [], "$core lists no system");
+		}
+	}
+}

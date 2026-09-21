@@ -15,6 +15,8 @@ const ICONS = {
 	screenshot: 'M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z',
 	fullscreen: 'M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z',
 	close: 'M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z',
+	gallery: 'M22,16V4A2,2 0 0,0 20,2H8A2,2 0 0,0 6,4V16A2,2 0 0,0 8,18H20A2,2 0 0,0 22,16M11,12L13.03,14.71L16,11L20,16H8M2,6V20A2,2 0 0,0 4,22H18V20H4V6',
+	trash: 'M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z',
 	gamepad: 'M7.97,16L5,19C4.67,19.3 4.23,19.5 3.75,19.5A1.75,1.75 0 0,1 2,17.75V17.5L3,10.12C3.21,7.81 5.14,6 7.5,6H16.5C18.86,6 20.79,7.81 21,10.12L22,17.5V17.75A1.75,1.75 0 0,1 20.25,19.5C19.77,19.5 19.33,19.3 19,19L16.03,16H7.97M7,8V10H5V11H7V13H8V11H10V10H8V8H7M16.5,8A0.75,0.75 0 0,0 15.75,8.75A0.75,0.75 0 0,0 16.5,9.5A0.75,0.75 0 0,0 17.25,8.75A0.75,0.75 0 0,0 16.5,8M14.75,9.75A0.75,0.75 0 0,0 14,10.5A0.75,0.75 0 0,0 14.75,11.25A0.75,0.75 0 0,0 15.5,10.5A0.75,0.75 0 0,0 14.75,9.75M18.25,9.75A0.75,0.75 0 0,0 17.5,10.5A0.75,0.75 0 0,0 18.25,11.25A0.75,0.75 0 0,0 19,10.5A0.75,0.75 0 0,0 18.25,9.75M16.5,11.5A0.75,0.75 0 0,0 15.75,12.25A0.75,0.75 0 0,0 16.5,13A0.75,0.75 0 0,0 17.25,12.25A0.75,0.75 0 0,0 16.5,11.5Z',
 }
 
@@ -131,6 +133,61 @@ const STYLE = `
 }
 .nostalgist-resume button:hover { background-color: rgba(255, 255, 255, 0.3); }
 .nostalgist-resume button.primary-action { background-color: rgba(255, 255, 255, 0.3); font-weight: bold; }
+.nostalgist-gallery {
+	position: absolute;
+	bottom: 56px;
+	left: 50%;
+	transform: translateX(-50%);
+	background-color: rgba(0, 0, 0, 0.85);
+	border-radius: 8px;
+	padding: 12px;
+	z-index: 20100;
+	color: #fff;
+	max-height: 70%;
+	max-width: 90%;
+	overflow-y: auto;
+	min-width: 320px;
+}
+.nostalgist-gallery.hidden { display: none; }
+.nostalgist-gallery h3 { color: #fff; margin: 0 0 8px 0; font-size: 14px; }
+.nostalgist-gallery-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+	gap: 8px;
+}
+.nostalgist-gallery-item { position: relative; }
+.nostalgist-gallery-item img {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	border-radius: 4px;
+	background-color: rgba(255, 255, 255, 0.1);
+	display: block;
+}
+.nostalgist-gallery-item figcaption {
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.7);
+	margin-top: 2px;
+}
+.nostalgist-gallery-item button {
+	position: absolute;
+	top: 4px;
+	inset-inline-end: 4px;
+	background-color: rgba(0, 0, 0, 0.6);
+	border: none;
+	border-radius: 4px;
+	padding: 4px;
+	margin: 0;
+	min-height: 0;
+	cursor: pointer;
+	display: flex;
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+.nostalgist-gallery-item:hover button,
+.nostalgist-gallery-item button:focus-visible { opacity: 1; }
+.nostalgist-gallery-item button svg { width: 16px; height: 16px; fill: #fff; }
+.nostalgist-gallery-empty { font-size: 12px; color: rgba(255, 255, 255, 0.7); }
 `
 
 /**
@@ -312,6 +369,106 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 }
 
 /**
+ * Build the panel listing the screenshots taken of a game.
+ *
+ * @param {object} options options
+ * @param {string} options.romPath path identifying the game
+ * @param {Function} options.flash shows a status message
+ * @return {{element: HTMLElement, refresh: Function}} the panel
+ */
+function createGalleryPanel({ romPath, flash }) {
+	const element = document.createElement('div')
+	element.className = 'nostalgist-gallery hidden'
+
+	const heading = document.createElement('h3')
+	heading.textContent = t('nostalgist', 'Screenshots')
+	element.appendChild(heading)
+
+	const grid = document.createElement('div')
+	grid.className = 'nostalgist-gallery-grid'
+	element.appendChild(grid)
+
+	const empty = document.createElement('p')
+	empty.className = 'nostalgist-gallery-empty hidden'
+	element.appendChild(empty)
+
+	const remove = async (fileId) => {
+		try {
+			await api(generateUrl('/apps/nostalgist/screenshots?fileId={fileId}', { fileId }), {
+				method: 'DELETE',
+			})
+			await refresh()
+		} catch (error) {
+			console.error('Could not delete the screenshot', error)
+			flash(t('nostalgist', 'Could not delete the screenshot'))
+		}
+	}
+
+	const refresh = async () => {
+		let data
+		try {
+			const response = await api(generateUrl(
+				'/apps/nostalgist/screenshots?file={file}',
+				{ file: romPath },
+			))
+			data = await response.json()
+		} catch (error) {
+			console.error('Could not list the screenshots', error)
+			return
+		}
+
+		grid.innerHTML = ''
+		if (data.folder === '') {
+			empty.textContent = t('nostalgist', 'Set a screenshots folder in the Nostalgist settings to keep your screenshots.')
+		} else if (data.screenshots.length === 0) {
+			empty.textContent = t('nostalgist', 'No screenshots of this game yet.')
+		} else {
+			empty.textContent = ''
+		}
+		empty.classList.toggle('hidden', empty.textContent === '')
+
+		for (const screenshot of data.screenshots) {
+			const item = document.createElement('figure')
+			item.className = 'nostalgist-gallery-item'
+
+			const link = document.createElement('a')
+			link.href = generateUrl('/f/{fileId}', { fileId: screenshot.fileId })
+			link.target = '_blank'
+			link.rel = 'noreferrer noopener'
+			link.title = screenshot.basename
+
+			const image = document.createElement('img')
+			image.src = generateUrl('/core/preview?fileId={fileId}&x=256&y=192&a=1', {
+				fileId: screenshot.fileId,
+			})
+			image.alt = screenshot.basename
+			image.loading = 'lazy'
+			link.appendChild(image)
+			item.appendChild(link)
+
+			const caption = document.createElement('figcaption')
+			caption.textContent = new Date(screenshot.mtime * 1000).toLocaleString()
+			item.appendChild(caption)
+
+			const deleteButton = document.createElement('button')
+			deleteButton.type = 'button'
+			deleteButton.title = t('nostalgist', 'Delete')
+			deleteButton.setAttribute('aria-label', t('nostalgist', 'Delete'))
+			deleteButton.innerHTML = icon(ICONS.trash)
+			deleteButton.addEventListener('click', (event) => {
+				event.stopPropagation()
+				remove(screenshot.fileId)
+			})
+			item.appendChild(deleteButton)
+
+			grid.appendChild(item)
+		}
+	}
+
+	return { element, refresh }
+}
+
+/**
  * Offer to continue from the most recent save state.
  *
  * @param {object} options options
@@ -432,6 +589,10 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	// Save states need a logged-in user; hide them on public share pages.
 	let statesPanel = null
 	let statesButton = null
+	const hideStates = () => {
+		statesPanel?.element.classList.add('hidden')
+		statesButton?.classList.remove('active')
+	}
 	if (getCurrentUser() !== null && romPath) {
 		statesPanel = createStatesPanel({
 			instance,
@@ -449,10 +610,29 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			statesPanel.element.classList.toggle('hidden', visible)
 			element.classList.toggle('active', !visible)
 			if (!visible) {
+				// Both panels cover the game, so only one shows at a time.
+				galleryPanel?.element.classList.add('hidden')
+				galleryButton?.classList.remove('active')
 				statesPanel.refresh()
 			}
 		})
 		offerResume({ container, romPath, load: statesPanel.load })
+	}
+
+	// The screenshots of this game, which also live in the user's files.
+	let galleryPanel = null
+	let galleryButton = null
+	if (getCurrentUser() !== null && romPath) {
+		galleryPanel = createGalleryPanel({ romPath, flash })
+		galleryButton = button(ICONS.gallery, t('nostalgist', 'Screenshots'), (element) => {
+			const visible = !galleryPanel.element.classList.contains('hidden')
+			galleryPanel.element.classList.toggle('hidden', visible)
+			element.classList.toggle('active', !visible)
+			if (!visible) {
+				hideStates()
+				galleryPanel.refresh()
+			}
+		})
 	}
 
 	// Virtual gamepad for touch play.
@@ -489,6 +669,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			if (folder && getCurrentUser() !== null) {
 				await saveScreenshot(folder, stem, blob)
 				flash(t('nostalgist', 'Screenshot saved to {folder}', { folder }))
+				galleryPanel?.refresh()
 			} else {
 				const url = URL.createObjectURL(blob)
 				const link = document.createElement('a')
@@ -527,11 +708,15 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	if (statesPanel !== null) {
 		container.appendChild(statesPanel.element)
 	}
+	if (galleryPanel !== null) {
+		container.appendChild(galleryPanel.element)
+	}
 
 	return () => {
 		clearTimeout(statusTimer)
 		touchControls?.detach()
 		statesPanel?.element.remove()
+		galleryPanel?.element.remove()
 		container.querySelector('.nostalgist-resume')?.remove()
 		toolbar.remove()
 	}
