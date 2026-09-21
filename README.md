@@ -80,11 +80,6 @@ picking up where you left off is one click, whether the game was started
 here or from the Files app. The star on a game card makes it a favorite,
 and how long each game was played is kept alongside it.
 
-The download button in the header looks for the box art of games that have
-none on the libretro thumbnail server and puts what it finds in the
-thumbnails folder. It works through a batch at a time, so on a large
-library it is worth pressing more than once.
-
 Games can be filtered by name and by system, and large libraries are paged
 (24 to 240 games per page). Filtering, sorting and paging all happen over
 the whole library, not just the page being shown. Pages are kept for the
@@ -117,10 +112,14 @@ a screenshots folder to be set, since that is where they are kept.
 
 The save state menu has three slots per game, each with a screenshot
 thumbnail and a timestamp; saving or loading a slot closes the menu and
-returns to the game. Closing the player with its own button writes the automatic state
-first, so a game can always be picked up where it was left; it is the
-one the player offers to continue from next time. States are stored per user and per game on the server, so every
-NextCloud user has their own saves, even for a shared ROM.
+returns to the game. Above them sits the Auto slot, which the player writes
+itself: when the player is closed, and at an interval while playing if one
+is set. A game can always be picked up where it was left that way, and it
+is the state the player offers to continue from next time — or loads
+straight away, if that is turned on in the settings.
+
+States are stored per user and per game on the server, so every NextCloud
+user has their own saves, even for a shared ROM.
 
 In-game battery saves (SRAM) are restored when a game starts, and uploaded
 every minute and when the page closes, so progress saved through a game's own
