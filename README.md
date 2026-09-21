@@ -67,6 +67,13 @@ occ maintenance:mimetype:update-db
 Until then they open from the Arcade page, which goes by the file
 extension.
 
+ROMs uploaded while the app is enabled are filed correctly as they arrive.
+That needs the app to be loaded during the upload itself, and `remote.php`,
+which every upload goes through, loads only apps that declare themselves a
+`filesystem` app — so Arcade declares it. Nextcloud does not let apps of that
+type be enabled for selected groups, so Arcade is enabled for everybody on
+the instance or for nobody.
+
 ### From the Arcade page
 
 The app's own page lists the games in your library folder (`/Games` by
