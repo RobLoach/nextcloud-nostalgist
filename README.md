@@ -330,8 +330,8 @@ lib/CoreOptions.php         The core options offered in the settings
 lib/AppInfo/Application.php Mimetype registration and event listeners
 lib/Controller/             Page, library, settings and save state endpoints
 lib/Listener/               Files and Viewer script loading, Content Security Policy
-lib/Migration/              Mimetype repair step
-lib/Command/                The occ cleanup command
+lib/Migration/              Repair steps: mimetypes on install, caches on disable
+lib/Command/                The occ cleanup and uninstall commands
 lib/BackgroundJob/          Looking for box art, away from the browser
 lib/Controls.php            What the keyboard does, and what it does by default
 build/extract-l10n.mjs      Collects the strings to translate
@@ -381,6 +381,31 @@ what event listeners cannot catch, such as a whole folder of games deleted
 in one go; `--dry-run` reports without removing. States written by versions before
 0.14 live in one flat folder instead of one per user; they are still read,
 and are cleaned up when their game is deleted.
+
+### What the app stores
+
+Outside of the files of a user, the app writes:
+
+| Where | What |
+| --- | --- |
+| `oc_preferences` | Personal settings, recently played, favorites, and how a box art run went |
+| `oc_appconfig` | Core options, thumbnail types, and the folder defaults of the instance |
+| `oc_jobs` | A queued box art lookup, while one is running |
+| `oc_mimetypes`, `oc_filecache` | The ROM mimetypes, and the files given them |
+| `appdata_*/arcade/` | Save states and battery saves, for as long as no saves folder is set |
+
+Nextcloud removes the code of an app and nothing else, so `occ app:remove`
+would leave all of that behind. Run **`occ arcade:uninstall` first**: it puts
+the ROMs back to `application/octet-stream`, drops the settings of every user
+and of the instance, removes the save states kept by the app, and cancels
+queued work. `--dry-run` reports without removing, `--force` skips the
+question. Games, saves, screenshots and thumbnails in the folders of a user
+are their own files, and are left alone.
+
+Disabling the app does not do any of that. Nextcloud runs uninstall repair
+steps on disable, and it disables apps by itself when a server upgrade leaves
+them behind — a library wiped by an upgrade would be a poor welcome back — so
+the step that runs then only drops the queued lookups and the caches.
 
 ## Credits
 
