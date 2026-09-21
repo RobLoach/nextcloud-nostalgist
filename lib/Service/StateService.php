@@ -14,10 +14,10 @@ use OCP\Files\SimpleFS\ISimpleFolder;
 
 /**
  * Stores emulator save states, keyed by user and ROM path, so every
- * Nextcloud user has their own save states per game. Each game has a fixed
- * number of slots, with a screenshot thumbnail per slot.
+ * Nextcloud user has their own save states per game.
  *
- * States live in the app data folder by default. When the user configures
+ * States live in the app data folder by default, in a folder per user so
+ * that everything of a user can be dropped at once. When the user configures
  * a saves folder, they are stored there instead, as regular files like
  * "Saves/Mario/Slot 1.state" with "Slot 1.png" next to them — per user by
  * nature, since the folder is in the user's own files.
@@ -46,7 +46,7 @@ class StateService {
 			$this->writeNode($folder, $this->slotName($slot) . '.state', $data);
 			return;
 		}
-		$this->writeAppData($this->stateName($userId, $romPath, $slot), $data);
+		$this->writeAppData($userId, $this->fileName($romPath, $slot, 'state'), $data);
 	}
 
 	public function saveThumbnail(string $userId, string $romPath, int $slot, string $data): void {
@@ -55,7 +55,7 @@ class StateService {
 			$this->writeNode($folder, $this->slotName($slot) . '.png', $data);
 			return;
 		}
-		$this->writeAppData($this->thumbnailName($userId, $romPath, $slot), $data);
+		$this->writeAppData($userId, $this->fileName($romPath, $slot, 'png'), $data);
 	}
 
 	public function load(string $userId, string $romPath, int $slot): ?string {
@@ -63,7 +63,11 @@ class StateService {
 		if ($folder !== null) {
 			return $this->readNode($folder, $this->slotName($slot) . '.state');
 		}
-		return $this->readAppData($this->stateName($userId, $romPath, $slot));
+		return $this->readAppData(
+			$userId,
+			$this->fileName($romPath, $slot, 'state'),
+			$this->legacyFileName($userId, $romPath, $slot, 'state'),
+		);
 	}
 
 	public function loadThumbnail(string $userId, string $romPath, int $slot): ?string {
@@ -71,7 +75,11 @@ class StateService {
 		if ($folder !== null) {
 			return $this->readNode($folder, $this->slotName($slot) . '.png');
 		}
-		return $this->readAppData($this->thumbnailName($userId, $romPath, $slot));
+		return $this->readAppData(
+			$userId,
+			$this->fileName($romPath, $slot, 'png'),
+			$this->legacyFileName($userId, $romPath, $slot, 'png'),
+		);
 	}
 
 	/**
@@ -84,7 +92,7 @@ class StateService {
 			$this->writeNode($folder, $this->sramNodeName($romPath), $data);
 			return;
 		}
-		$this->writeAppData($this->key($userId, $romPath) . '.srm', $data);
+		$this->writeAppData($userId, $this->sramFileName($romPath), $data);
 	}
 
 	public function loadSram(string $userId, string $romPath): ?string {
@@ -95,11 +103,11 @@ class StateService {
 		if ($this->savesFolderPath($userId) !== '') {
 			return null;
 		}
-		return $this->readAppData($this->key($userId, $romPath) . '.srm');
-	}
-
-	private function sramNodeName(string $romPath): string {
-		return pathinfo(basename($romPath), PATHINFO_FILENAME) . '.srm';
+		return $this->readAppData(
+			$userId,
+			$this->sramFileName($romPath),
+			$this->legacyKey($userId, $romPath) . '.srm',
+		);
 	}
 
 	public function delete(string $userId, string $romPath, int $slot): bool {
@@ -108,17 +116,53 @@ class StateService {
 			$this->deleteNode($folder, $this->slotName($slot) . '.png');
 			return $this->deleteNode($folder, $this->slotName($slot) . '.state');
 		}
-		$appDataFolder = $this->getStatesFolder();
-		try {
-			$appDataFolder->getFile($this->thumbnailName($userId, $romPath, $slot))->delete();
-		} catch (NotFoundException) {
-			// No thumbnail to delete.
+		$this->deleteAppData(
+			$userId,
+			$this->fileName($romPath, $slot, 'png'),
+			$this->legacyFileName($userId, $romPath, $slot, 'png'),
+		);
+		return $this->deleteAppData(
+			$userId,
+			$this->fileName($romPath, $slot, 'state'),
+			$this->legacyFileName($userId, $romPath, $slot, 'state'),
+		);
+	}
+
+	/**
+	 * Drop everything kept for one game of one user, wherever it lives, for
+	 * when the game itself is deleted.
+	 */
+	public function deleteAllForGame(string $userId, string $romPath): void {
+		foreach ($this->slots() as $slot) {
+			$this->deleteAppData(
+				$userId,
+				$this->fileName($romPath, $slot, 'state'),
+				$this->legacyFileName($userId, $romPath, $slot, 'state'),
+			);
+			$this->deleteAppData(
+				$userId,
+				$this->fileName($romPath, $slot, 'png'),
+				$this->legacyFileName($userId, $romPath, $slot, 'png'),
+			);
 		}
+		$this->deleteAppData(
+			$userId,
+			$this->sramFileName($romPath),
+			$this->legacyKey($userId, $romPath) . '.srm',
+		);
+		// And the folder of the game in the user's own saves folder.
+		$this->getGameFolder($userId, $romPath, false)?->delete();
+	}
+
+	/**
+	 * Drop everything kept for a user, for when the user is deleted. Their
+	 * own files, and so any saves folder, are removed by Nextcloud itself.
+	 */
+	public function deleteAllForUser(string $userId): void {
 		try {
-			$appDataFolder->getFile($this->stateName($userId, $romPath, $slot))->delete();
-			return true;
+			$this->statesRoot()->getFolder($this->userKey($userId))->delete();
 		} catch (NotFoundException) {
-			return false;
+			// Nothing was ever stored for this user.
 		}
 	}
 
@@ -145,18 +189,25 @@ class StateService {
 			return $states;
 		}
 
-		$appDataFolder = $this->getStatesFolder();
+		$userFolder = $this->userStates($userId, false);
+		$legacy = $this->statesRoot();
 		foreach ($this->slots() as $slot) {
-			try {
-				$file = $appDataFolder->getFile($this->stateName($userId, $romPath, $slot));
-			} catch (NotFoundException) {
+			$name = $this->fileName($romPath, $slot, 'state');
+			$legacyName = $this->legacyFileName($userId, $romPath, $slot, 'state');
+			if ($userFolder !== null && $userFolder->fileExists($name)) {
+				$file = $userFolder->getFile($name);
+				$hasThumbnail = $userFolder->fileExists($this->fileName($romPath, $slot, 'png'));
+			} elseif ($legacy->fileExists($legacyName)) {
+				$file = $legacy->getFile($legacyName);
+				$hasThumbnail = $legacy->fileExists($this->legacyFileName($userId, $romPath, $slot, 'png'));
+			} else {
 				continue;
 			}
 			$states[] = [
 				'slot' => $slot,
 				'size' => $file->getSize(),
 				'mtime' => $file->getMTime(),
-				'hasThumbnail' => $appDataFolder->fileExists($this->thumbnailName($userId, $romPath, $slot)),
+				'hasThumbnail' => $hasThumbnail,
 			];
 		}
 		return $states;
@@ -183,16 +234,23 @@ class StateService {
 	 * @return array<string, array{slot: int, mtime: int}>
 	 */
 	private function appDataThumbnailIndex(string $userId, array $romPaths): array {
-		// One listing, so looking a game up afterwards costs nothing.
+		// Two listings, so looking a game up afterwards costs nothing.
 		$mtimes = [];
-		foreach ($this->getStatesFolder()->getDirectoryListing() as $file) {
+		$userFolder = $this->userStates($userId, false);
+		foreach ($userFolder?->getDirectoryListing() ?? [] as $file) {
 			$mtimes[$file->getName()] = $file->getMTime();
 		}
+		$legacyMtimes = [];
+		foreach ($this->statesRoot()->getDirectoryListing() as $file) {
+			$legacyMtimes[$file->getName()] = $file->getMTime();
+		}
+
 		$found = [];
 		foreach ($romPaths as $path) {
-			$key = $this->key($userId, $path);
 			foreach ($this->slots() as $slot) {
-				$mtime = $mtimes["$key-$slot.png"] ?? null;
+				$mtime = $mtimes[$this->fileName($path, $slot, 'png')]
+					?? $legacyMtimes[$this->legacyFileName($userId, $path, $slot, 'png')]
+					?? null;
 				if ($mtime !== null && ($found[$path]['mtime'] ?? -1) < $mtime) {
 					$found[$path] = ['slot' => $slot, 'mtime' => $mtime];
 				}
@@ -321,8 +379,11 @@ class StateService {
 		}
 	}
 
-	private function writeAppData(string $name, string $data): void {
-		$folder = $this->getStatesFolder();
+	private function writeAppData(string $userId, string $name, string $data): void {
+		$folder = $this->userStates($userId, true);
+		if ($folder === null) {
+			return;
+		}
 		try {
 			$folder->getFile($name)->putContent($data);
 		} catch (NotFoundException) {
@@ -330,20 +391,60 @@ class StateService {
 		}
 	}
 
-	private function readAppData(string $name): ?string {
+	/**
+	 * Reads from the folder of the user, and failing that from the flat
+	 * names used before the states were kept per user.
+	 */
+	private function readAppData(string $userId, string $name, string $legacyName): ?string {
 		try {
-			return $this->getStatesFolder()->getFile($name)->getContent();
+			$folder = $this->userStates($userId, false);
+			if ($folder !== null && $folder->fileExists($name)) {
+				return $folder->getFile($name)->getContent();
+			}
+			$legacy = $this->statesRoot();
+			if ($legacy->fileExists($legacyName)) {
+				return $legacy->getFile($legacyName)->getContent();
+			}
 		} catch (NotFoundException) {
 			return null;
 		}
+		return null;
 	}
 
-	private function getStatesFolder(): ISimpleFolder {
+	private function deleteAppData(string $userId, string $name, string $legacyName): bool {
+		$deleted = false;
+		try {
+			$folder = $this->userStates($userId, false);
+			if ($folder !== null && $folder->fileExists($name)) {
+				$folder->getFile($name)->delete();
+				$deleted = true;
+			}
+			$legacy = $this->statesRoot();
+			if ($legacy->fileExists($legacyName)) {
+				$legacy->getFile($legacyName)->delete();
+				$deleted = true;
+			}
+		} catch (NotFoundException) {
+			return $deleted;
+		}
+		return $deleted;
+	}
+
+	private function statesRoot(): ISimpleFolder {
 		$appData = $this->appDataFactory->get(Application::APP_ID);
 		try {
 			return $appData->getFolder('states');
 		} catch (NotFoundException) {
 			return $appData->newFolder('states');
+		}
+	}
+
+	private function userStates(string $userId, bool $create): ?ISimpleFolder {
+		$root = $this->statesRoot();
+		try {
+			return $root->getFolder($this->userKey($userId));
+		} catch (NotFoundException) {
+			return $create ? $root->newFolder($this->userKey($userId)) : null;
 		}
 	}
 
@@ -356,22 +457,33 @@ class StateService {
 		return [self::AUTO_SLOT, ...range(1, self::HIGHEST_SLOT)];
 	}
 
-	/**
-	 * How a slot is named in the user's saves folder.
-	 */
+	/** How a slot is named in the user's saves folder. */
 	private function slotName(int $slot): string {
 		return $slot === self::AUTO_SLOT ? 'Auto' : "Slot $slot";
 	}
 
-	private function stateName(string $userId, string $romPath, int $slot): string {
-		return $this->key($userId, $romPath) . '-' . $slot . '.state';
+	private function sramNodeName(string $romPath): string {
+		return pathinfo(basename($romPath), PATHINFO_FILENAME) . '.srm';
 	}
 
-	private function thumbnailName(string $userId, string $romPath, int $slot): string {
-		return $this->key($userId, $romPath) . '-' . $slot . '.png';
+	private function fileName(string $romPath, int $slot, string $extension): string {
+		return hash('sha256', $romPath) . '-' . $slot . '.' . $extension;
 	}
 
-	private function key(string $userId, string $romPath): string {
+	private function sramFileName(string $romPath): string {
+		return hash('sha256', $romPath) . '.srm';
+	}
+
+	private function legacyFileName(string $userId, string $romPath, int $slot, string $extension): string {
+		return $this->legacyKey($userId, $romPath) . '-' . $slot . '.' . $extension;
+	}
+
+	/** The names used before the states were kept in a folder per user. */
+	private function legacyKey(string $userId, string $romPath): string {
 		return hash('sha256', $userId . '|' . $romPath);
+	}
+
+	private function userKey(string $userId): string {
+		return hash('sha256', $userId);
 	}
 }

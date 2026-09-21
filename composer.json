@@ -15,7 +15,6 @@
         }
     },
     "scripts": {
-        "openapi": "generate-spec",
         "post-install-cmd": [
             "@composer bin all install --ansi"
         ],

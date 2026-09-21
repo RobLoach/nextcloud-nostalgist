@@ -6,6 +6,7 @@ namespace OCA\Nostalgist\AppInfo;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
 use OCA\Nostalgist\CoreMap;
+use OCA\Nostalgist\Listener\CleanupListener;
 use OCA\Nostalgist\Listener\CSPListener;
 use OCA\Nostalgist\Listener\LoadFilesScriptsListener;
 use OCA\Nostalgist\Listener\LoadViewerListener;
@@ -15,7 +16,9 @@ use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Files\IMimeTypeDetector;
+use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Security\CSP\AddContentSecurityPolicyEvent;
+use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'nostalgist';
@@ -28,6 +31,10 @@ class Application extends App implements IBootstrap {
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(LoadAdditionalScriptsEvent::class, LoadFilesScriptsListener::class);
 		$context->registerEventListener(AddContentSecurityPolicyEvent::class, CSPListener::class);
+		// Save states have no owner of their own, so they are removed with
+		// the game or the user they belong to.
+		$context->registerEventListener(NodeDeletedEvent::class, CleanupListener::class);
+		$context->registerEventListener(UserDeletedEvent::class, CleanupListener::class);
 		if (class_exists(LoadViewer::class)) {
 			$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
 		}

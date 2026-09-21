@@ -39,6 +39,7 @@ class LoadViewerListener implements IEventListener {
 				? $this->settingsService->getDefaults()
 				: $this->settingsService->getUserSettings($user->getUID()),
 		);
+		Util::addStyle(Application::APP_ID, 'player');
 		// Load after the viewer script so OCA.Viewer is available.
 		Util::addScript(Application::APP_ID, 'nostalgist-viewer', 'viewer');
 	}

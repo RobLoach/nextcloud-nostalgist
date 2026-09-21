@@ -281,7 +281,10 @@ lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
 src/library.js              Games library views and pagination
 src/player.js               Shared launcher, ROM fetching, zip extraction, SRAM
-src/toolbar.js              Player control bar and save state menu
+src/toolbar.js              Player control bar
+src/panels/                 Save states, screenshots and resume panels
+src/api.js                  Save state endpoints shared by the panels
+src/icons.js                The icons of the player
 src/touch.js                Virtual gamepad
 src/files.js                Files app actions
 src/viewer.js               Viewer handler
@@ -289,6 +292,7 @@ src/settings.js             Personal settings page
 src/systems.js              System lookup shared by the frontend
 tests/unit/                 Unit tests of the logic that has no dependencies
 templates/                  App page and settings markup
+css/player.css              The player overlay, also loaded inside Files
 img/cores/                  Emulator cores
 ```
 
@@ -307,6 +311,11 @@ All of them are user-scoped and require a session.
 | GET/POST | `/apps/nostalgist/sram` | The in-game battery save |
 | POST | `/apps/nostalgist/recent` | Remember a game as played |
 | GET/DELETE | `/apps/nostalgist/screenshots` | The screenshots of a game |
+
+Save states and battery saves are removed along with the game they belong
+to, and with the user they belong to. States written by versions before
+0.14 live in one flat folder instead of one per user; they are still read,
+and are cleaned up when their game is deleted.
 
 ## Credits
 

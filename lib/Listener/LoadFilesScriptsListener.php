@@ -39,6 +39,7 @@ class LoadFilesScriptsListener implements IEventListener {
 				? $this->settingsService->getDefaults()
 				: $this->settingsService->getUserSettings($user->getUID()),
 		);
+		Util::addStyle(Application::APP_ID, 'player');
 		Util::addScript(Application::APP_ID, 'nostalgist-files');
 	}
 }

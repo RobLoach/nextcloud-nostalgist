@@ -9,7 +9,10 @@
 /.psalm-cache/
 
 /node_modules/
-#/js/
+
+# The bundles are committed, their source maps are not: they are only
+# useful while developing and weigh more than the bundles themselves.
+/js/*.map
 
 # Extracted cores from `npm run cores`. Only the default core for each
 # supported system (see lib/CoreMap.php) and the license are committed.
