@@ -42,6 +42,8 @@ class SettingsServiceTest extends TestCase {
 		$this->assertSame(64, $settings['audio_latency']);
 		$this->assertTrue($settings['pause_when_hidden']);
 		$this->assertTrue($settings['autosave_on_close']);
+		$this->assertFalse($settings['autoload_on_start'], 'a game does not resume by itself unless asked');
+		$this->assertSame(0, $settings['autosave_interval'], 'and does not save by itself either');
 		$this->assertTrue($settings['respond_to_global_events']);
 		$this->assertSame('/Games', $settings['library_folder']);
 		$this->assertSame('', $settings['saves_folder']);
@@ -114,6 +116,21 @@ class SettingsServiceTest extends TestCase {
 		$this->assertTrue($saved['scale_integer']);
 		$this->assertFalse($saved['pause_when_hidden']);
 		$this->assertFalse($saved['autosave_on_close']);
+	}
+
+	public function testTheAutosaveIntervalTakesOnlyTheOfferedValues(): void {
+		$this->assertSame(0, $this->save(['autosave_interval' => 0])['autosave_interval']);
+		$this->assertSame(30, $this->save(['autosave_interval' => '30'])['autosave_interval']);
+		$this->assertSame(600, $this->save(['autosave_interval' => 600])['autosave_interval']);
+		// Anything else would be a value the settings never offered.
+		$this->assertArrayNotHasKey('autosave_interval', $this->save(['autosave_interval' => 45]));
+		$this->assertArrayNotHasKey('autosave_interval', $this->save(['autosave_interval' => -60]));
+		$this->assertArrayNotHasKey('autosave_interval', $this->save(['autosave_interval' => 'often']));
+	}
+
+	public function testResumingByItselfIsStoredAsABoolean(): void {
+		$this->assertTrue($this->save(['autoload_on_start' => 'true'])['autoload_on_start']);
+		$this->assertFalse($this->save(['autoload_on_start' => '0'])['autoload_on_start']);
 	}
 
 	public function testUnknownSettingsAreDropped(): void {

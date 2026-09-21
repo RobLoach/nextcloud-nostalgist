@@ -135,7 +135,7 @@ export function createStatesPanel({ instance, romPath, flash, onDone }) {
 			label.className = 'nostalgist-states-label'
 			const when = state === undefined ? '' : new Date(state.mtime * 1000).toLocaleString()
 			if (slot === AUTO_SLOT) {
-				label.textContent = t('nostalgist', 'When closing — {date}', { date: when })
+				label.textContent = t('nostalgist', 'Auto — {date}', { date: when })
 			} else if (slot > data.slots) {
 				label.textContent = t('nostalgist', 'Slot {slot} — {date}, from an older version', {
 					slot,

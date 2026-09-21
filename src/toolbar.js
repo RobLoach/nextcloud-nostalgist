@@ -88,6 +88,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	})
 
 	// Save states need a logged-in user; hide them on public share pages.
+	let autosaveTimer = null
 	let statesPanel = null
 	let statesButton = null
 	const hideStates = () => {
@@ -117,7 +118,22 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 				statesPanel.refresh()
 			}
 		})
-		offerResume({ container, romPath, load: statesPanel.load })
+		offerResume({
+			container,
+			romPath,
+			load: statesPanel.load,
+			automatic: settings.autoload_on_start === true,
+		})
+
+		// And keep saving it while it is played, when asked to.
+		const interval = Number(settings.autosave_interval ?? 0)
+		if (interval > 0) {
+			autosaveTimer = setInterval(() => {
+				if (!paused && !document.hidden) {
+					statesPanel.save(AUTO_SLOT)
+				}
+			}, interval * 1000)
+		}
 	}
 
 	// The screenshots of this game, which also live in the user's files.
@@ -252,6 +268,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 
 	return () => {
 		clearTimeout(statusTimer)
+		clearInterval(autosaveTimer)
 		document.removeEventListener('visibilitychange', onVisibilityChange)
 		document.removeEventListener('keydown', onKeyDown, true)
 		touchControls?.detach()

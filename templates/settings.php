@@ -37,6 +37,29 @@ $systemsByCore = $_['systemsByCore'];
 		<label for="nostalgist-autosave"><?php p($l->t('Save the game automatically when closing the player')); ?></label>
 	</p>
 	<p>
+		<input type="checkbox" id="nostalgist-autoload" class="checkbox nostalgist-setting"
+			data-setting="autoload_on_start" <?php if ($settings['autoload_on_start']) { p('checked'); } ?>>
+		<label for="nostalgist-autoload"><?php p($l->t('Continue from the latest save when a game starts, without asking')); ?></label>
+	</p>
+	<p>
+		<label for="nostalgist-autosave-interval"><?php p($l->t('Save the game to the Auto slot every')); ?></label><br>
+		<select id="nostalgist-autosave-interval" class="nostalgist-setting" data-setting="autosave_interval">
+			<?php foreach ([
+				0 => $l->t('Never'),
+				30 => $l->t('30 seconds'),
+				60 => $l->t('Minute'),
+				120 => $l->t('2 minutes'),
+				300 => $l->t('5 minutes'),
+				600 => $l->t('10 minutes'),
+			] as $seconds => $label): ?>
+				<option value="<?php p($seconds); ?>"
+					<?php if ((int)$settings['autosave_interval'] === $seconds) { p('selected'); } ?>>
+					<?php p($label); ?>
+				</option>
+			<?php endforeach; ?>
+		</select>
+	</p>
+	<p>
 		<label for="nostalgist-fastforward"><?php p($l->t('Fast-forward speed')); ?></label><br>
 		<input type="range" id="nostalgist-fastforward" class="nostalgist-setting nostalgist-range"
 			data-setting="fastforward_ratio" data-unit="×" min="1" max="5" step="0.5"

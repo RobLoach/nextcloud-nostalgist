@@ -135,7 +135,9 @@ Personal settings → Nostalgist:
 | Pixel-perfect scaling | Off | Scale by whole pixels, with borders |
 | Capture input globally | On | Send gamepad and keyboard input to the game while playing |
 | Pause in the background | On | Stop the game while its tab is hidden |
-| Save when closing | On | Write a save state when the player is closed |
+| Save when closing | On | Write the Auto save state when the player is closed |
+| Continue on start | Off | Load the latest save as a game starts, without asking |
+| Save every | Never | Write the Auto save state while playing, from 30 seconds to 10 minutes |
 | Fast-forward speed | 3× | Speed of the fast-forward button, 1× to 5× |
 | Volume | 0 dB | Gain in decibels, -20 to 10 |
 | Audio latency | 64 ms | Raise it if the sound crackles |

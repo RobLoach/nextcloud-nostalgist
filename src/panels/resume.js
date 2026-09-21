@@ -2,14 +2,16 @@ import { translate as t } from '@nextcloud/l10n'
 import { api, stateUrl } from '../api.js'
 
 /**
- * Offer to continue from the most recent save state.
+ * Pick up a game where it was left: either by offering to, or by doing it
+ * as soon as the game starts.
  *
  * @param {object} options options
  * @param {HTMLElement} options.container element to attach the prompt to
  * @param {string} options.romPath path identifying the game
  * @param {Function} options.load loads a state slot
+ * @param {boolean} [options.automatic] load without asking
  */
-export async function offerResume({ container, romPath, load }) {
+export async function offerResume({ container, romPath, load, automatic = false }) {
 	let latest = null
 	try {
 		const response = await api(stateUrl('/states', romPath))
@@ -19,6 +21,10 @@ export async function offerResume({ container, romPath, load }) {
 		console.error('Could not list the states', error)
 	}
 	if (latest === null) {
+		return
+	}
+	if (automatic) {
+		load(latest.slot)
 		return
 	}
 

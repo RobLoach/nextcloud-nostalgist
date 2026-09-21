@@ -10,6 +10,12 @@ use OCP\IAppConfig;
 use OCP\IConfig;
 
 class SettingsService {
+	/** How often a game may save itself, in seconds. 0 leaves it to you. */
+	public const AUTOSAVE_INTERVALS = [0, 30, 60, 120, 300, 600];
+
+	/** The folder settings an administrator can set for everyone. */
+	public const INSTANCE_DEFAULTS = ['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder'];
+
 	/**
 	 * Settings are read on nearly every request, sometimes several times.
 	 * They cannot change within one, so they are parsed once.
@@ -23,9 +29,6 @@ class SettingsService {
 		private IAppConfig $appConfig,
 	) {
 	}
-
-	/** The folder settings an administrator can set for everyone. */
-	public const INSTANCE_DEFAULTS = ['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder'];
 
 	/**
 	 * The defaults of the app, with what the administrator set for the
@@ -85,6 +88,8 @@ class SettingsService {
 			'respond_to_global_events' => true,
 			'pause_when_hidden' => true,
 			'autosave_on_close' => true,
+			'autoload_on_start' => false,
+			'autosave_interval' => 0,
 			'library_folder' => '/Games',
 			'thumbnails_folder' => '',
 			'screenshots_folder' => '',
@@ -141,6 +146,7 @@ class SettingsService {
 			'respond_to_global_events',
 			'pause_when_hidden',
 			'autosave_on_close',
+			'autoload_on_start',
 		] as $key) {
 			if (array_key_exists($key, $settings)) {
 				$sanitized[$key] = filter_var($settings[$key], FILTER_VALIDATE_BOOLEAN);
@@ -154,6 +160,11 @@ class SettingsService {
 		if (array_key_exists('audio_volume', $settings) && is_numeric($settings['audio_volume'])) {
 			// RetroArch takes a gain in decibels, where 0 is as recorded.
 			$sanitized['audio_volume'] = (float)max(-20, min(10, (float)$settings['audio_volume']));
+		}
+		if (array_key_exists('autosave_interval', $settings)
+			&& is_numeric($settings['autosave_interval'])
+			&& in_array((int)$settings['autosave_interval'], self::AUTOSAVE_INTERVALS, true)) {
+			$sanitized['autosave_interval'] = (int)$settings['autosave_interval'];
 		}
 		if (array_key_exists('audio_latency', $settings) && is_numeric($settings['audio_latency'])) {
 			$sanitized['audio_latency'] = max(16, min(256, (int)$settings['audio_latency']));
