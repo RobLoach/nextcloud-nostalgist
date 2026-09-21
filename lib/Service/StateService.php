@@ -23,9 +23,15 @@ use OCP\Files\SimpleFS\ISimpleFolder;
  * nature, since the folder is in the user's own files.
  */
 class StateService {
-	public const SLOTS = 6;
+	/** The slots a game can be saved into. */
+	public const SLOTS = 3;
 	/** The slot written when a game is closed, kept apart from the numbered ones. */
 	public const AUTO_SLOT = 0;
+	/**
+	 * Earlier versions offered more slots. They are still listed, so what
+	 * they hold can be loaded and removed, but nothing is written to them.
+	 */
+	public const HIGHEST_SLOT = 6;
 
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
@@ -200,9 +206,28 @@ class StateService {
 	 * @return array<string, array{slot: int, mtime: int}>
 	 */
 	private function savesFolderThumbnailIndex(string $userId, array $romPaths): array {
+		$savesPath = $this->savesFolderPath($userId);
+		try {
+			$saves = $this->rootFolder->getUserFolder($userId)->get($savesPath);
+		} catch (NotFoundException) {
+			return [];
+		}
+		if (!$saves instanceof Folder) {
+			return [];
+		}
+		// The saves folder holds one folder per game, so listing it once is
+		// enough to know which games have anything at all.
+		$gameFolders = [];
+		foreach ($saves->getDirectoryListing() as $node) {
+			if ($node instanceof Folder) {
+				$gameFolders[mb_strtolower($node->getName())] = $node;
+			}
+		}
+
 		$found = [];
 		foreach ($romPaths as $path) {
-			$folder = $this->getGameFolder($userId, $path, false);
+			$stem = mb_strtolower(pathinfo(basename($path), PATHINFO_FILENAME));
+			$folder = $gameFolders[$stem] ?? null;
 			if ($folder === null) {
 				continue;
 			}
@@ -328,7 +353,7 @@ class StateService {
 	 * @return list<int>
 	 */
 	private function slots(): array {
-		return [self::AUTO_SLOT, ...range(1, self::SLOTS)];
+		return [self::AUTO_SLOT, ...range(1, self::HIGHEST_SLOT)];
 	}
 
 	/**

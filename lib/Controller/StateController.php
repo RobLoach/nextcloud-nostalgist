@@ -64,7 +64,7 @@ class StateController extends Controller {
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'POST', url: '/state')]
 	public function save(string $file = '', int $slot = 1): JSONResponse {
-		if (!$this->isValidRequest($file, $slot)) {
+		if (!$this->isWritableSlot($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
 		}
 		$state = $this->readBody(self::MAX_STATE_SIZE);
@@ -94,7 +94,7 @@ class StateController extends Controller {
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'POST', url: '/state/thumbnail')]
 	public function saveThumbnail(string $file = '', int $slot = 1): JSONResponse {
-		if (!$this->isValidRequest($file, $slot)) {
+		if (!$this->isWritableSlot($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
 		}
 		$thumbnail = $this->readBody(self::MAX_THUMBNAIL_SIZE);
@@ -145,6 +145,9 @@ class StateController extends Controller {
 	}
 
 	/**
+	 * Slots of earlier versions can still be read and removed, so that what
+	 * they hold is not stranded.
+	 *
 	 * @psalm-assert-if-true string $this->userId
 	 */
 	private function isValidRequest(string $file, int $slot): bool {
@@ -152,7 +155,14 @@ class StateController extends Controller {
 			&& $file !== ''
 			// Slot 0 is the one written when a game is closed.
 			&& $slot >= StateService::AUTO_SLOT
-			&& $slot <= StateService::SLOTS;
+			&& $slot <= StateService::HIGHEST_SLOT;
+	}
+
+	/**
+	 * @psalm-assert-if-true string $this->userId
+	 */
+	private function isWritableSlot(string $file, int $slot): bool {
+		return $this->isValidRequest($file, $slot) && $slot <= StateService::SLOTS;
 	}
 
 	private function readBody(int $maxSize): ?string {

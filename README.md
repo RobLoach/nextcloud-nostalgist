@@ -11,7 +11,8 @@ from your files and run in the browser.
 
 - Plays ROMs straight from the Files app, in the file viewer.
 - A games library page with grid, list and table views.
-- Six save state slots per game, each with a screenshot, unique per user.
+- Three save state slots per game plus an automatic one, each with a
+  screenshot, unique per user.
 - In-game battery saves (SRAM) synchronized automatically.
 - Player controls: pause, restart, mute, fast-forward, the RetroArch menu,
   screenshots, fullscreen, and a virtual gamepad on touch devices.
@@ -98,8 +99,8 @@ A screenshots button opens a gallery of every screenshot taken of the game,
 newest first, where they can be opened in the Files app or deleted. It needs
 a screenshots folder to be set, since that is where they are kept.
 
-The save state menu has six slots per game, each with a screenshot thumbnail
-and a timestamp; saving or loading a slot closes the menu and returns to the
+The save state menu has three slots per game, each with a screenshot
+thumbnail and a timestamp; saving or loading a slot closes the menu and returns to the
 game. Closing the player with its own button writes a seventh, automatic
 state first, so a game can always be picked up where it was left; it is the
 one the player offers to continue from next time. States are stored per user and per game on the server, so every

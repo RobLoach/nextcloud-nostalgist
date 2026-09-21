@@ -339,8 +339,23 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 			return
 		}
 		const bySlot = new Map(data.states.map((state) => [state.slot, state]))
+		// The slots offered now, plus anything left in slots earlier
+		// versions offered, so those saves stay reachable.
+		const slots = []
+		if (bySlot.has(AUTO_SLOT)) {
+			slots.push(AUTO_SLOT)
+		}
+		for (let slot = 1; slot <= data.slots; slot++) {
+			slots.push(slot)
+		}
+		for (const state of data.states) {
+			if (state.slot > data.slots) {
+				slots.push(state.slot)
+			}
+		}
+
 		slotsContainer.innerHTML = ''
-		for (let slot = bySlot.has(AUTO_SLOT) ? AUTO_SLOT : 1; slot <= data.slots; slot++) {
+		for (const slot of slots) {
 			const state = bySlot.get(slot)
 			const row = document.createElement('div')
 			row.className = 'nostalgist-states-slot'
@@ -358,6 +373,11 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 			const when = state === undefined ? '' : new Date(state.mtime * 1000).toLocaleString()
 			if (slot === AUTO_SLOT) {
 				label.textContent = t('nostalgist', 'When closing — {date}', { date: when })
+			} else if (slot > data.slots) {
+				label.textContent = t('nostalgist', 'Slot {slot} — {date}, from an older version', {
+					slot,
+					date: when,
+				})
 			} else {
 				label.textContent = state === undefined
 					? t('nostalgist', 'Slot {slot} — empty', { slot })
@@ -365,8 +385,9 @@ function createStatesPanel({ instance, romPath, flash, onDone }) {
 			}
 			row.appendChild(label)
 
-			// The automatic slot is written by the player itself.
-			if (slot !== AUTO_SLOT) {
+			// The automatic slot is written by the player itself, and slots
+			// beyond the ones offered now are only there to be emptied.
+			if (slot !== AUTO_SLOT && slot <= data.slots) {
 				row.appendChild(smallButton(t('nostalgist', 'Save'), () => save(slot)))
 			}
 			row.appendChild(smallButton(t('nostalgist', 'Load'), () => load(slot), state === undefined))

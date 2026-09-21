@@ -9,6 +9,14 @@ use OCA\Nostalgist\CoreOptions;
 use OCP\IConfig;
 
 class SettingsService {
+	/**
+	 * Settings are read on nearly every request, sometimes several times.
+	 * They cannot change within one, so they are parsed once.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
+	private array $settings = [];
+
 	public function __construct(
 		private IConfig $config,
 	) {
@@ -39,6 +47,13 @@ class SettingsService {
 	 * @return array<string, mixed>
 	 */
 	public function getUserSettings(string $userId): array {
+		return $this->settings[$userId] ??= $this->readUserSettings($userId);
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	private function readUserSettings(string $userId): array {
 		$defaults = $this->getDefaults();
 		$stored = $this->config->getUserValue($userId, Application::APP_ID, 'settings', '');
 		if ($stored === '') {
@@ -58,6 +73,7 @@ class SettingsService {
 	public function setUserSettings(string $userId, array $settings): array {
 		$sanitized = $this->sanitize($settings);
 		$this->config->setUserValue($userId, Application::APP_ID, 'settings', json_encode($sanitized));
+		unset($this->settings[$userId]);
 		return $this->getUserSettings($userId);
 	}
 
