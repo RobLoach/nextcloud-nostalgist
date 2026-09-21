@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\Service\RecentService;
-use OCP\IConfig;
+use OCP\Config\IUserConfig;
 use PHPUnit\Framework\TestCase;
 
 class RecentServiceTest extends TestCase {
@@ -15,13 +15,14 @@ class RecentServiceTest extends TestCase {
 	private array $stored = [];
 
 	private function service(): RecentService {
-		$config = $this->createMock(IConfig::class);
-		$config->method('setUserValue')->willReturnCallback(
-			function (string $user, string $app, string $key, string $value): void {
+		$config = $this->createMock(IUserConfig::class);
+		$config->method('setValueString')->willReturnCallback(
+			function (string $user, string $app, string $key, string $value): bool {
 				$this->stored[$key] = $value;
+				return true;
 			},
 		);
-		$config->method('getUserValue')->willReturnCallback(
+		$config->method('getValueString')->willReturnCallback(
 			fn (string $user, string $app, string $key): string => $this->stored[$key] ?? '',
 		);
 		return new RecentService($config);

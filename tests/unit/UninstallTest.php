@@ -7,6 +7,7 @@ namespace OCA\Arcade\Tests\Unit;
 use OCA\Arcade\BackgroundJob\FetchThumbnails;
 use OCA\Arcade\Command\Uninstall;
 use OCA\Arcade\CoreMap;
+use OCP\Config\IUserConfig;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IAppData;
 use OCP\Files\IMimeTypeLoader;
@@ -14,7 +15,6 @@ use OCP\Files\SimpleFS\ISimpleFolder;
 use OCP\IAppConfig;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use OCP\IConfig;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -35,8 +35,8 @@ class UninstallTest extends TestCase {
 	private bool $withoutAppData = false;
 
 	private function tester(): CommandTester {
-		$config = $this->createStub(IConfig::class);
-		$config->method('deleteAppFromAllUsers')->willReturnCallback(
+		$config = $this->createStub(IUserConfig::class);
+		$config->method('deleteApp')->willReturnCallback(
 			function (string $app): void {
 				$this->forgottenApps[] = "preferences:$app";
 			},

@@ -14,7 +14,7 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\BackgroundJob\IJobList;
-use OCP\IConfig;
+use OCP\Config\IUserConfig;
 use OCP\IRequest;
 
 /**
@@ -30,7 +30,7 @@ class ThumbnailController extends Controller {
 		IRequest $request,
 		private SettingsService $settingsService,
 		private IJobList $jobList,
-		private IConfig $config,
+		private IUserConfig $userConfig,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -63,7 +63,7 @@ class ThumbnailController extends Controller {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
 		}
-		$stored = $this->config->getUserValue($this->userId, Application::APP_ID, 'fetch_status', '');
+		$stored = $this->userConfig->getValueString($this->userId, Application::APP_ID, 'fetch_status', '');
 		$status = $stored === '' ? null : json_decode($stored, true);
 		return [
 			'message' => is_array($status) ? ($status['message'] ?? '') : '',
@@ -73,7 +73,7 @@ class ThumbnailController extends Controller {
 	}
 
 	private function setStatus(string $message): void {
-		$this->config->setUserValue(
+		$this->userConfig->setValueString(
 			(string)$this->userId,
 			Application::APP_ID,
 			'fetch_status',

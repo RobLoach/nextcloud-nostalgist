@@ -8,11 +8,11 @@ use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\BackgroundJob\FetchThumbnails;
 use OCA\Arcade\CoreMap;
 use OCP\BackgroundJob\IJobList;
+use OCP\Config\IUserConfig;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IMimeTypeLoader;
 use OCP\IAppConfig;
 use OCP\ICacheFactory;
-use OCP\IConfig;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -33,7 +33,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 class Uninstall extends Command {
 	public function __construct(
-		private IConfig $config,
+		private IUserConfig $userConfig,
 		private IAppConfig $appConfig,
 		private IAppDataFactory $appDataFactory,
 		private IJobList $jobList,
@@ -148,13 +148,7 @@ class Uninstall extends Command {
 	 */
 	private function forgetSettings(bool $dryRun, OutputInterface $output): void {
 		if (!$dryRun) {
-			/**
-			 * The replacement, IUserConfig::deleteApp, is only there from
-			 * Nextcloud 31 on, and this app still runs on 29.
-			 *
-			 * @psalm-suppress DeprecatedMethod
-			 */
-			$this->config->deleteAppFromAllUsers(Application::APP_ID);
+			$this->userConfig->deleteApp(Application::APP_ID);
 			$this->appConfig->deleteApp(Application::APP_ID);
 		}
 		$verb = $dryRun ? 'Would remove' : 'Removed';

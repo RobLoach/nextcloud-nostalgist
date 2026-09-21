@@ -11,10 +11,10 @@ use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;
+use OCP\Config\IUserConfig;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
-use OCP\IConfig;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -42,7 +42,7 @@ class FetchThumbnails extends QueuedJob {
 		private ThumbnailFetchService $fetchService,
 		private IRootFolder $rootFolder,
 		private IJobList $jobList,
-		private IConfig $config,
+		private IUserConfig $userConfig,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct($time);
@@ -131,7 +131,7 @@ class FetchThumbnails extends QueuedJob {
 	 * how a job that runs on its own is getting on.
 	 */
 	private function report(string $userId, string $message): void {
-		$this->config->setUserValue(
+		$this->userConfig->setValueString(
 			$userId,
 			Application::APP_ID,
 			'fetch_status',

@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\Service\SettingsService;
+use OCP\Config\IUserConfig;
 use OCP\IAppConfig;
-use OCP\IConfig;
 use PHPUnit\Framework\TestCase;
 
 class SettingsServiceTest extends TestCase {
 	private const USER = 'alice';
 
 	private function service(string $stored = ''): SettingsService {
-		$config = $this->createStub(IConfig::class);
-		$config->method('getUserValue')->willReturn($stored);
+		$config = $this->createStub(IUserConfig::class);
+		$config->method('getValueString')->willReturn($stored);
 		return new SettingsService($config, $this->createStub(IAppConfig::class));
 	}
 
@@ -22,14 +22,15 @@ class SettingsServiceTest extends TestCase {
 	 * @return array<string, mixed> the settings as they are stored
 	 */
 	private function save(array $settings): array {
-		$config = $this->createMock(IConfig::class);
+		$config = $this->createMock(IUserConfig::class);
 		$saved = '';
-		$config->method('setUserValue')->willReturnCallback(
-			function (string $user, string $app, string $key, string $value) use (&$saved): void {
+		$config->method('setValueString')->willReturnCallback(
+			function (string $user, string $app, string $key, string $value) use (&$saved): bool {
 				$saved = $value;
+				return true;
 			},
 		);
-		$config->method('getUserValue')->willReturnCallback(static fn (): string => $saved);
+		$config->method('getValueString')->willReturnCallback(static fn (): string => $saved);
 		(new SettingsService($config, $this->createStub(IAppConfig::class)))->setUserSettings(self::USER, $settings);
 		return json_decode($saved, true) ?? [];
 	}
@@ -51,7 +52,7 @@ class SettingsServiceTest extends TestCase {
 		$appConfig->method('getValueString')->willReturnCallback(
 			fn (string $app, string $key): string => $key === 'core_options' ? $saved : '',
 		);
-		(new SettingsService($this->createStub(IConfig::class), $appConfig))->setInstanceDefaults($settings);
+		(new SettingsService($this->createStub(IUserConfig::class), $appConfig))->setInstanceDefaults($settings);
 		return json_decode($saved, true) ?? [];
 	}
 

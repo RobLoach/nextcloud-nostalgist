@@ -13,7 +13,7 @@ use OCP\BackgroundJob\IJobList;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
-use OCP\IConfig;
+use OCP\Config\IUserConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -67,10 +67,11 @@ class FetchThumbnailsTest extends TestCase {
 		$rootFolder = $this->createStub(IRootFolder::class);
 		$rootFolder->method('getUserFolder')->willReturn($userFolder);
 
-		$config = $this->createStub(IConfig::class);
-		$config->method('setUserValue')->willReturnCallback(
-			function (string $user, string $app, string $key, string $value): void {
+		$config = $this->createStub(IUserConfig::class);
+		$config->method('setValueString')->willReturnCallback(
+			function (string $user, string $app, string $key, string $value): bool {
 				$this->status = $value;
+				return true;
 			},
 		);
 

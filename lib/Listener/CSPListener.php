@@ -33,7 +33,8 @@ class CSPListener implements IEventListener {
 		// and to default-src when neither is set, which blocks the cores.
 		$csp->addAllowedWorkerSrcDomain('blob:');
 		if (method_exists($csp, 'addAllowedChildSrcDomain')) {
-			// Removed in newer Nextcloud versions, where worker-src is enough.
+			// Nextcloud 33 still has child-src. 34 dropped it, worker-src
+			// being enough for every browser it supports.
 			$csp->addAllowedChildSrcDomain('blob:');
 		}
 		$csp->addAllowedFrameDomain('blob:');

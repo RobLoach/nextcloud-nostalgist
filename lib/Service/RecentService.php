@@ -6,7 +6,7 @@ namespace OCA\Arcade\Service;
 
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\CoreMap;
-use OCP\IConfig;
+use OCP\Config\IUserConfig;
 
 /**
  * What a user played, when, and for how long, wherever it was started from.
@@ -17,7 +17,7 @@ class RecentService {
 	private const MAX_SESSION = 4 * 3600;
 
 	public function __construct(
-		private IConfig $config,
+		private IUserConfig $userConfig,
 	) {
 	}
 
@@ -127,7 +127,7 @@ class RecentService {
 	 * @return list<array<string, mixed>>
 	 */
 	private function read(string $userId, string $key): array {
-		$stored = $this->config->getUserValue($userId, Application::APP_ID, $key, '');
+		$stored = $this->userConfig->getValueString($userId, Application::APP_ID, $key, '');
 		if ($stored === '') {
 			return [];
 		}
@@ -139,7 +139,7 @@ class RecentService {
 	 * @param list<array<string, mixed>> $entries
 	 */
 	private function write(string $userId, string $key, array $entries): void {
-		$this->config->setUserValue($userId, Application::APP_ID, $key, json_encode($entries));
+		$this->userConfig->setValueString($userId, Application::APP_ID, $key, json_encode($entries));
 	}
 
 	/**

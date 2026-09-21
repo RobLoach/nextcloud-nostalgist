@@ -8,8 +8,8 @@ use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\Controls;
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\CoreOptions;
+use OCP\Config\IUserConfig;
 use OCP\IAppConfig;
-use OCP\IConfig;
 
 class SettingsService {
 	/** The kinds of image a libretro thumbnail pack holds. */
@@ -36,7 +36,7 @@ class SettingsService {
 	private array $settings = [];
 
 	public function __construct(
-		private IConfig $config,
+		private IUserConfig $userConfig,
 		private IAppConfig $appConfig,
 	) {
 	}
@@ -171,7 +171,7 @@ class SettingsService {
 	 */
 	private function readUserSettings(string $userId): array {
 		$defaults = $this->getDefaults();
-		$stored = $this->config->getUserValue($userId, Application::APP_ID, 'settings', '');
+		$stored = $this->userConfig->getValueString($userId, Application::APP_ID, 'settings', '');
 		if ($stored === '') {
 			return $defaults;
 		}
@@ -190,7 +190,7 @@ class SettingsService {
 		$sanitized = $this->sanitize($settings);
 		// Those belong to the instance, not to whoever is playing.
 		unset($sanitized['core_options'], $sanitized['thumbnail_types']);
-		$this->config->setUserValue($userId, Application::APP_ID, 'settings', json_encode($sanitized));
+		$this->userConfig->setValueString($userId, Application::APP_ID, 'settings', json_encode($sanitized));
 		unset($this->settings[$userId]);
 		return $this->getUserSettings($userId);
 	}
