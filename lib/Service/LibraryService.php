@@ -23,7 +23,7 @@ class LibraryService {
 	public const MAX_DEPTH = 6;
 	private const CACHE_TTL = 24 * 3600;
 	/** Bumped when the shape of a cached entry changes. */
-	private const CACHE_VERSION = 4;
+	private const CACHE_VERSION = 5;
 
 	public function __construct(
 		private ICacheFactory $cacheFactory,
@@ -233,6 +233,7 @@ class LibraryService {
 				}
 			}
 			$games[] = [
+				'id' => $node->getId(),
 				'path' => $userFolder->getRelativePath($node->getPath()),
 				'basename' => $node->getName(),
 				'system' => $system,

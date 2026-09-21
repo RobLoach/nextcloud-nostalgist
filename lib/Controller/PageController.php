@@ -107,7 +107,7 @@ class PageController extends Controller {
 		$games = $this->libraryService->getGames($this->userId, $folder, $userFolder, $folderPath, $settings, $refresh);
 		$libraryTotal = count($games);
 		$recent = $this->getRecent($userFolder, $games);
-		$favorites = $this->getFavorites($userFolder, $games);
+		$favorites = $this->getFavorites($games);
 		// The systems of the whole library, so the filter keeps offering
 		// them while a filter is active.
 		$systems = array_values(array_unique(array_column($games, 'system')));
@@ -153,11 +153,25 @@ class PageController extends Controller {
 	}
 
 	/**
+	 * The games of the library the user has starred, in the Files app or
+	 * here -- it is the same star. Matched by file id, so a game keeps it
+	 * when renamed or moved, and no lookup of its own is needed.
+	 *
 	 * @param list<array<string, mixed>> $games
 	 * @return list<array<string, mixed>>
 	 */
-	private function getFavorites(Folder $userFolder, array $games): array {
-		$favorites = $this->present($this->recentService->getFavorites((string)$this->userId), $userFolder, $games);
+	private function getFavorites(array $games): array {
+		$ids = $this->recentService->favoriteIds((string)$this->userId);
+		if ($ids === []) {
+			return [];
+		}
+		$stats = $this->recentService->stats((string)$this->userId);
+		$favorites = [];
+		foreach ($games as $game) {
+			if (isset($ids[$game['id'] ?? 0])) {
+				$favorites[] = [...$game, ...($stats[$game['path'] ?? ''] ?? [])];
+			}
+		}
 		// The most played first, which is what a favorite is about.
 		usort($favorites, static fn (array $a, array $b): int => ($b['seconds'] ?? 0) <=> ($a['seconds'] ?? 0));
 		return $favorites;

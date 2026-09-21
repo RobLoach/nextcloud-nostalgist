@@ -20,13 +20,22 @@ from your files and run in the browser.
 - Thumbnails for your games, matched from a folder of images, downloaded
   from the libretro thumbnail server, or taken from their own screenshots
   and save states.
-- Favorites, and how long each game was played.
+- Favorites shared with the Files app -- the same star -- and how long
+  each game was played.
 - Works on publicly shared files and folders.
 
 ## Installation
 
 Nextcloud 34 or 35, on PHP 8.2 or newer — Nextcloud 35 asks for 8.3 itself.
 A browser with WebAssembly, which is every current one.
+
+It needs the **Files** app, for the games themselves, the favorites and the
+mimetypes, and the **Viewer** app, to play a ROM from the Files app. Both are
+always-enabled apps of Nextcloud, so there is nothing to install and no way
+to turn them off. That is stated here rather than declared in
+`appinfo/info.xml`: the app store schema has elements for PHP, databases,
+libraries, commands, architectures and the Nextcloud version, and none for
+depending on another app.
 
 1. Download the app
 
@@ -87,8 +96,13 @@ default). Three views are available and the choice is remembered:
 
 Favorites and the games played last are shown in rows above the library, so
 picking up where you left off is one click, whether the game was started
-here or from the Files app. The star on a game card makes it a favorite,
-and how long each game was played is kept alongside it.
+here or from the Files app. The star on a game card is the same star as the
+one in the Files app: starring a game here shows it in the Files favorites,
+and a ROM starred in Files is a favorite here. Because Files keeps it by
+file id, a game stays a favorite when it is renamed or moved. The favorites
+row shows the games of your library folder; a ROM starred somewhere else is
+still starred, it just has no place in the library to be shown in. How long
+each game was played is kept by the app, alongside.
 
 Games can be filtered by name and by system, and large libraries are paged
 (24 to 240 games per page). Filtering, sorting and paging all happen over
@@ -323,6 +337,10 @@ composer test     # the unit test suite
 composer psalm    # static analysis
 ```
 
+The tests and psalm need PHP 8.3, even though the app itself runs on 8.2:
+they are checked against the `nextcloud/ocp` stubs of the newest supported
+server, which use typed class constants.
+
 Every push and pull request runs the same through GitHub Actions: PHP
 linting on 8.2 to 8.4, the test suite, static analysis, the JavaScript
 build, and a check that `appinfo/info.xml` validates against the app store
@@ -398,11 +416,15 @@ Outside of the files of a user, the app writes:
 
 | Where | What |
 | --- | --- |
-| `oc_preferences` | Personal settings, recently played, favorites, and how a box art run went |
+| `oc_preferences` | Personal settings, recently played, how long each game was played, and how a box art run went |
 | `oc_appconfig` | Core options, thumbnail types, and the folder defaults of the instance |
 | `oc_jobs` | A queued box art lookup, while one is running |
 | `oc_mimetypes`, `oc_filecache` | The ROM mimetypes, and the files given them |
 | `appdata_*/arcade/` | Save states and battery saves, for as long as no saves folder is set |
+
+Favorites are not in that list: they are the favorites of the Files app,
+kept in its own tables under the file id. `occ arcade:uninstall` leaves
+them alone, as it leaves any other file of a user alone.
 
 Nextcloud removes the code of an app and nothing else, so `occ app:remove`
 would leave all of that behind. Run **`occ arcade:uninstall` first**: it puts
