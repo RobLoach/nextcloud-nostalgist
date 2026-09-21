@@ -24,6 +24,9 @@
 			<step>OCA\Nostalgist\Migration\RegisterMimeTypes</step>
 		</install>
 	</repair-steps>
+	<commands>
+		<command>OCA\Nostalgist\Command\Cleanup</command>
+	</commands>
 	<settings>
 		<personal>OCA\Nostalgist\Settings\Personal</personal>
 		<personal-section>OCA\Nostalgist\Settings\PersonalSection</personal-section>

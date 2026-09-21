@@ -27,6 +27,8 @@ class StateService {
 	public const SLOTS = 3;
 	/** The slot written when a game is closed, kept apart from the numbered ones. */
 	public const AUTO_SLOT = 0;
+	/** Lists the games a user has states for, next to the states. */
+	private const GAMES_FILE = 'games.json';
 	/**
 	 * Earlier versions offered more slots. They are still listed, so what
 	 * they hold can be loaded and removed, but nothing is written to them.
@@ -46,7 +48,7 @@ class StateService {
 			$this->writeNode($folder, $this->slotName($slot) . '.state', $data);
 			return;
 		}
-		$this->writeAppData($userId, $this->fileName($romPath, $slot, 'state'), $data);
+		$this->writeAppData($userId, $this->fileName($romPath, $slot, 'state'), $data, $romPath);
 	}
 
 	public function saveThumbnail(string $userId, string $romPath, int $slot, string $data): void {
@@ -92,7 +94,7 @@ class StateService {
 			$this->writeNode($folder, $this->sramNodeName($romPath), $data);
 			return;
 		}
-		$this->writeAppData($userId, $this->sramFileName($romPath), $data);
+		$this->writeAppData($userId, $this->sramFileName($romPath), $data, $romPath);
 	}
 
 	public function loadSram(string $userId, string $romPath): ?string {
@@ -150,6 +152,7 @@ class StateService {
 			$this->sramFileName($romPath),
 			$this->legacyKey($userId, $romPath) . '.srm',
 		);
+		$this->forgetGame($userId, $romPath);
 		// And the folder of the game in the user's own saves folder.
 		$this->getGameFolder($userId, $romPath, false)?->delete();
 	}
@@ -379,7 +382,7 @@ class StateService {
 		}
 	}
 
-	private function writeAppData(string $userId, string $name, string $data): void {
+	private function writeAppData(string $userId, string $name, string $data, string $romPath = ''): void {
 		$folder = $this->userStates($userId, true);
 		if ($folder === null) {
 			return;
@@ -389,6 +392,104 @@ class StateService {
 		} catch (NotFoundException) {
 			$folder->newFile($name, $data);
 		}
+		if ($romPath !== '') {
+			$this->rememberGame($folder, $romPath);
+		}
+	}
+
+	/**
+	 * The file names hide which game they belong to, so the games a user has
+	 * states for are listed alongside them. That is what tells apart a state
+	 * whose game is gone from one whose game is merely not being played.
+	 */
+	private function rememberGame(ISimpleFolder $folder, string $romPath): void {
+		$games = $this->readGames($folder);
+		$key = hash('sha256', $romPath);
+		if (($games[$key] ?? null) === $romPath) {
+			return;
+		}
+		$games[$key] = $romPath;
+		$this->writeGames($folder, $games);
+	}
+
+	private function forgetGame(string $userId, string $romPath): void {
+		$folder = $this->userStates($userId, false);
+		if ($folder === null) {
+			return;
+		}
+		$games = $this->readGames($folder);
+		unset($games[hash('sha256', $romPath)]);
+		$this->writeGames($folder, $games);
+	}
+
+	/**
+	 * The games a user has states for, by their path.
+	 *
+	 * @return array<string, string>
+	 */
+	public function gamesOf(string $userId): array {
+		$folder = $this->userStates($userId, false);
+		return $folder === null ? [] : $this->readGames($folder);
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private function readGames(ISimpleFolder $folder): array {
+		try {
+			if (!$folder->fileExists(self::GAMES_FILE)) {
+				return [];
+			}
+			$games = json_decode($folder->getFile(self::GAMES_FILE)->getContent(), true);
+		} catch (NotFoundException) {
+			return [];
+		}
+		return is_array($games) ? $games : [];
+	}
+
+	/**
+	 * @param array<string, string> $games
+	 */
+	private function writeGames(ISimpleFolder $folder, array $games): void {
+		$content = json_encode($games);
+		try {
+			$folder->getFile(self::GAMES_FILE)->putContent($content);
+		} catch (NotFoundException) {
+			$folder->newFile(self::GAMES_FILE, $content);
+		}
+	}
+
+	/**
+	 * The folders of the app data holding states, by the key of their user.
+	 *
+	 * @return array<string, ISimpleFolder>
+	 */
+	public function userFolders(): array {
+		$folders = [];
+		foreach ($this->statesRoot()->getDirectoryListing() as $node) {
+			if ($node instanceof ISimpleFolder) {
+				$folders[$node->getName()] = $node;
+			}
+		}
+		return $folders;
+	}
+
+	public function folderKeyOf(string $userId): string {
+		return $this->userKey($userId);
+	}
+
+	/**
+	 * How many files written before the states were kept per user are left.
+	 * They cannot be told apart, so they are only ever counted.
+	 */
+	public function countLegacyFiles(): int {
+		$count = 0;
+		foreach ($this->statesRoot()->getDirectoryListing() as $node) {
+			if (!$node instanceof ISimpleFolder) {
+				$count++;
+			}
+		}
+		return $count;
 	}
 
 	/**

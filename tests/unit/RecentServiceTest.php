@@ -11,16 +11,19 @@ use PHPUnit\Framework\TestCase;
 class RecentServiceTest extends TestCase {
 	private const USER = 'alice';
 
-	private string $stored = '';
+	/** @var array<string, string> */
+	private array $stored = [];
 
 	private function service(): RecentService {
 		$config = $this->createMock(IConfig::class);
 		$config->method('setUserValue')->willReturnCallback(
 			function (string $user, string $app, string $key, string $value): void {
-				$this->stored = $value;
+				$this->stored[$key] = $value;
 			},
 		);
-		$config->method('getUserValue')->willReturnCallback(fn (): string => $this->stored);
+		$config->method('getUserValue')->willReturnCallback(
+			fn (string $user, string $app, string $key): string => $this->stored[$key] ?? '',
+		);
 		return new RecentService($config);
 	}
 
@@ -29,7 +32,7 @@ class RecentServiceTest extends TestCase {
 	}
 
 	public function testBrokenStorageIsIgnored(): void {
-		$this->stored = 'not json';
+		$this->stored['recent'] = 'not json';
 		$this->assertSame([], $this->service()->get(self::USER));
 	}
 
@@ -64,6 +67,61 @@ class RecentServiceTest extends TestCase {
 		$this->assertCount(12, $recent);
 		$this->assertSame('/Games/Game 20.nes', $recent[0]['path']);
 		$this->assertSame('/Games/Game 9.nes', $recent[11]['path']);
+	}
+
+	public function testPlayTimeAddsUpAcrossSessions(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', 300);
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', 120);
+		$this->assertSame(420, $service->get(self::USER)[0]['seconds']);
+	}
+
+	public function testPlayTimeSurvivesPlayingAgain(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', 300);
+		$service->record(self::USER, '/Games/Mario.nes');
+
+		$entry = $service->get(self::USER)[0];
+		$this->assertSame(300, $entry['seconds'], 'the time played is carried over');
+		$this->assertSame(2, $entry['plays']);
+	}
+
+	public function testAForgottenTabDoesNotCountForHours(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', 10 * 3600);
+		$this->assertSame(4 * 3600, $service->get(self::USER)[0]['seconds']);
+	}
+
+	public function testNegativePlayTimeIsIgnored(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', -60);
+		$this->assertSame(0, $service->get(self::USER)[0]['seconds']);
+	}
+
+	public function testFavoritesAreToggledAndKeepWhatIsKnown(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', 60);
+
+		$this->assertTrue($service->toggleFavorite(self::USER, '/Games/Mario.nes'));
+		$favorites = $service->getFavorites(self::USER);
+		$this->assertCount(1, $favorites);
+		$this->assertSame(60, $favorites[0]['seconds'], 'the time played comes along');
+
+		$this->assertFalse($service->toggleFavorite(self::USER, '/Games/Mario.nes'));
+		$this->assertSame([], $service->getFavorites(self::USER));
+	}
+
+	public function testAGameCanBeMadeAFavoriteBeforeItIsPlayed(): void {
+		$service = $this->service();
+		$this->assertTrue($service->toggleFavorite(self::USER, '/Games/SNES/Zelda.sfc'));
+		$favorite = $service->getFavorites(self::USER)[0];
+		$this->assertSame('Zelda.sfc', $favorite['basename']);
+		$this->assertSame('snes', $favorite['system']);
 	}
 
 	public function testTheSystemIsFoundFromTheExtensionOrTheFolder(): void {
