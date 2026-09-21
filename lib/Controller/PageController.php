@@ -32,7 +32,7 @@ class PageController extends Controller {
 	private const LIBRARY_MAX_PAGE_SIZE = 500;
 	private const LIBRARY_CACHE_TTL = 24 * 3600;
 	/** Bumped when the shape of a cached entry changes. */
-	private const LIBRARY_CACHE_VERSION = 2;
+	private const LIBRARY_CACHE_VERSION = 3;
 
 	public function __construct(
 		string $appName,

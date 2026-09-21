@@ -179,6 +179,11 @@ class ThumbnailService {
 	 * leading or trailing article, no punctuation, so "The Legend of
 	 * Zelda.nes" and "Legend of Zelda, The (USA) (Rev 1).png" both become
 	 * "legend of zelda".
+	 *
+	 * Titles join their parts with "+", "&" or "and" interchangeably, and
+	 * libretro-thumbnails turns "&" into an underscore, so all of them are
+	 * dropped: "Super Mario All-Stars and Super Mario World (Europe).zip"
+	 * matches "Super Mario All-Stars + Super Mario World.png".
 	 */
 	private function looseKey(string $name): string {
 		$value = $this->transliterate(mb_strtolower(pathinfo($name, PATHINFO_FILENAME)));
@@ -186,7 +191,11 @@ class ThumbnailService {
 		$value = preg_replace('/,\s*(the|a|an)\s*$/u', '', trim($value)) ?? $value;
 		$value = preg_replace('/^(the|a|an)\s+/u', '', $value) ?? $value;
 		$value = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $value) ?? $value;
-		return trim(preg_replace('/\s+/u', ' ', $value) ?? $value);
+		$words = array_filter(
+			explode(' ', $value),
+			static fn (string $word): bool => $word !== '' && $word !== 'and',
+		);
+		return implode(' ', $words);
 	}
 
 	private function isImage(string $name): bool {
