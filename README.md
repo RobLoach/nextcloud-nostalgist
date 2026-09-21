@@ -101,6 +101,13 @@ once, in the background, and filed against the file by Nextcloud, along with
 the MD5 of the ROM — the one the desktop client sent if it sent one, and one
 of the app's own otherwise. All four are searchable.
 
+Nextcloud reads a file's metadata when the file is written, so ROMs that were
+already there when the app arrived have never been asked. The rescan button
+of the games library asks for them: it queues a background job that walks the
+library fifty games at a time, queuing the reading of each file behind it, and
+comes back for the rest until there is nothing left to ask. Nothing of it
+happens while the page waits.
+
 Games are given their box art as their Nextcloud preview, so a folder of
 ROMs looks like a shelf of games in the Files app. The picture is the one
 already in your thumbnails folder, only scaled; a game without one keeps the
@@ -383,7 +390,7 @@ lib/Listener/               Files and Viewer script loading, Content Security Po
 lib/Preview/                Box art as the Nextcloud preview of a ROM
 lib/Migration/              Repair steps: mimetypes on install, caches on disable
 lib/Command/                The occ cleanup and uninstall commands
-lib/BackgroundJob/          Looking for box art, away from the browser
+lib/BackgroundJob/          Looking for box art and reading ROMs, away from the browser
 lib/Controls.php            What the keyboard does, and what it does by default
 lib/RomHeader.php           The name a cartridge gives itself
 build/extract-l10n.mjs      Collects the strings to translate

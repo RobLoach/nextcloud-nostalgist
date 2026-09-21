@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Arcade\Controller;
 
 use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\BackgroundJob\RefreshMetadata;
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\Service\LibraryService;
 use OCA\Arcade\Service\RecentService;
@@ -17,6 +18,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
+use OCP\BackgroundJob\IJobList;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -36,6 +38,7 @@ class PageController extends Controller {
 		private LibraryService $libraryService,
 		private RecentService $recentService,
 		private IRootFolder $rootFolder,
+		private IJobList $jobList,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -106,6 +109,12 @@ class PageController extends Controller {
 
 		$games = $this->libraryService->getGames($this->userId, $folder, $userFolder, $folderPath, $settings, $refresh);
 		$libraryTotal = count($games);
+		if ($refresh) {
+			// Rescanning is the moment to ask what the games that were
+			// already here say about themselves. Nextcloud reads that only
+			// when a file is written, so nothing else ever asks.
+			$this->queueMetadata();
+		}
 		$recent = $this->getRecent($userFolder, $games);
 		$favorites = $this->getFavorites($games);
 		// The systems of the whole library, so the filter keeps offering
@@ -139,6 +148,17 @@ class PageController extends Controller {
 			'favorites' => $favorites,
 			'games' => $page,
 		]);
+	}
+
+	/**
+	 * Ask for the ROMs to be read, unless that is already waiting to
+	 * happen. The job works out for itself which games are missing it.
+	 */
+	private function queueMetadata(): void {
+		$argument = ['userId' => (string)$this->userId];
+		if (!$this->jobList->has(RefreshMetadata::class, $argument)) {
+			$this->jobList->add(RefreshMetadata::class, $argument);
+		}
 	}
 
 	/**
