@@ -264,6 +264,20 @@ and they are handed to the emulator as a game starts:
 Only ColecoVision really needs one; for the rest the file is optional, and
 a missing one is quietly left out rather than keeping a game from starting.
 
+A BIOS is the one thing a player cannot make for themselves, so an
+administrator can put one where every player reaches it, instead of every
+user finding their own copy:
+
+```sh
+occ arcade:bios                      # what is asked for, and what is held
+occ arcade:bios /path/to/gb_bios.bin # offer this one to everybody
+occ arcade:bios --remove gb_bios.bin # take it back
+```
+
+Only the names the cores ask for are accepted, so this cannot become a
+place to keep files in general. A player's own system folder comes first;
+what it has not got is taken from the instance.
+
 Thumbnails are matched by file name. With a thumbnails folder of `Thumbs`,
 `Games/NES/Mario.nes` uses `Thumbs/NES/Mario.png` and falls back to
 `Thumbs/Mario.png`. PNG, JPEG, WebP and GIF are supported.

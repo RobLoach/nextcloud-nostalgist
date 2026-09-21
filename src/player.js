@@ -127,20 +127,26 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
  */
 async function fetchBios(systemId, folder) {
 	const names = biosForSystem(systemId)
-	if (folder === '' || names.length === 0 || getCurrentUser() === null) {
+	if (names.length === 0 || getCurrentUser() === null) {
 		return []
 	}
 	const files = await Promise.all(names.map(async (name) => {
-		try {
-			const response = await fetch(davUrl(`${folder}/${name}`), { credentials: 'same-origin' })
-			if (!response.ok) {
-				return null
+		// The file of the player first, then the one the instance holds:
+		// a BIOS is the one thing a player cannot make for themselves, so
+		// an administrator can put one where everybody can reach it.
+		const urls = folder === '' ? [] : [davUrl(`${folder}/${name}`)]
+		urls.push(generateUrl('/apps/arcade/bios?name={name}', { name }))
+		for (const url of urls) {
+			try {
+				const response = await fetch(url, { credentials: 'same-origin' })
+				if (response.ok) {
+					return new File([await response.blob()], name)
+				}
+			} catch (error) {
+				console.error(`Could not read the BIOS file ${name}`, error)
 			}
-			return new File([await response.blob()], name)
-		} catch (error) {
-			console.error(`Could not read the BIOS file ${name}`, error)
-			return null
 		}
+		return null
 	}))
 	return files.filter((file) => file !== null)
 }

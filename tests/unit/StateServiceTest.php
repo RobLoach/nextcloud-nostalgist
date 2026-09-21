@@ -102,15 +102,23 @@ class StateServiceTest extends TestCase {
 				return $this->simpleFile($path, $name);
 			},
 		);
+		// Files and the folders beneath, as a real listing gives them: the
+		// states folder holds a folder per user, and the app tells them
+		// apart from the files left there by older versions.
 		$folder->method('getDirectoryListing')->willReturnCallback(
 			function () use ($path): array {
-				$files = [];
+				$nodes = [];
 				foreach (array_keys($this->appData[$path] ?? []) as $name) {
 					if (is_string($this->appData[$path][$name])) {
-						$files[] = $this->simpleFile($path, $name);
+						$nodes[] = $this->simpleFile($path, $name);
 					}
 				}
-				return $files;
+				foreach (array_keys($this->appData) as $other) {
+					if (dirname($other) === $path) {
+						$nodes[] = $this->simpleFolder($other);
+					}
+				}
+				return $nodes;
 			},
 		);
 		$folder->method('getFolder')->willReturnCallback(
@@ -381,6 +389,17 @@ class StateServiceTest extends TestCase {
 			$service->list(self::USER, self::GAME)[0],
 			'a checksum that arrived after the save says nothing about it',
 		);
+	}
+
+	public function testTheStatesOfAUserAreFoundAsAFolderOfTheirOwn(): void {
+		// What the cleanup command walks: a folder per user, told apart
+		// from the flat files older versions left in the same place.
+		$service = $this->service();
+		$service->save(self::USER, self::GAME, 1, 'a save');
+
+		$folders = $service->userFolders();
+		$this->assertSame([$service->folderKeyOf(self::USER)], array_keys($folders));
+		$this->assertSame(0, $service->countLegacyFiles(), 'nothing flat was left behind');
 	}
 
 	public function testThumbnailsAndBatterySavesLiveAlongsideTheStates(): void {
