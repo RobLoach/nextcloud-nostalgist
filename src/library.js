@@ -6,8 +6,8 @@ import { systemLabel } from './systems.js'
 
 const VIEWS = ['grid', 'list', 'table']
 const PAGE_SIZES = [24, 60, 120, 240]
-const VIEW_KEY = 'nostalgist-library-view'
-const PAGE_SIZE_KEY = 'nostalgist-library-page-size'
+const VIEW_KEY = 'arcade-library-view'
+const PAGE_SIZE_KEY = 'arcade-library-page-size'
 
 const ICONS = {
 	star: 'M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z',
@@ -26,11 +26,11 @@ const THUMBNAIL_PREFERENCE = {
 }
 
 // What each system is shown with, as the administration settings have it.
-const thumbnailTypes = loadState('nostalgist', 'settings', {}).thumbnail_types ?? {}
+const thumbnailTypes = loadState('arcade', 'settings', {}).thumbnail_types ?? {}
 
 // Pages are cached for the tab, so coming back from a game paints the
 // library immediately while it is revalidated in the background.
-const CACHE_PREFIX = 'nostalgist-library-page:'
+const CACHE_PREFIX = 'arcade-library-page:'
 const CACHE_TTL = 60 * 1000
 
 const state = {
@@ -130,7 +130,7 @@ function gameName(game) {
  */
 function gameSystem(game) {
 	if (game.system === 'zip' || !game.system) {
-		return t('nostalgist', 'ZIP archive')
+		return t('arcade', 'ZIP archive')
 	}
 	return systemLabel(game.system)
 }
@@ -146,8 +146,8 @@ function formatPlayTime(seconds) {
 	const hours = Math.floor(seconds / 3600)
 	const minutes = Math.round((seconds % 3600) / 60)
 	return hours > 0
-		? t('nostalgist', '{hours}h {minutes}m played', { hours, minutes })
-		: t('nostalgist', '{minutes}m played', { minutes })
+		? t('arcade', '{hours}h {minutes}m played', { hours, minutes })
+		: t('arcade', '{minutes}m played', { minutes })
 }
 
 /**
@@ -155,7 +155,7 @@ function formatPlayTime(seconds) {
  * @return {string} the URL that plays the game
  */
 function gameUrl(game) {
-	return generateUrl('/apps/nostalgist/?file={file}', { file: game.path })
+	return generateUrl('/apps/arcade/?file={file}', { file: game.path })
 }
 
 /**
@@ -180,7 +180,7 @@ function thumbnailFor(game, size) {
 	image.decoding = 'async'
 
 	if (type !== undefined) {
-		image.className = `nostalgist-library-thumbnail nostalgist-library-thumbnail-${type}`
+		image.className = `arcade-library-thumbnail arcade-library-thumbnail-${type}`
 		image.src = generateUrl('/core/preview?fileId={fileId}&x={size}&y={size}&a=1', {
 			fileId: available[type],
 			size,
@@ -190,7 +190,7 @@ function thumbnailFor(game, size) {
 
 	// No image of its own: show the game as it was last seen.
 	if (game.fallback?.type === 'screenshot') {
-		image.className = 'nostalgist-library-thumbnail nostalgist-library-thumbnail-snap'
+		image.className = 'arcade-library-thumbnail arcade-library-thumbnail-snap'
 		image.src = generateUrl('/core/preview?fileId={fileId}&x={size}&y={size}&a=1', {
 			fileId: game.fallback.fileId,
 			size,
@@ -198,8 +198,8 @@ function thumbnailFor(game, size) {
 		return image
 	}
 	if (game.fallback?.type === 'state') {
-		image.className = 'nostalgist-library-thumbnail nostalgist-library-thumbnail-snap'
-		image.src = generateUrl('/apps/nostalgist/state/thumbnail?file={file}&slot={slot}', {
+		image.className = 'arcade-library-thumbnail arcade-library-thumbnail-snap'
+		image.src = generateUrl('/apps/arcade/state/thumbnail?file={file}&slot={slot}', {
 			file: game.path,
 			slot: game.fallback.slot,
 		})
@@ -207,7 +207,7 @@ function thumbnailFor(game, size) {
 	}
 
 	const placeholder = document.createElement('div')
-	placeholder.className = 'nostalgist-library-thumbnail nostalgist-library-placeholder'
+	placeholder.className = 'arcade-library-thumbnail arcade-library-placeholder'
 	placeholder.innerHTML = icon(ICONS.gamepad)
 	return placeholder
 }
@@ -219,21 +219,21 @@ function thumbnailFor(game, size) {
  */
 function renderCard(game, reload) {
 	const card = document.createElement('div')
-	card.className = 'nostalgist-library-game'
+	card.className = 'arcade-library-game'
 
 	const link = document.createElement('a')
-	link.className = 'nostalgist-library-game-link'
+	link.className = 'arcade-library-game-link'
 	link.href = gameUrl(game)
 	link.appendChild(thumbnailFor(game, 256))
 
 	const name = document.createElement('span')
-	name.className = 'nostalgist-library-game-name'
+	name.className = 'arcade-library-game-name'
 	name.textContent = gameName(game)
 	name.title = game.basename
 	link.appendChild(name)
 
 	const system = document.createElement('span')
-	system.className = 'nostalgist-library-game-system'
+	system.className = 'arcade-library-game-system'
 	const played = formatPlayTime(game.seconds)
 	system.textContent = played === '' ? gameSystem(game) : `${gameSystem(game)} · ${played}`
 	link.appendChild(system)
@@ -241,17 +241,17 @@ function renderCard(game, reload) {
 
 	const favorite = document.createElement('button')
 	favorite.type = 'button'
-	favorite.className = game.favorite ? 'nostalgist-library-favorite active' : 'nostalgist-library-favorite'
+	favorite.className = game.favorite ? 'arcade-library-favorite active' : 'arcade-library-favorite'
 	favorite.title = game.favorite
-		? t('nostalgist', 'Remove from favorites')
-		: t('nostalgist', 'Add to favorites')
+		? t('arcade', 'Remove from favorites')
+		: t('arcade', 'Add to favorites')
 	favorite.setAttribute('aria-label', favorite.title)
 	favorite.setAttribute('aria-pressed', game.favorite ? 'true' : 'false')
 	favorite.innerHTML = icon(ICONS.star)
 	favorite.addEventListener('click', async (event) => {
 		event.preventDefault()
 		try {
-			await post('/apps/nostalgist/favorite', { file: game.path })
+			await post('/apps/arcade/favorite', { file: game.path })
 			reload(true)
 		} catch (error) {
 			console.error('Could not change the favorites', error)
@@ -269,7 +269,7 @@ function renderCard(game, reload) {
  */
 function renderGrid(games, reload) {
 	const grid = document.createElement('div')
-	grid.className = 'nostalgist-library-grid'
+	grid.className = 'arcade-library-grid'
 	for (const game of games) {
 		grid.appendChild(renderCard(game, reload))
 	}
@@ -285,14 +285,14 @@ function renderGrid(games, reload) {
  */
 function renderRow(title, className, games, reload) {
 	const section = document.createElement('div')
-	section.className = `nostalgist-library-row-section ${className}`
+	section.className = `arcade-library-row-section ${className}`
 
 	const heading = document.createElement('h3')
 	heading.textContent = title
 	section.appendChild(heading)
 
 	const row = document.createElement('div')
-	row.className = 'nostalgist-library-recent-row'
+	row.className = 'arcade-library-recent-row'
 	for (const game of games) {
 		row.appendChild(renderCard(game, reload))
 	}
@@ -306,21 +306,21 @@ function renderRow(title, className, games, reload) {
  */
 function renderList(games) {
 	const list = document.createElement('div')
-	list.className = 'nostalgist-library-rows'
+	list.className = 'arcade-library-rows'
 	for (const game of games) {
 		const row = document.createElement('a')
-		row.className = 'nostalgist-library-row'
+		row.className = 'arcade-library-row'
 		row.href = gameUrl(game)
 		row.appendChild(thumbnailFor(game, 64))
 
 		const name = document.createElement('span')
-		name.className = 'nostalgist-library-row-name'
+		name.className = 'arcade-library-row-name'
 		name.textContent = gameName(game)
 		name.title = game.basename
 		row.appendChild(name)
 
 		const system = document.createElement('span')
-		system.className = 'nostalgist-library-row-system'
+		system.className = 'arcade-library-row-system'
 		system.textContent = gameSystem(game)
 		row.appendChild(system)
 
@@ -336,15 +336,15 @@ function renderList(games) {
  */
 function renderTable(games, reload) {
 	const table = document.createElement('table')
-	table.className = 'nostalgist-library-table'
+	table.className = 'arcade-library-table'
 
 	const head = document.createElement('thead')
 	const headRow = document.createElement('tr')
 	const columns = [
-		{ key: 'name', label: t('nostalgist', 'Name') },
-		{ key: 'system', label: t('nostalgist', 'System') },
-		{ key: 'size', label: t('nostalgist', 'Size') },
-		{ key: 'mtime', label: t('nostalgist', 'Modified') },
+		{ key: 'name', label: t('arcade', 'Name') },
+		{ key: 'system', label: t('arcade', 'System') },
+		{ key: 'size', label: t('arcade', 'Size') },
+		{ key: 'mtime', label: t('arcade', 'Modified') },
 	]
 	for (const column of columns) {
 		const cell = document.createElement('th')
@@ -404,7 +404,7 @@ function renderTable(games, reload) {
  */
 function renderPagination(data, reload) {
 	const pagination = document.createElement('div')
-	pagination.className = 'nostalgist-library-pagination'
+	pagination.className = 'arcade-library-pagination'
 
 	const first = data.total === 0 ? 0 : data.offset + 1
 	const last = Math.min(data.offset + data.limit, data.total)
@@ -422,14 +422,14 @@ function renderPagination(data, reload) {
 	}
 
 	pagination.appendChild(pageButton(
-		t('nostalgist', 'Previous'),
+		t('arcade', 'Previous'),
 		Math.max(0, data.offset - data.limit),
 		data.offset === 0,
 	))
 
 	const count = document.createElement('span')
-	count.className = 'nostalgist-library-count'
-	count.textContent = t('nostalgist', '{first}–{last} of {total}', {
+	count.className = 'arcade-library-count'
+	count.textContent = t('arcade', '{first}–{last} of {total}', {
 		first,
 		last,
 		total: data.total,
@@ -437,18 +437,18 @@ function renderPagination(data, reload) {
 	pagination.appendChild(count)
 
 	pagination.appendChild(pageButton(
-		t('nostalgist', 'Next'),
+		t('arcade', 'Next'),
 		data.offset + data.limit,
 		last >= data.total,
 	))
 
 	const pageSize = document.createElement('select')
-	pageSize.className = 'nostalgist-library-page-size'
-	pageSize.setAttribute('aria-label', t('nostalgist', 'Games per page'))
+	pageSize.className = 'arcade-library-page-size'
+	pageSize.setAttribute('aria-label', t('arcade', 'Games per page'))
 	for (const size of PAGE_SIZES) {
 		const option = document.createElement('option')
 		option.value = String(size)
-		option.textContent = t('nostalgist', '{count} per page', { count: size })
+		option.textContent = t('arcade', '{count} per page', { count: size })
 		option.selected = size === state.pageSize
 		pageSize.appendChild(option)
 	}
@@ -470,13 +470,13 @@ function renderPagination(data, reload) {
  */
 function renderFilters(systems, reload) {
 	const filters = document.createElement('div')
-	filters.className = 'nostalgist-library-filters'
+	filters.className = 'arcade-library-filters'
 
 	const search = document.createElement('input')
 	search.type = 'search'
-	search.className = 'nostalgist-library-search'
-	search.placeholder = t('nostalgist', 'Search games …')
-	search.setAttribute('aria-label', t('nostalgist', 'Search games'))
+	search.className = 'arcade-library-search'
+	search.placeholder = t('arcade', 'Search games …')
+	search.setAttribute('aria-label', t('arcade', 'Search games'))
 	search.value = state.search
 	let searchTimer = null
 	search.addEventListener('input', () => {
@@ -490,17 +490,17 @@ function renderFilters(systems, reload) {
 	filters.appendChild(search)
 
 	const systemFilter = document.createElement('select')
-	systemFilter.className = 'nostalgist-library-system-filter'
-	systemFilter.setAttribute('aria-label', t('nostalgist', 'Filter by system'))
+	systemFilter.className = 'arcade-library-system-filter'
+	systemFilter.setAttribute('aria-label', t('arcade', 'Filter by system'))
 	const all = document.createElement('option')
 	all.value = ''
-	all.textContent = t('nostalgist', 'All systems')
+	all.textContent = t('arcade', 'All systems')
 	systemFilter.appendChild(all)
 	for (const system of systems) {
 		const option = document.createElement('option')
 		option.value = system
 		option.textContent = system === 'zip'
-			? t('nostalgist', 'ZIP archive')
+			? t('arcade', 'ZIP archive')
 			: systemLabel(system)
 		option.selected = system === state.system
 		systemFilter.appendChild(option)
@@ -522,19 +522,19 @@ function renderFilters(systems, reload) {
  */
 function renderHeader(reload, setView) {
 	const header = document.createElement('div')
-	header.className = 'nostalgist-library-header'
+	header.className = 'arcade-library-header'
 
 	const heading = document.createElement('h2')
-	heading.textContent = t('nostalgist', 'Games library')
+	heading.textContent = t('arcade', 'Games library')
 	header.appendChild(heading)
 
 	const controls = document.createElement('div')
-	controls.className = 'nostalgist-library-controls'
+	controls.className = 'arcade-library-controls'
 
 	const labels = {
-		grid: t('nostalgist', 'Grid view'),
-		list: t('nostalgist', 'List view'),
-		table: t('nostalgist', 'Table view'),
+		grid: t('arcade', 'Grid view'),
+		list: t('arcade', 'List view'),
+		table: t('arcade', 'Table view'),
 	}
 	for (const view of VIEWS) {
 		const button = document.createElement('button')
@@ -549,7 +549,7 @@ function renderHeader(reload, setView) {
 
 	const refresh = document.createElement('button')
 	refresh.type = 'button'
-	refresh.title = t('nostalgist', 'Rescan the library folder')
+	refresh.title = t('arcade', 'Rescan the library folder')
 	refresh.setAttribute('aria-label', refresh.title)
 	refresh.innerHTML = icon(ICONS.refresh)
 	refresh.addEventListener('click', () => reload(true))
@@ -586,7 +586,7 @@ export async function renderLibrary(container, onError) {
 		let data
 		try {
 			const response = await fetch(generateUrl(
-				'/apps/nostalgist/library?offset={offset}&limit={limit}&sort={sort}&order={order}'
+				'/apps/arcade/library?offset={offset}&limit={limit}&sort={sort}&order={order}'
 					+ '&search={search}&system={system}&refresh={refresh}',
 				{
 					offset: state.offset,
@@ -611,7 +611,7 @@ export async function renderLibrary(container, onError) {
 			}
 			console.error('Could not load the games library', error)
 			if (shown === null) {
-				onError(t('nostalgist', 'Could not load the games library.'))
+				onError(t('arcade', 'Could not load the games library.'))
 			}
 			return
 		}
@@ -646,23 +646,23 @@ export async function renderLibrary(container, onError) {
 		shown = data
 
 		// Typing in the search field re-renders, so put the caret back.
-		const searchWasFocused = container.querySelector('.nostalgist-library-search') === document.activeElement
+		const searchWasFocused = container.querySelector('.arcade-library-search') === document.activeElement
 
 		container.innerHTML = ''
 		container.appendChild(renderHeader(load, setView))
 
 		if (!data.exists || data.libraryTotal === 0) {
 			const hint = document.createElement('p')
-			hint.className = 'nostalgist-library-hint'
+			hint.className = 'arcade-library-hint'
 			hint.textContent = data.exists
 				? t(
-					'nostalgist',
-					'No games found in {folder}. Upload some ROMs there, or pick another folder in the Nostalgist personal settings.',
+					'arcade',
+					'No games found in {folder}. Upload some ROMs there, or pick another folder in the Arcade personal settings.',
 					{ folder: data.folder },
 				)
 				: t(
-					'nostalgist',
-					'The games library folder {folder} does not exist. Create it, or pick another folder in the Nostalgist personal settings.',
+					'arcade',
+					'The games library folder {folder} does not exist. Create it, or pick another folder in the Arcade personal settings.',
 					{ folder: data.folder },
 				)
 			container.appendChild(hint)
@@ -673,16 +673,16 @@ export async function renderLibrary(container, onError) {
 		const plainPage = state.search === '' && state.system === '' && state.offset === 0
 		if (plainPage && (data.favorites ?? []).length > 0) {
 			container.appendChild(renderRow(
-				t('nostalgist', 'Favorites'),
-				'nostalgist-library-favorites',
+				t('arcade', 'Favorites'),
+				'arcade-library-favorites',
 				data.favorites,
 				load,
 			))
 		}
 		if (plainPage && (data.recent ?? []).length > 0) {
 			container.appendChild(renderRow(
-				t('nostalgist', 'Recently played'),
-				'nostalgist-library-recent',
+				t('arcade', 'Recently played'),
+				'arcade-library-recent',
 				data.recent,
 				load,
 			))
@@ -698,8 +698,8 @@ export async function renderLibrary(container, onError) {
 
 		if (data.total === 0) {
 			const hint = document.createElement('p')
-			hint.className = 'nostalgist-library-hint'
-			hint.textContent = t('nostalgist', 'No games match the filters.')
+			hint.className = 'arcade-library-hint'
+			hint.textContent = t('arcade', 'No games match the filters.')
 			container.appendChild(hint)
 			return
 		}
@@ -716,8 +716,8 @@ export async function renderLibrary(container, onError) {
 		}
 		if (data.truncated) {
 			const truncated = document.createElement('p')
-			truncated.className = 'nostalgist-library-hint'
-			truncated.textContent = t('nostalgist', 'Only the first {count} games of the folder are listed.', {
+			truncated.className = 'arcade-library-hint'
+			truncated.textContent = t('arcade', 'Only the first {count} games of the folder are listed.', {
 				count: data.libraryTotal,
 			})
 			container.appendChild(truncated)

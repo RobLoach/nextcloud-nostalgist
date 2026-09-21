@@ -1,43 +1,45 @@
 <?xml version="1.0"?>
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
-	<id>nostalgist</id>
-	<name>Nostalgist</name>
-	<summary>Nostalgist for NextCloud</summary>
-	<description>Play retro games directly in NextCloud.</description>
-	<version>0.19.0</version>
+	<id>arcade</id>
+	<name>Arcade</name>
+	<summary>Play retro games from your files</summary>
+	<description><![CDATA[Play retro console games straight from your NextCloud files.
+
+Arcade runs the RetroArch libretro cores in the browser, so nothing is uploaded anywhere else. It comes with a games library with box art, save states, screenshots, SRAM and BIOS handling, touch controls, and configurable keys — all kept in folders of your own choosing.]]></description>
+	<version>0.20.0</version>
 	<licence>agpl</licence>
 	<author homepage="https://robloach.net">Rob Loach</author>
-	<namespace>Nostalgist</namespace>
+	<namespace>Arcade</namespace>
 	<category>games</category>
-	<bugs>https://github.com/robloach/nextcloud-nostalgist</bugs>
-	<repository type="git">https://github.com/robloach/nextcloud-nostalgist.git</repository>
-	<screenshot small-thumbnail="https://raw.githubusercontent.com/robloach/nextcloud-nostalgist/master/img/screenshot-thumbnail.jpg">https://raw.githubusercontent.com/robloach/nextcloud-nostalgist/master/img/screenshot.png</screenshot>
+	<bugs>https://github.com/robloach/nextcloud-arcade</bugs>
+	<repository type="git">https://github.com/robloach/nextcloud-arcade.git</repository>
+	<screenshot small-thumbnail="https://raw.githubusercontent.com/robloach/nextcloud-arcade/master/img/screenshot-thumbnail.jpg">https://raw.githubusercontent.com/robloach/nextcloud-arcade/master/img/screenshot.png</screenshot>
 	<dependencies>
 		<nextcloud min-version="29" max-version="35"/>
 	</dependencies>
 	<repair-steps>
 		<post-migration>
-			<step>OCA\Nostalgist\Migration\RegisterMimeTypes</step>
+			<step>OCA\Arcade\Migration\RegisterMimeTypes</step>
 		</post-migration>
 		<install>
-			<step>OCA\Nostalgist\Migration\RegisterMimeTypes</step>
+			<step>OCA\Arcade\Migration\RegisterMimeTypes</step>
 		</install>
 	</repair-steps>
 	<commands>
-		<command>OCA\Nostalgist\Command\Cleanup</command>
+		<command>OCA\Arcade\Command\Cleanup</command>
 	</commands>
 	<settings>
-		<admin>OCA\Nostalgist\Settings\Admin</admin>
-		<admin-section>OCA\Nostalgist\Settings\AdminSection</admin-section>
-		<personal>OCA\Nostalgist\Settings\Personal</personal>
-		<personal-section>OCA\Nostalgist\Settings\PersonalSection</personal-section>
+		<admin>OCA\Arcade\Settings\Admin</admin>
+		<admin-section>OCA\Arcade\Settings\AdminSection</admin-section>
+		<personal>OCA\Arcade\Settings\Personal</personal>
+		<personal-section>OCA\Arcade\Settings\PersonalSection</personal-section>
 	</settings>
 	<navigations>
 		<navigation>
-			<id>nostalgist</id>
-			<name>Nostalgist</name>
-			<route>nostalgist.page.index</route>
+			<id>arcade</id>
+			<name>Arcade</name>
+			<route>arcade.page.index</route>
 			<icon>app.svg</icon>
 			<type>link</type>
 		</navigation>

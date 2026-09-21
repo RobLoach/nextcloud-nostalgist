@@ -10,8 +10,8 @@ $thumbnailTypes = $_['thumbnailTypes'];
 $storedTypes = $_['storedThumbnailTypes'];
 ?>
 
-<div id="nostalgist-settings" class="section" data-scope="admin">
-	<h2><?php p($l->t('Nostalgist')); ?></h2>
+<div id="arcade-settings" class="section" data-scope="admin">
+	<h2><?php p($l->t('Arcade')); ?></h2>
 	<p class="settings-hint"><?php p($l->t('The folders users start with. Everybody can pick their own afterwards.')); ?></p>
 
 	<?php foreach ([
@@ -22,18 +22,18 @@ $storedTypes = $_['storedThumbnailTypes'];
 		'system_folder' => $l->t('System folder, for BIOS files'),
 	] as $key => $label): ?>
 		<p>
-			<label for="nostalgist-<?php p($key); ?>"><?php p($label); ?></label><br>
-			<input type="text" id="nostalgist-<?php p($key); ?>" class="nostalgist-setting"
+			<label for="arcade-<?php p($key); ?>"><?php p($label); ?></label><br>
+			<input type="text" id="arcade-<?php p($key); ?>" class="arcade-setting"
 				data-setting="<?php p($key); ?>" value="<?php p($defaults[$key]); ?>">
-			<button type="button" class="nostalgist-folder-picker"
-				data-target="nostalgist-<?php p($key); ?>"><?php p($l->t('Browse …')); ?></button>
+			<button type="button" class="arcade-folder-picker"
+				data-target="arcade-<?php p($key); ?>"><?php p($l->t('Browse …')); ?></button>
 		</p>
 	<?php endforeach; ?>
 
 	<h3><?php p($l->t('Core options')); ?></h3>
 	<p class="settings-hint"><?php p($l->t('Options of the emulator cores themselves. Left on "Core default", the core decides.')); ?></p>
 	<?php foreach ($coreOptions as $core => $options): ?>
-		<details class="nostalgist-core-options">
+		<details class="arcade-core-options">
 			<summary>
 				<?php p($core); ?>
 				<em><?php p(implode(', ', $systemsByCore[$core] ?? [])); ?></em>
@@ -43,8 +43,8 @@ $storedTypes = $_['storedThumbnailTypes'];
 					<?php /* Not through $l->t(): these come from CoreOptions, so they are
 					        not translatable anyway, and a "%" in them would be taken for
 					        a format specifier. */ ?>
-					<label for="nostalgist-option-<?php p($key); ?>"><?php p($option['label']); ?></label><br>
-					<select id="nostalgist-option-<?php p($key); ?>" class="nostalgist-core-option"
+					<label for="arcade-option-<?php p($key); ?>"><?php p($option['label']); ?></label><br>
+					<select id="arcade-option-<?php p($key); ?>" class="arcade-core-option"
 						data-core="<?php p($core); ?>" data-option="<?php p($key); ?>">
 						<option value=""><?php p($l->t('Core default')); ?></option>
 						<?php foreach ($option['values'] as $value => $label): ?>
@@ -59,10 +59,10 @@ $storedTypes = $_['storedThumbnailTypes'];
 			<?php foreach ($systems as $systemId => $system): ?>
 				<?php if ($system['core'] !== $core) { continue; } ?>
 				<p>
-					<label for="nostalgist-thumbnail-<?php p($systemId); ?>">
+					<label for="arcade-thumbnail-<?php p($systemId); ?>">
 						<?php p($l->t('Picture shown for %s', [$system['short']])); ?>
 					</label><br>
-					<select id="nostalgist-thumbnail-<?php p($systemId); ?>" class="nostalgist-thumbnail-type"
+					<select id="arcade-thumbnail-<?php p($systemId); ?>" class="arcade-thumbnail-type"
 						data-system="<?php p($systemId); ?>">
 						<?php foreach ($thumbnailTypes as $type => $label): ?>
 							<option value="<?php p($type); ?>"
@@ -74,14 +74,14 @@ $storedTypes = $_['storedThumbnailTypes'];
 				</p>
 			<?php endforeach; ?>
 			<p>
-				<button type="button" class="nostalgist-core-reset"
+				<button type="button" class="arcade-core-reset"
 					data-core="<?php p($core); ?>"><?php p($l->t('Reset this core to defaults')); ?></button>
 			</p>
 		</details>
 	<?php endforeach; ?>
 
 	<p>
-		<button id="nostalgist-save" class="primary"><?php p($l->t('Save')); ?></button>
-		<span id="nostalgist-save-status" aria-live="polite"></span>
+		<button id="arcade-save" class="primary"><?php p($l->t('Save')); ?></button>
+		<span id="arcade-save-status" aria-live="polite"></span>
 	</p>
 </div>

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Service\RecentService;
+use OCA\Arcade\Service\RecentService;
 use OCP\IConfig;
 use PHPUnit\Framework\TestCase;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Settings;
+namespace OCA\Arcade\Settings;
 
-use OCA\Nostalgist\AppInfo\Application;
+use OCA\Arcade\AppInfo\Application;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\Settings\IIconSection;
@@ -21,7 +21,7 @@ class PersonalSection implements IIconSection {
 	}
 
 	public function getName(): string {
-		return $this->l->t('Nostalgist');
+		return $this->l->t('Arcade');
 	}
 
 	public function getPriority(): int {

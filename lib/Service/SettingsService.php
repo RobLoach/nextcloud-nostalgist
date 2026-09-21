@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Service;
+namespace OCA\Arcade\Service;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\Controls;
-use OCA\Nostalgist\CoreMap;
-use OCA\Nostalgist\CoreOptions;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\Controls;
+use OCA\Arcade\CoreMap;
+use OCA\Arcade\CoreOptions;
 use OCP\IAppConfig;
 use OCP\IConfig;
 

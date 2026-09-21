@@ -1,4 +1,4 @@
-# Translations of the Nostalgist app.
+# Translations of the Arcade app.
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -48,6 +48,11 @@ msgstr ""
 msgid "All systems"
 msgstr ""
 
+#: templates/admin.php
+#: templates/settings.php
+msgid "Arcade"
+msgstr ""
+
 #: templates/settings.php
 msgid "Audio latency, raise it if the sound crackles"
 msgstr ""
@@ -82,7 +87,7 @@ msgid "Close"
 msgstr ""
 
 #: templates/settings.php
-msgid "Configure how the Nostalgist retro game player behaves."
+msgid "Configure how the Arcade retro game player behaves."
 msgstr ""
 
 #: src/panels/resume.js
@@ -192,7 +197,7 @@ msgid "Game saved"
 msgstr ""
 
 #: templates/settings.php
-msgid "Games in this folder are listed on the Nostalgist page."
+msgid "Games in this folder are listed on the Arcade page."
 msgstr ""
 
 #: src/library.js
@@ -257,7 +262,7 @@ msgid "Next"
 msgstr ""
 
 #: src/library.js
-msgid "No games found in {folder}. Upload some ROMs there, or pick another folder in the Nostalgist personal settings."
+msgid "No games found in {folder}. Upload some ROMs there, or pick another folder in the Arcade personal settings."
 msgstr ""
 
 #: src/library.js
@@ -270,11 +275,6 @@ msgstr ""
 
 #: src/player.js
 msgid "No supported ROM found in the archive"
-msgstr ""
-
-#: templates/admin.php
-#: templates/settings.php
-msgid "Nostalgist"
 msgstr ""
 
 #: src/library.js
@@ -420,7 +420,7 @@ msgid "Search games …"
 msgstr ""
 
 #: src/panels/gallery.js
-msgid "Set a screenshots folder in the Nostalgist settings to keep your screenshots."
+msgid "Set a screenshots folder in the Arcade settings to keep your screenshots."
 msgstr ""
 
 #: src/library.js
@@ -480,7 +480,7 @@ msgid "The folders users start with. Everybody can pick their own afterwards."
 msgstr ""
 
 #: src/library.js
-msgid "The games library folder {folder} does not exist. Create it, or pick another folder in the Nostalgist personal settings."
+msgid "The games library folder {folder} does not exist. Create it, or pick another folder in the Arcade personal settings."
 msgstr ""
 
 #: src/settings.js

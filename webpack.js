@@ -5,7 +5,7 @@ const path = require('path')
 // up under a wrong name and URL without these overrides. 'auto' derives the
 // public path from the script URL, which follows the Nextcloud webroot.
 webpackConfig.output.publicPath = 'auto'
-webpackConfig.output.chunkFilename = 'nostalgist-chunk-[name].js?v=[contenthash]'
+webpackConfig.output.chunkFilename = 'arcade-chunk-[name].js?v=[contenthash]'
 
 webpackConfig.entry = {
 	main: {
@@ -14,11 +14,11 @@ webpackConfig.entry = {
 	},
 	viewer: {
 		import: path.join(__dirname, 'src', 'viewer.js'),
-		filename: 'nostalgist-viewer.js'
+		filename: 'arcade-viewer.js'
 	},
 	settings: {
 		import: path.join(__dirname, 'src', 'settings.js'),
-		filename: 'nostalgist-settings.js'
+		filename: 'arcade-settings.js'
 	}
 }
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Migration;
+namespace OCA\Arcade\Migration;
 
-use OCA\Nostalgist\CoreMap;
+use OCA\Arcade\CoreMap;
 use OCP\Files\IMimeTypeLoader;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -20,7 +20,7 @@ class RegisterMimeTypes implements IRepairStep {
 	}
 
 	public function getName(): string {
-		return 'Register Nostalgist ROM mimetypes';
+		return 'Register Arcade ROM mimetypes';
 	}
 
 	public function run(IOutput $output): void {

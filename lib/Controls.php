@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist;
+namespace OCA\Arcade;
 
 /**
  * What the keyboard does: which key works which button of the controller,

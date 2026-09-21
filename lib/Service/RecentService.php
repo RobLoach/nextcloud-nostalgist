@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Service;
+namespace OCA\Arcade\Service;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\CoreMap;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\CoreMap;
 use OCP\IConfig;
 
 /**

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Service\LibraryService;
-use OCA\Nostalgist\Service\StateService;
-use OCA\Nostalgist\Service\ThumbnailService;
+use OCA\Arcade\Service\LibraryService;
+use OCA\Arcade\Service\StateService;
+use OCA\Arcade\Service\ThumbnailService;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
 

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\AppInfo;
+namespace OCA\Arcade\AppInfo;
 
-use OCA\Nostalgist\CoreMap;
-use OCA\Nostalgist\Listener\CleanupListener;
-use OCA\Nostalgist\Listener\CSPListener;
-use OCA\Nostalgist\Listener\LoadViewerListener;
+use OCA\Arcade\CoreMap;
+use OCA\Arcade\Listener\CleanupListener;
+use OCA\Arcade\Listener\CSPListener;
+use OCA\Arcade\Listener\LoadViewerListener;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -19,7 +19,7 @@ use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
-	public const APP_ID = 'nostalgist';
+	public const APP_ID = 'arcade';
 
 	/** @psalm-suppress PossiblyUnusedMethod */
 	public function __construct() {

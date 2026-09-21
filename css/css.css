@@ -1,4 +1,4 @@
-.nostalgist {
+.arcade {
     display: flex;
     flex: 1;
     height: 100%;
@@ -6,24 +6,24 @@
     align-items: center;
 }
 
-.nostalgist canvas {
+.arcade canvas {
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
 }
 
-.nostalgist .hidden {
+.arcade .hidden {
 	display: none;
 }
 
-.nostalgist .nostalgist-message {
+.arcade .arcade-message {
 	padding: 20px;
 	text-align: center;
 }
 
 /* Games library */
 
-.nostalgist .nostalgist-library {
+.arcade .arcade-library {
 	width: 100%;
 	max-width: 1200px;
 	max-height: 100%;
@@ -33,7 +33,7 @@
 	margin: 0 auto;
 }
 
-.nostalgist .nostalgist-library-header {
+.arcade .arcade-library-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -42,16 +42,16 @@
 	margin-bottom: 16px;
 }
 
-.nostalgist .nostalgist-library-header h2 {
+.arcade .arcade-library-header h2 {
 	margin: 0;
 }
 
-.nostalgist .nostalgist-library-controls {
+.arcade .arcade-library-controls {
 	display: flex;
 	gap: 4px;
 }
 
-.nostalgist .nostalgist-library-controls button {
+.arcade .arcade-library-controls button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -65,39 +65,39 @@
 	cursor: pointer;
 }
 
-.nostalgist .nostalgist-library-controls button:hover {
+.arcade .arcade-library-controls button:hover {
 	background-color: var(--color-background-hover);
 }
 
-.nostalgist .nostalgist-library-controls button.active {
+.arcade .arcade-library-controls button.active {
 	background-color: var(--color-primary-element);
 }
 
-.nostalgist .nostalgist-library-controls button svg {
+.arcade .arcade-library-controls button svg {
 	width: 20px;
 	height: 20px;
 	fill: var(--color-main-text);
 }
 
-.nostalgist .nostalgist-library-controls button.active svg {
+.arcade .arcade-library-controls button.active svg {
 	fill: var(--color-primary-element-text);
 }
 
-.nostalgist .nostalgist-library-row-section {
+.arcade .arcade-library-row-section {
 	margin-bottom: 20px;
 }
 
-.nostalgist .nostalgist-library-row-section h3 {
+.arcade .arcade-library-row-section h3 {
 	margin: 0 0 8px 0;
 }
 
-.nostalgist .nostalgist-library-status {
+.arcade .arcade-library-status {
 	color: var(--color-text-maxcontrast);
 	min-height: 1.2em;
 	margin-bottom: 8px;
 }
 
-.nostalgist .nostalgist-library-recent-row {
+.arcade .arcade-library-recent-row {
 	display: flex;
 	gap: 16px;
 	overflow-x: auto;
@@ -105,43 +105,43 @@
 	scroll-snap-type: x proximity;
 }
 
-.nostalgist .nostalgist-library-recent-row .nostalgist-library-game {
+.arcade .arcade-library-recent-row .arcade-library-game {
 	flex: 0 0 140px;
 	scroll-snap-align: start;
 }
 
-.nostalgist .nostalgist-library-recent-row .nostalgist-library-thumbnail {
+.arcade .arcade-library-recent-row .arcade-library-thumbnail {
 	width: 100%;
 	aspect-ratio: 4 / 3;
 	object-fit: contain;
 	background-color: var(--color-background-dark);
 }
 
-.nostalgist .nostalgist-library-filters {
+.arcade .arcade-library-filters {
 	display: flex;
 	gap: 8px;
 	flex-wrap: wrap;
 	margin-bottom: 16px;
 }
 
-.nostalgist .nostalgist-library-search {
+.arcade .arcade-library-search {
 	flex: 1;
 	min-width: 180px;
 }
 
-.nostalgist .nostalgist-library-hint {
+.arcade .arcade-library-hint {
 	color: var(--color-text-maxcontrast);
 	margin-bottom: 12px;
 }
 
-.nostalgist .nostalgist-library-placeholder {
+.arcade .arcade-library-placeholder {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	color: var(--color-text-maxcontrast);
 }
 
-.nostalgist .nostalgist-library-placeholder svg {
+.arcade .arcade-library-placeholder svg {
 	width: 50%;
 	height: 50%;
 	max-width: 48px;
@@ -152,13 +152,13 @@
 
 /* Grid view */
 
-.nostalgist .nostalgist-library-grid {
+.arcade .arcade-library-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 	gap: 16px;
 }
 
-.nostalgist .nostalgist-library-game {
+.arcade .arcade-library-game {
 	position: relative;
 	/* Cards below the fold are laid out when they are scrolled to. */
 	content-visibility: auto;
@@ -172,14 +172,14 @@
 	transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
-.nostalgist .nostalgist-library-game:hover,
-.nostalgist .nostalgist-library-game:focus-visible {
+.arcade .arcade-library-game:hover,
+.arcade .arcade-library-game:focus-visible {
 	background-color: var(--color-background-hover);
 	border-color: var(--color-primary-element);
 	box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
-.nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail {
+.arcade .arcade-library-grid .arcade-library-thumbnail {
 	width: 100%;
 	aspect-ratio: 4 / 3;
 	object-fit: cover;
@@ -187,18 +187,18 @@
 }
 
 /* Box art is portrait and logos are wide, so show them whole. */
-.nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail-boxart,
-.nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail-logo {
+.arcade .arcade-library-grid .arcade-library-thumbnail-boxart,
+.arcade .arcade-library-grid .arcade-library-thumbnail-logo {
 	object-fit: contain;
 }
 
-.nostalgist .nostalgist-library-game-link {
+.arcade .arcade-library-game-link {
 	display: flex;
 	flex-direction: column;
 	flex: 1;
 }
 
-.nostalgist .nostalgist-library-favorite {
+.arcade .arcade-library-favorite {
 	position: absolute;
 	top: 4px;
 	inset-inline-end: 4px;
@@ -215,23 +215,23 @@
 	display: flex;
 }
 
-.nostalgist .nostalgist-library-game:hover .nostalgist-library-favorite,
-.nostalgist .nostalgist-library-favorite:focus-visible,
-.nostalgist .nostalgist-library-favorite.active {
+.arcade .arcade-library-game:hover .arcade-library-favorite,
+.arcade .arcade-library-favorite:focus-visible,
+.arcade .arcade-library-favorite.active {
 	opacity: 1;
 }
 
-.nostalgist .nostalgist-library-favorite svg {
+.arcade .arcade-library-favorite svg {
 	width: 100%;
 	height: 100%;
 	fill: #fff;
 }
 
-.nostalgist .nostalgist-library-favorite.active svg {
+.arcade .arcade-library-favorite.active svg {
 	fill: #e9a13b;
 }
 
-.nostalgist .nostalgist-library-game-name {
+.arcade .arcade-library-game-name {
 	padding: 8px 12px 0 12px;
 	font-weight: bold;
 	overflow: hidden;
@@ -239,7 +239,7 @@
 	white-space: nowrap;
 }
 
-.nostalgist .nostalgist-library-game-system {
+.arcade .arcade-library-game-system {
 	padding: 0 12px 10px 12px;
 	color: var(--color-text-maxcontrast);
 	font-size: 0.85em;
@@ -250,12 +250,12 @@
 
 /* List view */
 
-.nostalgist .nostalgist-library-rows {
+.arcade .arcade-library-rows {
 	display: flex;
 	flex-direction: column;
 }
 
-.nostalgist .nostalgist-library-row {
+.arcade .arcade-library-row {
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -263,12 +263,12 @@
 	border-radius: var(--border-radius);
 }
 
-.nostalgist .nostalgist-library-row:hover,
-.nostalgist .nostalgist-library-row:focus-visible {
+.arcade .arcade-library-row:hover,
+.arcade .arcade-library-row:focus-visible {
 	background-color: var(--color-background-hover);
 }
 
-.nostalgist .nostalgist-library-rows .nostalgist-library-thumbnail {
+.arcade .arcade-library-rows .arcade-library-thumbnail {
 	width: 48px;
 	height: 36px;
 	object-fit: contain;
@@ -277,14 +277,14 @@
 	flex-shrink: 0;
 }
 
-.nostalgist .nostalgist-library-row-name {
+.arcade .arcade-library-row-name {
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.nostalgist .nostalgist-library-row-system {
+.arcade .arcade-library-row-system {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.85em;
 	white-space: nowrap;
@@ -292,17 +292,17 @@
 
 /* Table view */
 
-.nostalgist .nostalgist-library-table {
+.arcade .arcade-library-table {
 	width: 100%;
 	border-collapse: collapse;
 }
 
-.nostalgist .nostalgist-library-table th {
+.arcade .arcade-library-table th {
 	text-align: start;
 	border-bottom: 1px solid var(--color-border);
 }
 
-.nostalgist .nostalgist-library-table th button {
+.arcade .arcade-library-table th button {
 	background-color: transparent;
 	border: none;
 	padding: 8px;
@@ -314,11 +314,11 @@
 	text-align: start;
 }
 
-.nostalgist .nostalgist-library-table th button:hover {
+.arcade .arcade-library-table th button:hover {
 	color: var(--color-main-text);
 }
 
-.nostalgist .nostalgist-library-table td {
+.arcade .arcade-library-table td {
 	padding: 8px;
 	border-bottom: 1px solid var(--color-border);
 	white-space: nowrap;
@@ -327,17 +327,17 @@
 	max-width: 0;
 }
 
-.nostalgist .nostalgist-library-table td:first-child {
+.arcade .arcade-library-table td:first-child {
 	width: 55%;
 }
 
-.nostalgist .nostalgist-library-table tr:hover td {
+.arcade .arcade-library-table tr:hover td {
 	background-color: var(--color-background-hover);
 }
 
 /* Pagination */
 
-.nostalgist .nostalgist-library-pagination {
+.arcade .arcade-library-pagination {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -346,7 +346,7 @@
 	margin-top: 16px;
 }
 
-.nostalgist .nostalgist-library-count {
+.arcade .arcade-library-count {
 	color: var(--color-text-maxcontrast);
 	font-size: 0.9em;
 }

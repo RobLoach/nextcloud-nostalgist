@@ -29,9 +29,9 @@ export async function offerResume({ container, romPath, load, automatic = false 
 	}
 
 	const prompt = document.createElement('div')
-	prompt.className = 'nostalgist-resume'
+	prompt.className = 'arcade-resume'
 	const text = document.createElement('span')
-	text.textContent = t('nostalgist', 'Continue from slot {slot} ({date})?', {
+	text.textContent = t('arcade', 'Continue from slot {slot} ({date})?', {
 		slot: latest.slot,
 		date: new Date(latest.mtime * 1000).toLocaleString(),
 	})
@@ -46,7 +46,7 @@ export async function offerResume({ container, romPath, load, automatic = false 
 	const resumeButton = document.createElement('button')
 	resumeButton.type = 'button'
 	resumeButton.className = 'primary-action'
-	resumeButton.textContent = t('nostalgist', 'Continue')
+	resumeButton.textContent = t('arcade', 'Continue')
 	resumeButton.addEventListener('click', () => {
 		load(latest.slot)
 		dismiss()
@@ -55,7 +55,7 @@ export async function offerResume({ container, romPath, load, automatic = false 
 
 	const dismissButton = document.createElement('button')
 	dismissButton.type = 'button'
-	dismissButton.textContent = t('nostalgist', 'Dismiss')
+	dismissButton.textContent = t('arcade', 'Dismiss')
 	dismissButton.addEventListener('click', dismiss)
 	prompt.appendChild(dismissButton)
 

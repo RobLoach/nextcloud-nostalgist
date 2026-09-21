@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Settings;
+namespace OCA\Arcade\Settings;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\Controls;
-use OCA\Nostalgist\Service\SettingsService;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\Controls;
+use OCA\Arcade\Service\SettingsService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IUserSession;
@@ -27,7 +27,7 @@ class Personal implements ISettings {
 			? $this->settingsService->getDefaults()
 			: $this->settingsService->getUserSettings($user->getUID());
 		$this->initialState->provideInitialState('settings', $settings);
-		Util::addScript(Application::APP_ID, 'nostalgist-settings');
+		Util::addScript(Application::APP_ID, 'arcade-settings');
 		Util::addStyle(Application::APP_ID, 'settings');
 
 		return new TemplateResponse(Application::APP_ID, 'settings', [

@@ -3,7 +3,7 @@ import { loadState } from '@nextcloud/initial-state'
 /**
  * System definitions (extensions, mimetype, cores) provided by lib/CoreMap.php.
  */
-const systems = loadState('nostalgist', 'systems', {})
+const systems = loadState('arcade', 'systems', {})
 
 /**
  * @return {string[]} every ROM mimetype the player can handle

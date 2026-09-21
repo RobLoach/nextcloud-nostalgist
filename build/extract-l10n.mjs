@@ -12,8 +12,8 @@ import { join } from 'node:path'
 
 const ROOTS = ['lib', 'src', 'templates']
 const PATTERNS = [
-	// t('nostalgist', 'Some text') in JavaScript
-	/\bt\(\s*'nostalgist'\s*,\s*'((?:[^'\\]|\\.)*)'/g,
+	// t('arcade', 'Some text') in JavaScript
+	/\bt\(\s*'arcade'\s*,\s*'((?:[^'\\]|\\.)*)'/g,
 	// $l->t('Some text') in PHP
 	/\$l->t\(\s*'((?:[^'\\]|\\.)*)'/g,
 ]
@@ -36,7 +36,7 @@ for (const file of ROOTS.flatMap(walk)) {
 	}
 }
 
-const header = `# Translations of the Nostalgist app.
+const header = `# Translations of the Arcade app.
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\\n"
@@ -52,5 +52,5 @@ const body = [...strings.entries()]
 	.join('\n')
 
 mkdirSync('translationfiles/templates', { recursive: true })
-writeFileSync('translationfiles/templates/nostalgist.pot', `${header}\n${body}`)
+writeFileSync('translationfiles/templates/arcade.pot', `${header}\n${body}`)
 console.info(`${strings.size} strings to translate`)

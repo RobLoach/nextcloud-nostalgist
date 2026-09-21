@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Controller;
+namespace OCA\Arcade\Controller;
 
-use OCA\Nostalgist\Service\SettingsService;
-use OCA\Nostalgist\Service\StateService;
+use OCA\Arcade\Service\SettingsService;
+use OCA\Arcade\Service\StateService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;

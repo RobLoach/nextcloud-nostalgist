@@ -1,38 +1,38 @@
-#nostalgist-settings em {
+#arcade-settings em {
 	color: var(--color-text-maxcontrast);
 }
 
-#nostalgist-settings .nostalgist-core-options {
+#arcade-settings .arcade-core-options {
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
 	margin-bottom: 8px;
 	max-width: 500px;
 }
 
-#nostalgist-settings .nostalgist-core-options summary {
+#arcade-settings .arcade-core-options summary {
 	padding: 10px 12px;
 	cursor: pointer;
 	font-weight: bold;
 }
 
-#nostalgist-settings .nostalgist-core-options summary em {
+#arcade-settings .arcade-core-options summary em {
 	font-weight: normal;
 	margin-inline-start: 6px;
 }
 
-#nostalgist-settings .nostalgist-core-options[open] summary {
+#arcade-settings .arcade-core-options[open] summary {
 	border-bottom: 1px solid var(--color-border);
 }
 
-#nostalgist-settings .nostalgist-core-options p {
+#arcade-settings .arcade-core-options p {
 	padding: 0 12px;
 }
 
-#nostalgist-settings .nostalgist-core-options p:last-child {
+#arcade-settings .arcade-core-options p:last-child {
 	padding-bottom: 12px;
 }
 
-#nostalgist-settings .nostalgist-keys {
+#arcade-settings .arcade-keys {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 	gap: 4px 16px;
@@ -40,30 +40,30 @@
 	margin-bottom: 12px;
 }
 
-#nostalgist-settings .nostalgist-key {
+#arcade-settings .arcade-key {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
 }
 
-#nostalgist-settings .nostalgist-key-binding {
+#arcade-settings .arcade-key-binding {
 	min-width: 120px;
 	font-family: monospace;
 }
 
-#nostalgist-settings .nostalgist-key-binding.capturing {
+#arcade-settings .arcade-key-binding.capturing {
 	border-color: var(--color-primary-element);
 	font-family: inherit;
 	font-style: italic;
 }
 
-#nostalgist-settings .nostalgist-key-binding.shadowed {
+#arcade-settings .arcade-key-binding.shadowed {
 	border-color: var(--color-warning, #e9a13b);
 	text-decoration: line-through;
 }
 
-#nostalgist-settings details.nostalgist-section > summary {
+#arcade-settings details.arcade-section > summary {
 	font-size: 1.1em;
 	font-weight: bold;
 	padding: 10px 0;

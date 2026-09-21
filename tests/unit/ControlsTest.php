@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Controls;
+use OCA\Arcade\Controls;
 use PHPUnit\Framework\TestCase;
 
 class ControlsTest extends TestCase {

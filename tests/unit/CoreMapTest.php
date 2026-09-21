@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\CoreMap;
+use OCA\Arcade\CoreMap;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

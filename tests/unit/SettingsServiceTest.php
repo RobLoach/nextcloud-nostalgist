@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Service\SettingsService;
+use OCA\Arcade\Service\SettingsService;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use PHPUnit\Framework\TestCase;

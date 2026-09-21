@@ -12,8 +12,8 @@ export const AUTO_SLOT = 0
  */
 export function stateUrl(route, romPath, slot = null) {
 	return slot === null
-		? generateUrl(`/apps/nostalgist${route}?file={file}`, { file: romPath })
-		: generateUrl(`/apps/nostalgist${route}?file={file}&slot={slot}`, { file: romPath, slot })
+		? generateUrl(`/apps/arcade${route}?file={file}`, { file: romPath })
+		: generateUrl(`/apps/arcade${route}?file={file}&slot={slot}`, { file: romPath, slot })
 }
 
 /**

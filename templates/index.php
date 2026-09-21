@@ -1,13 +1,13 @@
 <?php
-style('nostalgist', 'css');
-style('nostalgist', 'player');
-script('nostalgist', 'main');
+style('arcade', 'css');
+style('arcade', 'player');
+script('arcade', 'main');
 ?>
 
 <div id="app-content">
-	<div class="nostalgist">
+	<div class="arcade">
 		<canvas></canvas>
-		<div class="nostalgist-message hidden"></div>
-		<div class="nostalgist-library hidden"></div>
+		<div class="arcade-message hidden"></div>
+		<div class="arcade-library hidden"></div>
 	</div>
 </div>

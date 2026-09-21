@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Listener;
+namespace OCA\Arcade\Listener;
 
-use OCA\Nostalgist\CoreMap;
-use OCA\Nostalgist\Service\StateService;
+use OCA\Arcade\CoreMap;
+use OCA\Arcade\Service\StateService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Files\Events\Node\NodeDeletedEvent;

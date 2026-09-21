@@ -1,8 +1,8 @@
 /* The player overlay: the control bar and its panels. Loaded on the
-   Nostalgist page and, through the listeners, inside the Files app. */
+   Arcade page and, through the listeners, inside the Files app. */
 
-.nostalgist-player-container { position: relative; }
-.nostalgist-toolbar {
+.arcade-player-container { position: relative; }
+.arcade-toolbar {
 	position: absolute;
 	bottom: 8px;
 	left: 50%;
@@ -17,9 +17,9 @@
 	opacity: 0.4;
 	transition: opacity 0.2s;
 }
-.nostalgist-toolbar:hover,
-.nostalgist-toolbar:focus-within { opacity: 1; }
-.nostalgist-toolbar button {
+.arcade-toolbar:hover,
+.arcade-toolbar:focus-within { opacity: 1; }
+.arcade-toolbar button {
 	background-color: transparent;
 	border: none;
 	min-height: 34px;
@@ -32,11 +32,11 @@
 	align-items: center;
 	justify-content: center;
 }
-.nostalgist-toolbar button:hover { background-color: rgba(255, 255, 255, 0.2); }
-.nostalgist-toolbar button.active { background-color: rgba(255, 255, 255, 0.35); }
-.nostalgist-toolbar svg { width: 20px; height: 20px; fill: #fff; }
-.nostalgist-toolbar-status { color: #fff; font-size: 12px; margin-inline-start: 6px; white-space: nowrap; }
-.nostalgist-states {
+.arcade-toolbar button:hover { background-color: rgba(255, 255, 255, 0.2); }
+.arcade-toolbar button.active { background-color: rgba(255, 255, 255, 0.35); }
+.arcade-toolbar svg { width: 20px; height: 20px; fill: #fff; }
+.arcade-toolbar-status { color: #fff; font-size: 12px; margin-inline-start: 6px; white-space: nowrap; }
+.arcade-states {
 	position: absolute;
 	bottom: 56px;
 	left: 50%;
@@ -50,15 +50,15 @@
 	overflow-y: auto;
 	min-width: 320px;
 }
-.nostalgist-states.hidden { display: none; }
-.nostalgist-states h3 { color: #fff; margin: 0 0 8px 0; font-size: 14px; }
-.nostalgist-states-slot {
+.arcade-states.hidden { display: none; }
+.arcade-states h3 { color: #fff; margin: 0 0 8px 0; font-size: 14px; }
+.arcade-states-slot {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	padding: 4px 0;
 }
-.nostalgist-states-thumbnail {
+.arcade-states-thumbnail {
 	width: 64px;
 	height: 48px;
 	object-fit: cover;
@@ -66,12 +66,12 @@
 	background-color: rgba(255, 255, 255, 0.1);
 	flex-shrink: 0;
 }
-.nostalgist-states-label {
+.arcade-states-label {
 	flex: 1;
 	font-size: 12px;
 	line-height: 1.3;
 }
-.nostalgist-states-slot button {
+.arcade-states-slot button {
 	background-color: rgba(255, 255, 255, 0.15);
 	border: none;
 	border-radius: 6px;
@@ -82,9 +82,9 @@
 	min-height: 0;
 	cursor: pointer;
 }
-.nostalgist-states-slot button:hover:not(:disabled) { background-color: rgba(255, 255, 255, 0.3); }
-.nostalgist-states-slot button:disabled { opacity: 0.4; cursor: default; }
-.nostalgist-resume {
+.arcade-states-slot button:hover:not(:disabled) { background-color: rgba(255, 255, 255, 0.3); }
+.arcade-states-slot button:disabled { opacity: 0.4; cursor: default; }
+.arcade-resume {
 	position: absolute;
 	top: 16px;
 	left: 50%;
@@ -99,7 +99,7 @@
 	color: #fff;
 	font-size: 13px;
 }
-.nostalgist-resume button {
+.arcade-resume button {
 	background-color: rgba(255, 255, 255, 0.15);
 	border: none;
 	border-radius: 6px;
@@ -110,9 +110,9 @@
 	min-height: 0;
 	cursor: pointer;
 }
-.nostalgist-resume button:hover { background-color: rgba(255, 255, 255, 0.3); }
-.nostalgist-resume button.primary-action { background-color: rgba(255, 255, 255, 0.3); font-weight: bold; }
-.nostalgist-gallery {
+.arcade-resume button:hover { background-color: rgba(255, 255, 255, 0.3); }
+.arcade-resume button.primary-action { background-color: rgba(255, 255, 255, 0.3); font-weight: bold; }
+.arcade-gallery {
 	position: absolute;
 	bottom: 56px;
 	left: 50%;
@@ -127,15 +127,15 @@
 	overflow-y: auto;
 	min-width: 320px;
 }
-.nostalgist-gallery.hidden { display: none; }
-.nostalgist-gallery h3 { color: #fff; margin: 0 0 8px 0; font-size: 14px; }
-.nostalgist-gallery-grid {
+.arcade-gallery.hidden { display: none; }
+.arcade-gallery h3 { color: #fff; margin: 0 0 8px 0; font-size: 14px; }
+.arcade-gallery-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 	gap: 8px;
 }
-.nostalgist-gallery-item { position: relative; }
-.nostalgist-gallery-item img {
+.arcade-gallery-item { position: relative; }
+.arcade-gallery-item img {
 	width: 100%;
 	aspect-ratio: 4 / 3;
 	object-fit: cover;
@@ -143,12 +143,12 @@
 	background-color: rgba(255, 255, 255, 0.1);
 	display: block;
 }
-.nostalgist-gallery-item figcaption {
+.arcade-gallery-item figcaption {
 	font-size: 11px;
 	color: rgba(255, 255, 255, 0.7);
 	margin-top: 2px;
 }
-.nostalgist-gallery-item button {
+.arcade-gallery-item button {
 	position: absolute;
 	top: 4px;
 	inset-inline-end: 4px;
@@ -163,7 +163,7 @@
 	opacity: 0;
 	transition: opacity 0.2s;
 }
-.nostalgist-gallery-item:hover button,
-.nostalgist-gallery-item button:focus-visible { opacity: 1; }
-.nostalgist-gallery-item button svg { width: 16px; height: 16px; fill: #fff; }
-.nostalgist-gallery-empty { font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+.arcade-gallery-item:hover button,
+.arcade-gallery-item button:focus-visible { opacity: 1; }
+.arcade-gallery-item button svg { width: 16px; height: 16px; fill: #fff; }
+.arcade-gallery-empty { font-size: 12px; color: rgba(255, 255, 255, 0.7); }

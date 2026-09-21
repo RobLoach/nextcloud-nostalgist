@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Service;
+namespace OCA\Arcade\Service;
 
-use OCA\Nostalgist\CoreMap;
+use OCA\Arcade\CoreMap;
 use OCP\Files\Folder;
 use OCP\Files\Node;
 

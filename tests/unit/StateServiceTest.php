@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Service\SettingsService;
-use OCA\Nostalgist\Service\StateService;
+use OCA\Arcade\Service\SettingsService;
+use OCA\Arcade\Service\StateService;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\File;
 use OCP\Files\Folder;

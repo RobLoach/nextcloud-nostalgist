@@ -1,5 +1,5 @@
 {
-    "name": "robloach/nextcloud-nostalgist",
+    "name": "robloach/nextcloud-arcade",
     "description": "Run emulators directly from NextCloud.",
     "license": "AGPL-3.0-or-later",
     "authors": [
@@ -11,7 +11,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "OCA\\Nostalgist\\": "lib/"
+            "OCA\\Arcade\\": "lib/"
         }
     },
     "scripts": {
@@ -46,7 +46,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "OCA\\Nostalgist\\Tests\\": "tests/",
+            "OCA\\Arcade\\Tests\\": "tests/",
             "OCP\\": "vendor/nextcloud/ocp/OCP/"
         }
     }

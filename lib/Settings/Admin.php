@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Settings;
+namespace OCA\Arcade\Settings;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\CoreMap;
-use OCA\Nostalgist\CoreOptions;
-use OCA\Nostalgist\Service\SettingsService;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\CoreMap;
+use OCA\Arcade\CoreOptions;
+use OCA\Arcade\Service\SettingsService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 use OCP\Util;
@@ -23,7 +23,7 @@ class Admin implements ISettings {
 	}
 
 	public function getForm(): TemplateResponse {
-		Util::addScript(Application::APP_ID, 'nostalgist-settings');
+		Util::addScript(Application::APP_ID, 'arcade-settings');
 		Util::addStyle(Application::APP_ID, 'settings');
 
 		return new TemplateResponse(Application::APP_ID, 'admin', [

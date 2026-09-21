@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Listener\CleanupListener;
-use OCA\Nostalgist\Service\StateService;
+use OCA\Arcade\Listener\CleanupListener;
+use OCA\Arcade\Service\StateService;
 use OCP\EventDispatcher\Event;
 use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Files\File;

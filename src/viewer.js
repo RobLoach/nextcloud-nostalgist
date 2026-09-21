@@ -12,8 +12,8 @@ import { isPlayable, romMimes } from './systems.js'
  * the Viewer's own Vue instance without needing a template compiler, and so
  * the Viewer can apply its own mixin to it.
  */
-const NostalgistViewer = {
-	name: 'NostalgistViewer',
+const ArcadeViewer = {
+	name: 'ArcadeViewer',
 
 	props: {
 		active: {
@@ -79,7 +79,7 @@ const NostalgistViewer = {
 			this.started = true
 			try {
 				if (!isPlayable(this.basename, this.mime)) {
-					throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: this.basename }))
+					throw new Error(t('arcade', 'Unsupported ROM type: {file}', { file: this.basename }))
 				}
 				const { startSession } = await import(/* webpackChunkName: 'player' */ './session.js')
 				this.stopSession = await startSession({
@@ -90,8 +90,8 @@ const NostalgistViewer = {
 					source: this.source,
 				})
 			} catch (error) {
-				console.error('Nostalgist failed to start', error)
-				this.errorMessage = t('nostalgist', 'Could not start the emulator: {error}', { error: error.message })
+				console.error('Arcade failed to start', error)
+				this.errorMessage = t('arcade', 'Could not start the emulator: {error}', { error: error.message })
 			}
 			this.$emit('update:loaded', true)
 		},
@@ -110,7 +110,7 @@ const NostalgistViewer = {
 				},
 			})
 		return h('div', {
-			class: 'nostalgist-viewer',
+			class: 'arcade-viewer',
 			style: {
 				width: '100%',
 				height: '100%',
@@ -127,10 +127,10 @@ function register() {
 		return false
 	}
 	window.OCA.Viewer.registerHandler({
-		id: 'nostalgist',
+		id: 'arcade',
 		group: null,
 		mimes: romMimes(),
-		component: NostalgistViewer,
+		component: ArcadeViewer,
 	})
 	return true
 }

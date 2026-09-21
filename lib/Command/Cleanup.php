@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Command;
+namespace OCA\Arcade\Command;
 
-use OCA\Nostalgist\Service\StateService;
+use OCA\Arcade\Service\StateService;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IUserManager;
@@ -33,7 +33,7 @@ class Cleanup extends Command {
 
 	protected function configure(): void {
 		$this
-			->setName('nostalgist:cleanup')
+			->setName('arcade:cleanup')
 			->setDescription('Remove save states of games and users that no longer exist')
 			->addOption('dry-run', null, InputOption::VALUE_NONE, 'Only report what would be removed');
 	}

@@ -3,7 +3,7 @@ import { davUrl, launchRom, recordRecent, startSramSync } from './player.js'
 import { systemForFolderPath } from './systems.js'
 import { attachToolbar } from './toolbar.js'
 
-const settings = loadState('nostalgist', 'settings', {})
+const settings = loadState('arcade', 'settings', {})
 
 /**
  * Start a game and everything that goes with it: the save data, the
@@ -49,7 +49,7 @@ export async function startSession({ canvas, container, filename, basename, sour
 		try {
 			instance.exit()
 		} catch (error) {
-			console.error('Nostalgist failed to exit', error)
+			console.error('Arcade failed to exit', error)
 		}
 	}
 }

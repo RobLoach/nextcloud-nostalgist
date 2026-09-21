@@ -3,7 +3,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { keyLabel, retroarchKey } from './keys.js'
 
-const container = document.getElementById('nostalgist-settings')
+const container = document.getElementById('arcade-settings')
 
 /**
  * @param {HTMLInputElement} input the folder input to fill
@@ -15,7 +15,7 @@ async function pickFolder(input) {
 		import(/* webpackChunkName: 'picker' */ '@nextcloud/dialogs'),
 		import(/* webpackChunkName: 'picker' */ '@nextcloud/dialogs/style.css'),
 	])
-	const picker = getFilePickerBuilder(t('nostalgist', 'Choose a folder'))
+	const picker = getFilePickerBuilder(t('arcade', 'Choose a folder'))
 		.setMultiSelect(false)
 		.setMimeTypeFilter(['httpd/unix-directory'])
 		.allowDirectories(true)
@@ -33,16 +33,16 @@ async function pickFolder(input) {
 }
 
 async function save() {
-	const status = document.getElementById('nostalgist-save-status')
+	const status = document.getElementById('arcade-save-status')
 	const settings = {}
-	container.querySelectorAll('.nostalgist-setting').forEach((element) => {
+	container.querySelectorAll('.arcade-setting').forEach((element) => {
 		settings[element.dataset.setting] = element.type === 'checkbox'
 			? element.checked
 			: element.value
 	})
 	for (const kind of ['buttons', 'hotkeys']) {
 		const bindings = {}
-		container.querySelectorAll(`.nostalgist-key-binding[data-kind="${kind}"]`)
+		container.querySelectorAll(`.arcade-key-binding[data-kind="${kind}"]`)
 			.forEach((element) => {
 				bindings[element.dataset.binding] = element.dataset.code
 			})
@@ -51,22 +51,22 @@ async function save() {
 		}
 	}
 	settings.thumbnail_types = {}
-	container.querySelectorAll('.nostalgist-thumbnail-type').forEach((element) => {
+	container.querySelectorAll('.arcade-thumbnail-type').forEach((element) => {
 		settings.thumbnail_types[element.dataset.system] = element.value
 	})
 	settings.core_options = {}
-	container.querySelectorAll('.nostalgist-core-option').forEach((element) => {
+	container.querySelectorAll('.arcade-core-option').forEach((element) => {
 		if (element.value !== '') {
 			settings.core_options[element.dataset.core] ??= {}
 			settings.core_options[element.dataset.core][element.dataset.option] = element.value
 		}
 	})
 
-	status.textContent = t('nostalgist', 'Saving …')
+	status.textContent = t('arcade', 'Saving …')
 	try {
 		const url = container.dataset.scope === 'admin'
-			? '/apps/nostalgist/settings/admin'
-			: '/apps/nostalgist/settings'
+			? '/apps/arcade/settings/admin'
+			: '/apps/arcade/settings'
 		const response = await fetch(generateUrl(url), {
 			method: 'POST',
 			headers: {
@@ -78,10 +78,10 @@ async function save() {
 		if (!response.ok) {
 			throw new Error(`${response.status} ${response.statusText}`)
 		}
-		status.textContent = t('nostalgist', 'Saved')
+		status.textContent = t('arcade', 'Saved')
 	} catch (error) {
-		console.error('Could not save Nostalgist settings', error)
-		status.textContent = t('nostalgist', 'Could not save the settings')
+		console.error('Could not save Arcade settings', error)
+		status.textContent = t('arcade', 'Could not save the settings')
 	}
 	setTimeout(() => {
 		status.textContent = ''
@@ -94,7 +94,7 @@ async function save() {
  * @param {string} core the core to reset
  */
 function resetCore(core) {
-	container.querySelectorAll(`.nostalgist-core-option[data-core="${CSS.escape(core)}"]`)
+	container.querySelectorAll(`.arcade-core-option[data-core="${CSS.escape(core)}"]`)
 		.forEach((element) => {
 			element.value = ''
 		})
@@ -121,7 +121,7 @@ function showRangeValue(range) {
 function captureKey(element) {
 	const previous = element.dataset.code
 	element.classList.add('capturing')
-	element.textContent = t('nostalgist', 'Press a key …')
+	element.textContent = t('arcade', 'Press a key …')
 
 	const done = (code) => {
 		document.removeEventListener('keydown', onKey, true)
@@ -143,7 +143,7 @@ function captureKey(element) {
 		// name for the key; the player itself can take any of them.
 		if (element.dataset.kind === 'buttons' && retroarchKey(event.code) === null) {
 			done(previous)
-			element.title = t('nostalgist', 'The emulator has no name for that key, try another one')
+			element.title = t('arcade', 'The emulator has no name for that key, try another one')
 			return
 		}
 		element.title = ''
@@ -165,14 +165,14 @@ function showBinding(element) {
  */
 function showShadowedHotkeys() {
 	const taken = new Set(
-		[...container.querySelectorAll('.nostalgist-key-binding[data-kind="buttons"]')]
+		[...container.querySelectorAll('.arcade-key-binding[data-kind="buttons"]')]
 			.map((element) => element.dataset.code),
 	)
-	container.querySelectorAll('.nostalgist-key-binding[data-kind="hotkeys"]').forEach((element) => {
+	container.querySelectorAll('.arcade-key-binding[data-kind="hotkeys"]').forEach((element) => {
 		const shadowed = taken.has(element.dataset.code)
 		element.classList.toggle('shadowed', shadowed)
 		element.title = shadowed
-			? t('nostalgist', 'This key works a button of the controller, so the game gets it instead')
+			? t('arcade', 'This key works a button of the controller, so the game gets it instead')
 			: ''
 	})
 }
@@ -182,24 +182,24 @@ function showShadowedHotkeys() {
  * as a background job, so this only starts it and reports what it says.
  */
 async function fetchThumbnails() {
-	const button = document.getElementById('nostalgist-fetch-thumbnails')
-	const status = document.getElementById('nostalgist-fetch-status')
+	const button = document.getElementById('arcade-fetch-thumbnails')
+	const status = document.getElementById('arcade-fetch-status')
 	button.disabled = true
-	status.textContent = t('nostalgist', 'Starting …')
+	status.textContent = t('arcade', 'Starting …')
 	try {
 		// Saving first, so a folder just typed in is the one used.
 		await save()
-		const response = await fetch(generateUrl('/apps/nostalgist/thumbnails/fetch'), {
+		const response = await fetch(generateUrl('/apps/arcade/thumbnails/fetch'), {
 			method: 'POST',
 			headers: { requesttoken: getRequestToken() ?? '' },
 		})
 		if (!response.ok) {
 			throw new Error(`${response.status} ${response.statusText}`)
 		}
-		status.textContent = t('nostalgist', 'Looking for box art in the background. It carries on without this page.')
+		status.textContent = t('arcade', 'Looking for box art in the background. It carries on without this page.')
 	} catch (error) {
 		console.error('Could not look for box art', error)
-		status.textContent = t('nostalgist', 'Could not start looking. A thumbnails folder has to be set first.')
+		status.textContent = t('arcade', 'Could not start looking. A thumbnails folder has to be set first.')
 	}
 	button.disabled = false
 }
@@ -208,18 +208,18 @@ async function fetchThumbnails() {
  * Show what the background job last had to say for itself.
  */
 async function showFetchStatus() {
-	const status = document.getElementById('nostalgist-fetch-status')
+	const status = document.getElementById('arcade-fetch-status')
 	if (status === null) {
 		return
 	}
 	try {
-		const response = await fetch(generateUrl('/apps/nostalgist/thumbnails/fetch'), {
+		const response = await fetch(generateUrl('/apps/arcade/thumbnails/fetch'), {
 			headers: { requesttoken: getRequestToken() ?? '' },
 		})
 		const result = await response.json()
 		if (result.message) {
 			status.textContent = result.queued
-				? t('nostalgist', '{message}, still going', result)
+				? t('arcade', '{message}, still going', result)
 				: result.message
 		}
 	} catch (error) {
@@ -228,27 +228,27 @@ async function showFetchStatus() {
 }
 
 if (container !== null) {
-	document.getElementById('nostalgist-save').addEventListener('click', save)
-	document.getElementById('nostalgist-fetch-thumbnails')?.addEventListener('click', fetchThumbnails)
-	container.querySelectorAll('.nostalgist-key-binding').forEach((element) => {
+	document.getElementById('arcade-save').addEventListener('click', save)
+	document.getElementById('arcade-fetch-thumbnails')?.addEventListener('click', fetchThumbnails)
+	container.querySelectorAll('.arcade-key-binding').forEach((element) => {
 		showBinding(element)
 		element.addEventListener('click', () => captureKey(element))
 	})
 	showShadowedHotkeys()
-	document.getElementById('nostalgist-keys-reset')?.addEventListener('click', () => {
-		container.querySelectorAll('.nostalgist-key-binding').forEach((element) => {
+	document.getElementById('arcade-keys-reset')?.addEventListener('click', () => {
+		container.querySelectorAll('.arcade-key-binding').forEach((element) => {
 			element.dataset.code = element.dataset.default ?? element.dataset.code
 		})
 		save()
 	})
 	showFetchStatus()
-	container.querySelectorAll('.nostalgist-range').forEach((range) => {
+	container.querySelectorAll('.arcade-range').forEach((range) => {
 		range.addEventListener('input', () => showRangeValue(range))
 	})
-	container.querySelectorAll('.nostalgist-core-reset').forEach((button) => {
+	container.querySelectorAll('.arcade-core-reset').forEach((button) => {
 		button.addEventListener('click', () => resetCore(button.dataset.core))
 	})
-	container.querySelectorAll('.nostalgist-folder-picker').forEach((button) => {
+	container.querySelectorAll('.arcade-folder-picker').forEach((button) => {
 		button.addEventListener('click', () => {
 			pickFolder(document.getElementById(button.dataset.target))
 		})

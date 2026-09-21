@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Service\ThumbnailService;
+use OCA\Arcade\Service\ThumbnailService;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use PHPUnit\Framework\Attributes\DataProvider;

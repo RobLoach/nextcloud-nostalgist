@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist;
+namespace OCA\Arcade;
 
 /**
  * Maps retro console systems to their file extensions, mimetypes and

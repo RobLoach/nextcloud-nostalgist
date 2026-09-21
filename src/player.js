@@ -49,7 +49,7 @@ async function resolveRom(blob, romName, systemHint) {
 		const [name, data] = entries.reduce((a, b) => (a[1].length >= b[1].length ? a : b))
 		return { rom: new File([data], name.split('/').pop()), system: systemHint }
 	}
-	throw new Error(t('nostalgist', 'No supported ROM found in the archive'))
+	throw new Error(t('arcade', 'No supported ROM found in the archive'))
 }
 
 /**
@@ -62,7 +62,7 @@ async function resolveRom(blob, romName, systemHint) {
  * @param {object} options.settings the user settings
  * @param {?object} [options.systemHint] system detected from the game's folder
  * @param {string} [options.romPath] path identifying the game, enables SRAM restore
- * @return {Promise<Nostalgist>} the running Nostalgist instance
+ * @return {Promise<Nostalgist>} the running emulator
  */
 export async function launchRom({ element, romUrl, romName, settings = {}, systemHint = null, romPath = '' }) {
 	const canSave = (settings.saves_folder ?? '') !== ''
@@ -81,7 +81,7 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 	}
 	const { rom, system } = await resolveRom(await response.blob(), romName, systemHint)
 	if (system === null) {
-		throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: romName }))
+		throw new Error(t('arcade', 'Unsupported ROM type: {file}', { file: romName }))
 	}
 	const sram = canSave ? await fetchSram(romPath) : null
 	const bios = await fetchBios(system.id, settings.system_folder ?? '')
@@ -168,7 +168,7 @@ function prefetchCore(core) {
  */
 function coreUrl(file) {
 	return new URL(
-		generateFilePath('nostalgist', 'img', `cores/${file}`),
+		generateFilePath('arcade', 'img', `cores/${file}`),
 		window.location.origin,
 	).href
 }
@@ -206,7 +206,7 @@ export function recordRecent(romPath) {
  * @param {number} seconds how long it was played, 0 when starting
  */
 function report(romPath, seconds) {
-	fetch(generateUrl('/apps/nostalgist/recent?file={file}&seconds={seconds}', {
+	fetch(generateUrl('/apps/arcade/recent?file={file}&seconds={seconds}', {
 		file: romPath,
 		seconds,
 	}), {
@@ -223,7 +223,7 @@ function report(romPath, seconds) {
  * @return {string} the SRAM endpoint URL
  */
 function sramUrl(romPath) {
-	return generateUrl('/apps/nostalgist/sram?file={file}', { file: romPath })
+	return generateUrl('/apps/arcade/sram?file={file}', { file: romPath })
 }
 
 /**

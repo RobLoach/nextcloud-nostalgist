@@ -4,11 +4,11 @@ import { generateUrl } from '@nextcloud/router'
 import { renderLibrary } from './library.js'
 import { isPlayable } from './systems.js'
 
-const file = loadState('nostalgist', 'file', '')
+const file = loadState('arcade', 'file', '')
 
-const canvas = document.querySelector('.nostalgist canvas')
-const message = document.querySelector('.nostalgist .nostalgist-message')
-const library = document.querySelector('.nostalgist .nostalgist-library')
+const canvas = document.querySelector('.arcade canvas')
+const message = document.querySelector('.arcade .arcade-message')
+const library = document.querySelector('.arcade .arcade-library')
 
 /**
  * @param {string} text message to show instead of the player
@@ -36,22 +36,22 @@ async function main() {
 	}
 	const basename = file.split('/').pop()
 	if (!isPlayable(basename)) {
-		showMessage(t('nostalgist', 'Unsupported ROM type: {file}', { file: basename }))
+		showMessage(t('arcade', 'Unsupported ROM type: {file}', { file: basename }))
 		return
 	}
-	document.title = `${basename.replace(/\.[^.]+$/, '')} - Nostalgist`
+	document.title = `${basename.replace(/\.[^.]+$/, '')} - Arcade`
 	try {
 		const { startSession } = await import('./session.js')
 		await startSession({
 			canvas,
-			container: document.querySelector('.nostalgist'),
+			container: document.querySelector('.arcade'),
 			filename: file,
 			basename,
-			closeUrl: generateUrl('/apps/nostalgist/'),
+			closeUrl: generateUrl('/apps/arcade/'),
 		})
 	} catch (error) {
-		console.error('Nostalgist failed to start', error)
-		showMessage(t('nostalgist', 'Could not start the emulator: {error}', { error: error.message }))
+		console.error('Arcade failed to start', error)
+		showMessage(t('arcade', 'Could not start the emulator: {error}', { error: error.message }))
 	}
 }
 

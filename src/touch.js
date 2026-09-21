@@ -1,6 +1,6 @@
-const STYLE_ID = 'nostalgist-touch-style'
+const STYLE_ID = 'arcade-touch-style'
 const STYLE = `
-.nostalgist-touch {
+.arcade-touch {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
@@ -8,9 +8,9 @@ const STYLE = `
 	user-select: none;
 	-webkit-user-select: none;
 }
-.nostalgist-touch.hidden { display: none; }
-.nostalgist-touch * { touch-action: none; }
-.nostalgist-touch-dpad {
+.arcade-touch.hidden { display: none; }
+.arcade-touch * { touch-action: none; }
+.arcade-touch-dpad {
 	position: absolute;
 	bottom: 70px;
 	left: 20px;
@@ -21,7 +21,7 @@ const STYLE = `
 	border: 2px solid rgba(255, 255, 255, 0.25);
 	pointer-events: auto;
 }
-.nostalgist-touch-dpad::before {
+.arcade-touch-dpad::before {
 	content: '';
 	position: absolute;
 	top: 50%;
@@ -32,7 +32,7 @@ const STYLE = `
 	border-radius: 50%;
 	background-color: rgba(255, 255, 255, 0.2);
 }
-.nostalgist-touch-buttons {
+.arcade-touch-buttons {
 	position: absolute;
 	bottom: 70px;
 	right: 20px;
@@ -40,7 +40,7 @@ const STYLE = `
 	height: 150px;
 	pointer-events: none;
 }
-.nostalgist-touch-button {
+.arcade-touch-button {
 	position: absolute;
 	display: flex;
 	align-items: center;
@@ -53,25 +53,25 @@ const STYLE = `
 	font-size: 16px;
 	pointer-events: auto;
 }
-.nostalgist-touch-button.pressed { background-color: rgba(255, 255, 255, 0.45); }
-.nostalgist-touch-button.face {
+.arcade-touch-button.pressed { background-color: rgba(255, 255, 255, 0.45); }
+.arcade-touch-button.face {
 	width: 52px;
 	height: 52px;
 }
-.nostalgist-touch-buttons .face-a { right: 0; top: 50%; transform: translateY(-50%); }
-.nostalgist-touch-buttons .face-b { bottom: 0; left: 50%; transform: translateX(-50%); }
-.nostalgist-touch-buttons .face-x { top: 0; left: 50%; transform: translateX(-50%); }
-.nostalgist-touch-buttons .face-y { left: 0; top: 50%; transform: translateY(-50%); }
-.nostalgist-touch-button.pill {
+.arcade-touch-buttons .face-a { right: 0; top: 50%; transform: translateY(-50%); }
+.arcade-touch-buttons .face-b { bottom: 0; left: 50%; transform: translateX(-50%); }
+.arcade-touch-buttons .face-x { top: 0; left: 50%; transform: translateX(-50%); }
+.arcade-touch-buttons .face-y { left: 0; top: 50%; transform: translateY(-50%); }
+.arcade-touch-button.pill {
 	border-radius: 16px;
 	font-size: 11px;
 	width: 64px;
 	height: 28px;
 }
-.nostalgist-touch-select { position: absolute; bottom: 24px; left: 50%; transform: translateX(-108%); }
-.nostalgist-touch-start { position: absolute; bottom: 24px; left: 50%; transform: translateX(8%); }
-.nostalgist-touch-l { position: absolute; top: 16px; left: 20px; }
-.nostalgist-touch-r { position: absolute; top: 16px; right: 20px; }
+.arcade-touch-select { position: absolute; bottom: 24px; left: 50%; transform: translateX(-108%); }
+.arcade-touch-start { position: absolute; bottom: 24px; left: 50%; transform: translateX(8%); }
+.arcade-touch-l { position: absolute; top: 16px; left: 20px; }
+.arcade-touch-r { position: absolute; top: 16px; right: 20px; }
 `
 
 /**
@@ -104,12 +104,12 @@ export function attachTouchControls({ container, instance }) {
 	ensureStyle()
 
 	const overlay = document.createElement('div')
-	overlay.className = 'nostalgist-touch'
+	overlay.className = 'arcade-touch'
 
 	// The D-pad is a single zone: the touch position relative to the center
 	// decides the pressed directions, so diagonals work with one thumb.
 	const dpad = document.createElement('div')
-	dpad.className = 'nostalgist-touch-dpad'
+	dpad.className = 'arcade-touch-dpad'
 	let pressedDirections = new Set()
 	const releaseDirections = () => {
 		for (const direction of pressedDirections) {
@@ -165,7 +165,7 @@ export function attachTouchControls({ container, instance }) {
 
 	const button = (label, name, className) => {
 		const element = document.createElement('div')
-		element.className = `nostalgist-touch-button ${className}`
+		element.className = `arcade-touch-button ${className}`
 		element.textContent = label
 		element.addEventListener('touchstart', (event) => {
 			event.preventDefault()
@@ -183,17 +183,17 @@ export function attachTouchControls({ container, instance }) {
 	}
 
 	const faceButtons = document.createElement('div')
-	faceButtons.className = 'nostalgist-touch-buttons'
+	faceButtons.className = 'arcade-touch-buttons'
 	faceButtons.appendChild(button('A', 'a', 'face face-a'))
 	faceButtons.appendChild(button('B', 'b', 'face face-b'))
 	faceButtons.appendChild(button('X', 'x', 'face face-x'))
 	faceButtons.appendChild(button('Y', 'y', 'face face-y'))
 	overlay.appendChild(faceButtons)
 
-	overlay.appendChild(button('SELECT', 'select', 'pill nostalgist-touch-select'))
-	overlay.appendChild(button('START', 'start', 'pill nostalgist-touch-start'))
-	overlay.appendChild(button('L', 'l', 'pill nostalgist-touch-l'))
-	overlay.appendChild(button('R', 'r', 'pill nostalgist-touch-r'))
+	overlay.appendChild(button('SELECT', 'select', 'pill arcade-touch-select'))
+	overlay.appendChild(button('START', 'start', 'pill arcade-touch-start'))
+	overlay.appendChild(button('L', 'l', 'pill arcade-touch-l'))
+	overlay.appendChild(button('R', 'r', 'pill arcade-touch-r'))
 
 	container.appendChild(overlay)
 

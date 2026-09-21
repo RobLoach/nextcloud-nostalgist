@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Listener;
+namespace OCA\Arcade\Listener;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\CoreMap;
-use OCA\Nostalgist\Service\SettingsService;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\CoreMap;
+use OCA\Arcade\Service\SettingsService;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
@@ -15,7 +15,7 @@ use OCP\IUserSession;
 use OCP\Util;
 
 /**
- * Registers the Nostalgist player as a Viewer handler for ROM mimetypes.
+ * Registers the Arcade player as a Viewer handler for ROM mimetypes.
  *
  * @template-implements IEventListener<LoadViewer>
  */
@@ -41,6 +41,6 @@ class LoadViewerListener implements IEventListener {
 		);
 		Util::addStyle(Application::APP_ID, 'player');
 		// Load after the viewer script so OCA.Viewer is available.
-		Util::addScript(Application::APP_ID, 'nostalgist-viewer', 'viewer');
+		Util::addScript(Application::APP_ID, 'arcade-viewer', 'viewer');
 	}
 }

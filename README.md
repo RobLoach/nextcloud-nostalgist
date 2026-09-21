@@ -1,11 +1,11 @@
-# NextCloud Nostalgist
+# NextCloud Arcade
 
 Play retro console games directly in NextCloud, through
 [Nostalgist.js](https://nostalgist.js.org/) and the RetroArch libretro cores
 compiled to WebAssembly. Nothing is emulated on the server: ROMs are streamed
 from your files and run in the browser.
 
-[![Screenshot of NextCloud Nostalgist](img/screenshot-thumbnail.jpg)](img/screenshot.png)
+[![Screenshot of NextCloud Arcade](img/screenshot-thumbnail.jpg)](img/screenshot.png)
 
 ## Features
 
@@ -29,10 +29,10 @@ from your files and run in the browser.
 
 	```sh
 	cd /path/to/nextcloud/apps
-	git clone https://github.com/robloach/nextcloud-nostalgist.git nostalgist
+	git clone https://github.com/robloach/nextcloud-arcade.git arcade
 	```
 
-2. Enable the Nostalgist app
+2. Enable the Arcade app
 
 Updating is `git pull` in that folder: the built JavaScript and the emulator
 cores are committed, so nothing needs to be built on the server.
@@ -45,7 +45,7 @@ Open a ROM (for example a `.nes` file) and it starts playing in the file
 viewer, which is what the app registers itself with. ROMs are recognized by
 their mimetype, which the app teaches Nextcloud for every system it runs.
 
-Zipped ROMs are played from the Nostalgist page rather than from Files,
+Zipped ROMs are played from the Arcade page rather than from Files,
 since a `.zip` says nothing about what is in it. The system is then detected
 from the file inside the archive, or from the folder the game is stored in —
 short names and No-Intro platform names both work, so `Games/SNES/NHL 96.zip`
@@ -61,10 +61,10 @@ occ maintenance:repair
 occ maintenance:mimetype:update-db
 ```
 
-Until then they open from the Nostalgist page, which goes by the file
+Until then they open from the Arcade page, which goes by the file
 extension.
 
-### From the Nostalgist page
+### From the Arcade page
 
 The app's own page lists the games in your library folder (`/Games` by
 default). Three views are available and the choice is remembered:
@@ -131,7 +131,7 @@ no user to store them for.
 
 ### Settings
 
-Personal settings → Nostalgist:
+Personal settings → Arcade:
 
 | Setting | Default | Description |
 | --- | --- | --- |
@@ -158,7 +158,7 @@ the games that have none; it runs as a background job, so it carries on
 after the page is closed, and says how it went when the page is opened
 again.
 
-Administration settings → Nostalgist holds what is the same for everybody:
+Administration settings → Arcade holds what is the same for everybody:
 the folders new users start with, which each of them can still change, and
 the options of the emulator cores, which they cannot — an option of a core
 belongs to the core rather than to whoever is playing. Each system also
@@ -274,7 +274,7 @@ no configuration needed.
 On nginx, add the equivalent to the NextCloud server block:
 
 ```nginx
-location ~ ^/apps/nostalgist/img/cores/ {
+location ~ ^/apps/arcade/img/cores/ {
     types { application/wasm wasm; }
     add_header Cache-Control "public, max-age=604800";
     gzip on;
@@ -363,20 +363,20 @@ All of them are user-scoped and require a session.
 
 | Method | Route | Purpose |
 | --- | --- | --- |
-| GET | `/apps/nostalgist/` | The app page, `?file=` plays a game |
-| GET | `/apps/nostalgist/library` | Games: `offset`, `limit`, `sort`, `order`, `search`, `system`, `refresh` |
-| GET/POST | `/apps/nostalgist/settings` | Personal settings |
-| GET | `/apps/nostalgist/states` | Save state slots of a game |
-| GET/POST/DELETE | `/apps/nostalgist/state` | A save state slot |
-| GET/POST | `/apps/nostalgist/state/thumbnail` | The screenshot of a slot |
-| GET/POST | `/apps/nostalgist/sram` | The in-game battery save |
-| POST | `/apps/nostalgist/recent` | Remember a game as played, and for how long |
-| POST | `/apps/nostalgist/favorite` | Make a game a favorite, or stop |
-| GET/POST | `/apps/nostalgist/thumbnails/fetch` | Ask for missing box art, and how it went |
-| GET/DELETE | `/apps/nostalgist/screenshots` | The screenshots of a game |
+| GET | `/apps/arcade/` | The app page, `?file=` plays a game |
+| GET | `/apps/arcade/library` | Games: `offset`, `limit`, `sort`, `order`, `search`, `system`, `refresh` |
+| GET/POST | `/apps/arcade/settings` | Personal settings |
+| GET | `/apps/arcade/states` | Save state slots of a game |
+| GET/POST/DELETE | `/apps/arcade/state` | A save state slot |
+| GET/POST | `/apps/arcade/state/thumbnail` | The screenshot of a slot |
+| GET/POST | `/apps/arcade/sram` | The in-game battery save |
+| POST | `/apps/arcade/recent` | Remember a game as played, and for how long |
+| POST | `/apps/arcade/favorite` | Make a game a favorite, or stop |
+| GET/POST | `/apps/arcade/thumbnails/fetch` | Ask for missing box art, and how it went |
+| GET/DELETE | `/apps/arcade/screenshots` | The screenshots of a game |
 
 Save states and battery saves are removed along with the game they belong
-to, and with the user they belong to. `occ nostalgist:cleanup` sweeps up
+to, and with the user they belong to. `occ arcade:cleanup` sweeps up
 what event listeners cannot catch, such as a whole folder of games deleted
 in one go; `--dry-run` reports without removing. States written by versions before
 0.14 live in one flat folder instead of one per user; they are still read,

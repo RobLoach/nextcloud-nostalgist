@@ -11,7 +11,7 @@ import { shortNameForPath } from './systems.js'
 import { attachTouchControls, isTouchDevice } from './touch.js'
 
 /**
- * Attach a control bar for a running Nostalgist instance.
+ * Attach a control bar for a running emulator.
  *
  * @param {object} options options
  * @param {HTMLElement} options.container element to attach the toolbar to
@@ -23,13 +23,13 @@ import { attachTouchControls, isTouchDevice } from './touch.js'
  * @return {Function} detaches the toolbar again
  */
 export function attachToolbar({ container, instance, romPath, romName, settings = {}, closeUrl = '', onClose = null }) {
-	container.classList.add('nostalgist-player-container')
+	container.classList.add('arcade-player-container')
 
 	const toolbar = document.createElement('div')
-	toolbar.className = 'nostalgist-toolbar'
+	toolbar.className = 'arcade-toolbar'
 
 	const status = document.createElement('span')
-	status.className = 'nostalgist-toolbar-status'
+	status.className = 'arcade-toolbar-status'
 	let statusTimer = null
 	const flash = (text) => {
 		status.textContent = text
@@ -54,7 +54,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	}
 
 	let paused = false
-	const pauseButton = button(ICONS.pause, t('nostalgist', 'Pause'), (element) => {
+	const pauseButton = button(ICONS.pause, t('arcade', 'Pause'), (element) => {
 		paused = !paused
 		if (paused) {
 			instance.pause()
@@ -62,7 +62,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			instance.resume()
 		}
 		element.innerHTML = icon(paused ? ICONS.play : ICONS.pause)
-		element.title = paused ? t('nostalgist', 'Resume') : t('nostalgist', 'Pause')
+		element.title = paused ? t('arcade', 'Resume') : t('arcade', 'Pause')
 		element.setAttribute('aria-label', element.title)
 		element.classList.toggle('active', paused)
 	})
@@ -83,9 +83,9 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	}
 	document.addEventListener('visibilitychange', onVisibilityChange)
 
-	button(ICONS.restart, t('nostalgist', 'Restart'), () => {
+	button(ICONS.restart, t('arcade', 'Restart'), () => {
 		instance.restart()
-		flash(t('nostalgist', 'Restarted'))
+		flash(t('arcade', 'Restarted'))
 	})
 
 	// Saving needs a logged-in user and somewhere of their own to put it,
@@ -110,7 +110,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 				statesButton?.classList.remove('active')
 			},
 		})
-		statesButton = button(ICONS.save, t('nostalgist', 'Save states'), (element) => {
+		statesButton = button(ICONS.save, t('arcade', 'Save states'), (element) => {
 			const visible = !statesPanel.element.classList.contains('hidden')
 			statesPanel.element.classList.toggle('hidden', visible)
 			element.classList.toggle('active', !visible)
@@ -143,29 +143,29 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	let touchControls = null
 	if (isTouchDevice()) {
 		touchControls = attachTouchControls({ container, instance })
-		button(ICONS.gamepad, t('nostalgist', 'Touch controls'), (element) => {
+		button(ICONS.gamepad, t('arcade', 'Touch controls'), (element) => {
 			const hidden = touchControls.element.classList.toggle('hidden')
 			element.classList.toggle('active', !hidden)
 		}).classList.add('active')
 	}
 
-	button(ICONS.mute, t('nostalgist', 'Mute'), (element) => {
+	button(ICONS.mute, t('arcade', 'Mute'), (element) => {
 		instance.sendCommand('MUTE')
 		element.classList.toggle('active')
 	})
 
-	const fastForwardButton = button(ICONS.fastForward, t('nostalgist', 'Fast-forward'), (element) => {
+	const fastForwardButton = button(ICONS.fastForward, t('arcade', 'Fast-forward'), (element) => {
 		instance.sendCommand('FAST_FORWARD')
 		element.classList.toggle('active')
 	})
 
 	// RetroArch's built-in menu, with core options, control remapping, etc.
-	button(ICONS.menu, t('nostalgist', 'RetroArch menu'), (element) => {
+	button(ICONS.menu, t('arcade', 'RetroArch menu'), (element) => {
 		instance.sendCommand('MENU_TOGGLE')
 		element.classList.toggle('active')
 	})
 
-	const screenshotButton = button(ICONS.screenshot, t('nostalgist', 'Screenshot'), async () => {
+	const screenshotButton = button(ICONS.screenshot, t('arcade', 'Screenshot'), async () => {
 		try {
 			const blob = await instance.screenshot()
 			const stem = (romName || 'nostalgist').replace(/\.[^.]+$/, '')
@@ -174,7 +174,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 				// Under the system, so two games of the same name keep apart.
 				const system = shortNameForPath(romPath)
 				await saveScreenshot(system === '' ? folder : `${folder}/${system}`, stem, blob)
-				flash(t('nostalgist', 'Screenshot saved to {folder}', { folder }))
+				flash(t('arcade', 'Screenshot saved to {folder}', { folder }))
 				galleryPanel?.refresh()
 			} else {
 				const url = URL.createObjectURL(blob)
@@ -186,7 +186,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			}
 		} catch (error) {
 			console.error('Could not take a screenshot', error)
-			flash(t('nostalgist', 'Could not take a screenshot'))
+			flash(t('arcade', 'Could not take a screenshot'))
 		}
 	})
 
@@ -195,7 +195,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	let galleryButton = null
 	if (getCurrentUser() !== null && romPath && (settings.screenshots_folder ?? '') !== '') {
 		galleryPanel = createGalleryPanel({ romPath, flash })
-		galleryButton = button(ICONS.gallery, t('nostalgist', 'Screenshots'), (element) => {
+		galleryButton = button(ICONS.gallery, t('arcade', 'Screenshots'), (element) => {
 			const visible = !galleryPanel.element.classList.contains('hidden')
 			galleryPanel.element.classList.toggle('hidden', visible)
 			element.classList.toggle('active', !visible)
@@ -211,7 +211,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		})
 	}
 
-	const fullscreenButton = button(ICONS.fullscreen, t('nostalgist', 'Fullscreen'), () => {
+	const fullscreenButton = button(ICONS.fullscreen, t('arcade', 'Fullscreen'), () => {
 		if (document.fullscreenElement !== null) {
 			document.exitFullscreen()
 		} else {
@@ -220,18 +220,18 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	})
 
 	if (closeUrl !== '') {
-		button(ICONS.close, t('nostalgist', 'Close'), async (element) => {
+		button(ICONS.close, t('arcade', 'Close'), async (element) => {
 			element.disabled = true
 			// Leave the game where it was, so it can be picked up again.
 			if (settings.autosave_on_close !== false && statesPanel !== null) {
-				flash(t('nostalgist', 'Saving the game …'))
+				flash(t('arcade', 'Saving the game …'))
 				await statesPanel.save(AUTO_SLOT)
 			}
 			onClose?.()
 			try {
 				instance.exit()
 			} catch (error) {
-				console.error('Nostalgist failed to exit', error)
+				console.error('Arcade failed to exit', error)
 			}
 			window.location.href = closeUrl
 		})
@@ -296,7 +296,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		touchControls?.detach()
 		statesPanel?.element.remove()
 		galleryPanel?.element.remove()
-		container.querySelector('.nostalgist-resume')?.remove()
+		container.querySelector('.arcade-resume')?.remove()
 		toolbar.remove()
 	}
 }

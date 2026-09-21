@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\BackgroundJob;
+namespace OCA\Arcade\BackgroundJob;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\Service\LibraryService;
-use OCA\Nostalgist\Service\SettingsService;
-use OCA\Nostalgist\Service\ThumbnailFetchService;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\Service\LibraryService;
+use OCA\Arcade\Service\SettingsService;
+use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;

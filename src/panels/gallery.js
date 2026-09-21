@@ -13,33 +13,33 @@ import { ICONS, icon } from '../icons.js'
  */
 export function createGalleryPanel({ romPath, flash }) {
 	const element = document.createElement('div')
-	element.className = 'nostalgist-gallery hidden'
+	element.className = 'arcade-gallery hidden'
 
 	element.setAttribute('role', 'dialog')
 	element.setAttribute('aria-modal', 'false')
-	element.setAttribute('aria-label', t('nostalgist', 'Screenshots'))
+	element.setAttribute('aria-label', t('arcade', 'Screenshots'))
 
 	const heading = document.createElement('h3')
-	heading.textContent = t('nostalgist', 'Screenshots')
+	heading.textContent = t('arcade', 'Screenshots')
 	element.appendChild(heading)
 
 	const grid = document.createElement('div')
-	grid.className = 'nostalgist-gallery-grid'
+	grid.className = 'arcade-gallery-grid'
 	element.appendChild(grid)
 
 	const empty = document.createElement('p')
-	empty.className = 'nostalgist-gallery-empty hidden'
+	empty.className = 'arcade-gallery-empty hidden'
 	element.appendChild(empty)
 
 	const remove = async (fileId) => {
 		try {
-			await api(generateUrl('/apps/nostalgist/screenshots?fileId={fileId}', { fileId }), {
+			await api(generateUrl('/apps/arcade/screenshots?fileId={fileId}', { fileId }), {
 				method: 'DELETE',
 			})
 			await refresh()
 		} catch (error) {
 			console.error('Could not delete the screenshot', error)
-			flash(t('nostalgist', 'Could not delete the screenshot'))
+			flash(t('arcade', 'Could not delete the screenshot'))
 		}
 	}
 
@@ -47,7 +47,7 @@ export function createGalleryPanel({ romPath, flash }) {
 		let data
 		try {
 			const response = await api(generateUrl(
-				'/apps/nostalgist/screenshots?file={file}',
+				'/apps/arcade/screenshots?file={file}',
 				{ file: romPath },
 			))
 			data = await response.json()
@@ -58,9 +58,9 @@ export function createGalleryPanel({ romPath, flash }) {
 
 		grid.innerHTML = ''
 		if (data.folder === '') {
-			empty.textContent = t('nostalgist', 'Set a screenshots folder in the Nostalgist settings to keep your screenshots.')
+			empty.textContent = t('arcade', 'Set a screenshots folder in the Arcade settings to keep your screenshots.')
 		} else if (data.screenshots.length === 0) {
-			empty.textContent = t('nostalgist', 'No screenshots of this game yet.')
+			empty.textContent = t('arcade', 'No screenshots of this game yet.')
 		} else {
 			empty.textContent = ''
 		}
@@ -68,7 +68,7 @@ export function createGalleryPanel({ romPath, flash }) {
 
 		for (const screenshot of data.screenshots) {
 			const item = document.createElement('figure')
-			item.className = 'nostalgist-gallery-item'
+			item.className = 'arcade-gallery-item'
 
 			const link = document.createElement('a')
 			link.href = generateUrl('/f/{fileId}', { fileId: screenshot.fileId })
@@ -91,8 +91,8 @@ export function createGalleryPanel({ romPath, flash }) {
 
 			const deleteButton = document.createElement('button')
 			deleteButton.type = 'button'
-			deleteButton.title = t('nostalgist', 'Delete')
-			deleteButton.setAttribute('aria-label', t('nostalgist', 'Delete'))
+			deleteButton.title = t('arcade', 'Delete')
+			deleteButton.setAttribute('aria-label', t('arcade', 'Delete'))
 			deleteButton.innerHTML = icon(ICONS.trash)
 			deleteButton.addEventListener('click', (event) => {
 				event.stopPropagation()
@@ -110,7 +110,7 @@ export function createGalleryPanel({ romPath, flash }) {
 	const count = async () => {
 		try {
 			const response = await api(generateUrl(
-				'/apps/nostalgist/screenshots?file={file}',
+				'/apps/arcade/screenshots?file={file}',
 				{ file: romPath },
 			))
 			const data = await response.json()

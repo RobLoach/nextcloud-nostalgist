@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist;
+namespace OCA\Arcade;
 
 /**
  * A curated set of libretro core options, offered per core in the personal

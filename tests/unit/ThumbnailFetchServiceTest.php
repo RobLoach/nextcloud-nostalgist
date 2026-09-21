@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Tests\Unit;
+namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Nostalgist\Service\ThumbnailFetchService;
+use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;

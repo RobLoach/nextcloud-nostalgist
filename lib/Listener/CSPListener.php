@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Listener;
+namespace OCA\Arcade\Listener;
 
 use OCP\AppFramework\Http\EmptyContentSecurityPolicy;
 use OCP\EventDispatcher\Event;

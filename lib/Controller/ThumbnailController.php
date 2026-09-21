@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\Nostalgist\Controller;
+namespace OCA\Arcade\Controller;
 
-use OCA\Nostalgist\AppInfo\Application;
-use OCA\Nostalgist\BackgroundJob\FetchThumbnails;
-use OCA\Nostalgist\Service\SettingsService;
+use OCA\Arcade\AppInfo\Application;
+use OCA\Arcade\BackgroundJob\FetchThumbnails;
+use OCA\Arcade\Service\SettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
