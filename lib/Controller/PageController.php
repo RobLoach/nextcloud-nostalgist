@@ -124,6 +124,12 @@ class PageController extends Controller {
 		$limit = max(1, min(self::LIBRARY_MAX_PAGE_SIZE, $limit));
 		$offset = max(0, min($offset, max(0, count($games) - 1)));
 
+		// Only for what is about to be shown, and outside the cached scan:
+		// screenshots and save states change as games are played.
+		$page = array_slice($games, $offset, $limit);
+		$this->addFallbackImages($page, $userFolder, $settings);
+		$this->addFallbackImages($recent, $userFolder, $settings);
+
 		return new JSONResponse([
 			'folder' => $folderPath,
 			'exists' => true,
@@ -134,8 +140,59 @@ class PageController extends Controller {
 			'truncated' => $libraryTotal >= self::LIBRARY_MAX_GAMES,
 			'systems' => $systems,
 			'recent' => $recent,
-			'games' => array_slice($games, $offset, $limit),
+			'games' => $page,
 		]);
+	}
+
+	/**
+	 * Games without a thumbnail fall back to a picture of themselves: the
+	 * most recent of the screenshots taken of them and the screenshots of
+	 * their save states.
+	 *
+	 * @param list<array<string, mixed>> $games
+	 * @param array<string, mixed> $settings
+	 */
+	private function addFallbackImages(array &$games, Folder $userFolder, array $settings): void {
+		$missing = array_filter($games, static fn (array $game): bool => empty($game['thumbnails']));
+		if ($missing === []) {
+			return;
+		}
+
+		$screenshots = [];
+		if ($settings['screenshots_folder'] !== '') {
+			try {
+				$folder = $userFolder->get($settings['screenshots_folder']);
+				if ($folder instanceof Folder) {
+					$screenshots = $this->thumbnailService->indexScreenshots($folder);
+				}
+			} catch (NotFoundException) {
+				// No screenshots folder, no screenshots.
+			}
+		}
+		$states = $this->stateService->thumbnailIndex(
+			(string)$this->userId,
+			array_values(array_column($missing, 'path')),
+		);
+
+		foreach ($games as &$game) {
+			if (!empty($game['thumbnails'])) {
+				continue;
+			}
+			$screenshot = null;
+			foreach ($this->thumbnailService->screenshotKeys($game['basename']) as $key) {
+				if (isset($screenshots[$key])) {
+					$screenshot = $screenshots[$key];
+					break;
+				}
+			}
+			$state = $states[$game['path']] ?? null;
+
+			if ($screenshot !== null && ($state === null || $screenshot['mtime'] >= $state['mtime'])) {
+				$game['fallback'] = ['type' => 'screenshot', 'fileId' => $screenshot['id']];
+			} elseif ($state !== null) {
+				$game['fallback'] = ['type' => 'state', 'slot' => $state['slot']];
+			}
+		}
 	}
 
 	/**

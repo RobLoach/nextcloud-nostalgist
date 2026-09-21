@@ -132,18 +132,38 @@ function thumbnailFor(game, size) {
 	const preference = THUMBNAIL_PREFERENCE[size > 96 ? 'large' : 'small']
 	const type = preference.find((candidate) => available[candidate] !== undefined)
 
+	const image = document.createElement('img')
+	image.alt = ''
+	image.loading = 'lazy'
+	image.decoding = 'async'
+
 	if (type !== undefined) {
-		const image = document.createElement('img')
 		image.className = `nostalgist-library-thumbnail nostalgist-library-thumbnail-${type}`
 		image.src = generateUrl('/core/preview?fileId={fileId}&x={size}&y={size}&a=1', {
 			fileId: available[type],
 			size,
 		})
-		image.alt = ''
-		image.loading = 'lazy'
-		image.decoding = 'async'
 		return image
 	}
+
+	// No image of its own: show the game as it was last seen.
+	if (game.fallback?.type === 'screenshot') {
+		image.className = 'nostalgist-library-thumbnail nostalgist-library-thumbnail-snap'
+		image.src = generateUrl('/core/preview?fileId={fileId}&x={size}&y={size}&a=1', {
+			fileId: game.fallback.fileId,
+			size,
+		})
+		return image
+	}
+	if (game.fallback?.type === 'state') {
+		image.className = 'nostalgist-library-thumbnail nostalgist-library-thumbnail-snap'
+		image.src = generateUrl('/apps/nostalgist/state/thumbnail?file={file}&slot={slot}', {
+			file: game.path,
+			slot: game.fallback.slot,
+		})
+		return image
+	}
+
 	const placeholder = document.createElement('div')
 	placeholder.className = 'nostalgist-library-thumbnail nostalgist-library-placeholder'
 	placeholder.innerHTML = icon(ICONS.gamepad)

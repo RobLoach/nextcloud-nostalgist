@@ -42,6 +42,22 @@ class CoreOptions {
 				'label' => 'Remove sprite limit',
 				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
 			],
+			'fceumm_overscan_v' => [
+				'label' => 'Crop vertical overscan',
+				'values' => ['enabled' => 'Yes', 'disabled' => 'No'],
+			],
+			'fceumm_overscan_h' => [
+				'label' => 'Crop horizontal overscan',
+				'values' => ['enabled' => 'Yes', 'disabled' => 'No'],
+			],
+			'fceumm_turbo_enable' => [
+				'label' => 'Turbo buttons',
+				'values' => ['None' => 'Off', 'Player 1' => 'Player 1', 'Player 2' => 'Player 2', 'Both' => 'Both players'],
+			],
+			'fceumm_sndquality' => [
+				'label' => 'Sound quality',
+				'values' => ['Low' => 'Low', 'High' => 'High', 'Very High' => 'Very high'],
+			],
 		],
 		'snes9x' => [
 			'snes9x_region' => [
@@ -59,6 +75,28 @@ class CoreOptions {
 			'snes9x_hires_blend' => [
 				'label' => 'Blend high resolution modes',
 				'values' => ['disabled' => 'No', 'merge' => 'Merge', 'blur' => 'Blur'],
+			],
+			'snes9x_blargg' => [
+				'label' => 'NTSC video filter',
+				'values' => [
+					'disabled' => 'No',
+					'composite' => 'Composite',
+					's-video' => 'S-Video',
+					'rgb' => 'RGB',
+					'monochrome' => 'Monochrome',
+				],
+			],
+			'snes9x_audio_interpolation' => [
+				'label' => 'Audio interpolation',
+				'values' => ['gaussian' => 'Gaussian, as the hardware', 'cubic' => 'Cubic', 'sinc' => 'Sinc', 'linear' => 'Linear', 'none' => 'None'],
+			],
+			'snes9x_up_down_allowed' => [
+				'label' => 'Allow opposite directions at once',
+				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
+			],
+			'snes9x_overclock_superfx' => [
+				'label' => 'SuperFX overclock',
+				'values' => ['100%' => 'None', '150%' => '150%', '200%' => '200%', '300%' => '300%'],
 			],
 		],
 		'gambatte' => [
@@ -89,6 +127,18 @@ class CoreOptions {
 					'GBC - Yellow' => 'Yellow',
 				],
 			],
+			'gambatte_gbc_color_correction' => [
+				'label' => 'Game Boy Color color correction',
+				'values' => ['disabled' => 'No', 'GBC only' => 'Game Boy Color games only', 'always' => 'Always'],
+			],
+			'gambatte_dark_filter_level' => [
+				'label' => 'Darken the picture',
+				'values' => ['0' => 'No', '10' => '10%', '25' => '25%', '50' => '50%'],
+			],
+			'gambatte_up_down_allowed' => [
+				'label' => 'Allow opposite directions at once',
+				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
+			],
 			'gambatte_mix_frames' => [
 				'label' => 'Blend frames',
 				'values' => [
@@ -118,6 +168,14 @@ class CoreOptions {
 			'mgba_frameskip' => [
 				'label' => 'Frame skipping',
 				'values' => ['disabled' => 'No', 'auto' => 'Auto'],
+			],
+			'mgba_skip_bios' => [
+				'label' => 'Skip the BIOS intro',
+				'values' => ['OFF' => 'No', 'ON' => 'Yes'],
+			],
+			'mgba_audio_low_pass_filter' => [
+				'label' => 'Soften the audio',
+				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
 			],
 			'mgba_solar_sensor_level' => [
 				'label' => 'Solar sensor level',
@@ -152,6 +210,14 @@ class CoreOptions {
 					'monochrome' => 'Monochrome',
 				],
 			],
+			'genesis_plus_gx_ym2413' => [
+				'label' => 'FM sound chip, Master System',
+				'values' => ['auto' => 'Auto', 'disabled' => 'No', 'enabled' => 'Yes'],
+			],
+			'genesis_plus_gx_audio_filter' => [
+				'label' => 'Audio filter',
+				'values' => ['disabled' => 'No', 'low-pass' => 'Low pass'],
+			],
 			'genesis_plus_gx_lcd_filter' => [
 				'label' => 'LCD ghosting filter, handhelds',
 				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
@@ -172,6 +238,18 @@ class CoreOptions {
 				'label' => 'Remove sprite limit',
 				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
 			],
+			'picodrive_input1' => [
+				'label' => 'Controller, player 1',
+				'values' => ['3 button pad' => '3 button pad', '6 button pad' => '6 button pad'],
+			],
+			'picodrive_input2' => [
+				'label' => 'Controller, player 2',
+				'values' => ['3 button pad' => '3 button pad', '6 button pad' => '6 button pad'],
+			],
+			'picodrive_renderer' => [
+				'label' => 'Renderer',
+				'values' => ['accurate' => 'Accurate', 'good' => 'Good', 'fast' => 'Fast'],
+			],
 			'picodrive_audio_filter' => [
 				'label' => 'Audio filter',
 				'values' => ['off' => 'No', 'low-pass' => 'Low pass'],
@@ -191,6 +269,10 @@ class CoreOptions {
 			'handy_rot' => [
 				'label' => 'Screen rotation',
 				'values' => ['None' => 'None', '90' => '90°', '180' => '180°', '270' => '270°'],
+			],
+			'handy_frameskip' => [
+				'label' => 'Frame skipping',
+				'values' => ['disabled' => 'No', 'auto' => 'Auto'],
 			],
 			'handy_gfx_colors' => [
 				'label' => 'Color depth',

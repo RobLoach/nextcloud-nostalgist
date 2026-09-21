@@ -16,7 +16,8 @@ from your files and run in the browser.
 - Player controls: pause, restart, mute, fast-forward, the RetroArch menu,
   screenshots, fullscreen, and a virtual gamepad on touch devices.
 - Zipped ROMs, extracted in the browser.
-- Thumbnails for your games, matched from a folder of images.
+- Thumbnails for your games, matched from a folder of images, or taken
+  from their own screenshots and save states.
 - Works on publicly shared files and folders.
 
 ## Installation
@@ -144,6 +145,10 @@ Platform folders are matched by their No-Intro name as above, or by a short
 name like `SNES`. The library picks the image that suits the size it is
 drawing: box art in the grid, logos in the list and table, falling back to
 title screens and screenshots.
+
+A game with no image of its own shows itself instead: the most recent of
+the screenshots taken of it and the screenshots of its save states. That
+needs no configuration, and it keeps up as the game is played.
 
 Matching is forgiving. An identical file name wins, and otherwise region and
 revision tags, articles, punctuation and accents are ignored, so

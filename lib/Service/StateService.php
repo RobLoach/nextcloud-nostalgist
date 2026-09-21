@@ -153,6 +153,69 @@ class StateService {
 		return $states;
 	}
 
+	/**
+	 * The most recent save state screenshot of each of the given games, to
+	 * stand in for a missing thumbnail.
+	 *
+	 * @param list<string> $romPaths
+	 * @return array<string, array{slot: int, mtime: int}> rom path => slot
+	 */
+	public function thumbnailIndex(string $userId, array $romPaths): array {
+		if ($romPaths === []) {
+			return [];
+		}
+		return $this->savesFolderPath($userId) === ''
+			? $this->appDataThumbnailIndex($userId, $romPaths)
+			: $this->savesFolderThumbnailIndex($userId, $romPaths);
+	}
+
+	/**
+	 * @param list<string> $romPaths
+	 * @return array<string, array{slot: int, mtime: int}>
+	 */
+	private function appDataThumbnailIndex(string $userId, array $romPaths): array {
+		// One listing, so looking a game up afterwards costs nothing.
+		$mtimes = [];
+		foreach ($this->getStatesFolder()->getDirectoryListing() as $file) {
+			$mtimes[$file->getName()] = $file->getMTime();
+		}
+		$found = [];
+		foreach ($romPaths as $path) {
+			$key = $this->key($userId, $path);
+			for ($slot = 1; $slot <= self::SLOTS; $slot++) {
+				$mtime = $mtimes["$key-$slot.png"] ?? null;
+				if ($mtime !== null && ($found[$path]['mtime'] ?? -1) < $mtime) {
+					$found[$path] = ['slot' => $slot, 'mtime' => $mtime];
+				}
+			}
+		}
+		return $found;
+	}
+
+	/**
+	 * @param list<string> $romPaths
+	 * @return array<string, array{slot: int, mtime: int}>
+	 */
+	private function savesFolderThumbnailIndex(string $userId, array $romPaths): array {
+		$found = [];
+		foreach ($romPaths as $path) {
+			$folder = $this->getGameFolder($userId, $path, false);
+			if ($folder === null) {
+				continue;
+			}
+			foreach ($folder->getDirectoryListing() as $node) {
+				if (preg_match('/^Slot (\d+)\.png$/', $node->getName(), $matches) !== 1) {
+					continue;
+				}
+				$mtime = $node->getMTime();
+				if (($found[$path]['mtime'] ?? -1) < $mtime) {
+					$found[$path] = ['slot' => (int)$matches[1], 'mtime' => $mtime];
+				}
+			}
+		}
+		return $found;
+	}
+
 	private function savesFolderPath(string $userId): string {
 		return $this->settingsService->getUserSettings($userId)['saves_folder'];
 	}

@@ -209,8 +209,49 @@ class ThumbnailService {
 	 * "Mario Bros_ 3.png".
 	 */
 	private function stemKey(string $name): string {
-		$stem = pathinfo($name, PATHINFO_FILENAME);
+		return $this->stemToKey(pathinfo($name, PATHINFO_FILENAME));
+	}
+
+	private function stemToKey(string $stem): string {
 		return $this->normalize(preg_replace('/[&*\/:`<>?\\\\|]/', '_', $stem) ?? $stem);
+	}
+
+	/**
+	 * Index a folder of screenshots by game, keeping the most recent one.
+	 * Screenshots taken by the player are named after the game and the
+	 * moment they were taken, which is stripped here.
+	 *
+	 * @return array<string, array{id: int, mtime: int}> game key => screenshot
+	 */
+	public function indexScreenshots(Folder $folder): array {
+		$screenshots = [];
+		foreach ($folder->getDirectoryListing() as $node) {
+			if ($node instanceof Folder || !$this->isImage($node->getName())) {
+				continue;
+			}
+			$stem = pathinfo($node->getName(), PATHINFO_FILENAME);
+			$stem = preg_replace('/\s\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$/', '', $stem) ?? $stem;
+			$mtime = $node->getMTime();
+			foreach ([$this->stemToKey($stem), $this->looseStemKey($stem)] as $key) {
+				if ($key !== '' && ($screenshots[$key]['mtime'] ?? -1) < $mtime) {
+					$screenshots[$key] = ['id' => $node->getId(), 'mtime' => $mtime];
+				}
+			}
+		}
+		return $screenshots;
+	}
+
+	/**
+	 * The keys a game is looked up by in a screenshot index.
+	 *
+	 * @return list<string>
+	 */
+	public function screenshotKeys(string $basename): array {
+		return array_values(array_filter([$this->stemKey($basename), $this->looseKey($basename)]));
+	}
+
+	private function looseStemKey(string $stem): string {
+		return $this->looseKey($stem . '.png');
 	}
 
 	private function normalize(string $value): string {
