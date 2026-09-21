@@ -18,14 +18,17 @@ use OCP\AppFramework\Services\IInitialState;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\ICacheFactory;
 use OCP\IRequest;
 
 /**
  * @psalm-suppress UnusedClass
  */
 class PageController extends Controller {
-	private const LIBRARY_MAX_GAMES = 500;
-	private const LIBRARY_MAX_DEPTH = 4;
+	private const LIBRARY_MAX_GAMES = 5000;
+	private const LIBRARY_MAX_DEPTH = 6;
+	private const LIBRARY_MAX_PAGE_SIZE = 500;
+	private const LIBRARY_CACHE_TTL = 24 * 3600;
 
 	public function __construct(
 		string $appName,
@@ -33,6 +36,7 @@ class PageController extends Controller {
 		private IInitialState $initialState,
 		private SettingsService $settingsService,
 		private IRootFolder $rootFolder,
+		private ICacheFactory $cacheFactory,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -60,11 +64,19 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * List the ROMs found in the user's games library folder.
+	 * List the ROMs found in the user's games library folder, one page at a
+	 * time. The full scan is cached, so paging through a large library only
+	 * walks the folders once.
 	 */
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/library')]
-	public function library(): JSONResponse {
+	public function library(
+		int $offset = 0,
+		int $limit = 60,
+		string $sort = 'name',
+		string $order = 'asc',
+		bool $refresh = false,
+	): JSONResponse {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
 		}
@@ -80,8 +92,53 @@ class PageController extends Controller {
 			return new JSONResponse([
 				'folder' => $folderPath,
 				'exists' => false,
+				'total' => 0,
+				'offset' => 0,
+				'limit' => $limit,
 				'games' => [],
 			]);
+		}
+
+		$games = $this->getGames($folder, $userFolder, $folderPath, $settings, $refresh);
+		$this->sortGames($games, $sort, $order);
+
+		$limit = max(1, min(self::LIBRARY_MAX_PAGE_SIZE, $limit));
+		$offset = max(0, min($offset, max(0, count($games) - 1)));
+
+		return new JSONResponse([
+			'folder' => $folderPath,
+			'exists' => true,
+			'total' => count($games),
+			'offset' => $offset,
+			'limit' => $limit,
+			'truncated' => count($games) >= self::LIBRARY_MAX_GAMES,
+			'games' => array_slice($games, $offset, $limit),
+		]);
+	}
+
+	/**
+	 * The scanned games, from the cache when the library and thumbnails
+	 * folders have not changed since.
+	 *
+	 * @param array<string, mixed> $settings
+	 * @return list<array<string, mixed>>
+	 */
+	private function getGames(Folder $folder, Folder $userFolder, string $folderPath, array $settings, bool $refresh): array {
+		$cache = $this->cacheFactory->createDistributed(Application::APP_ID . '_library');
+		// Nextcloud propagates etags up the tree, so the library folder's
+		// etag changes whenever anything inside it does.
+		$key = implode('|', [
+			$this->userId,
+			$folderPath,
+			$folder->getEtag(),
+			$settings['thumbnails_folder'],
+			$this->folderEtag($userFolder, $settings['thumbnails_folder']),
+		]);
+		if (!$refresh) {
+			$cached = $cache->get($key);
+			if (is_array($cached)) {
+				return $cached;
+			}
 		}
 
 		$games = [];
@@ -89,14 +146,42 @@ class PageController extends Controller {
 		// Zipped ROMs are extracted in the browser when launched.
 		$extensionMap['zip'] = 'zip';
 		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, []);
-		usort($games, static fn (array $a, array $b): int => strcasecmp($a['basename'], $b['basename']));
 		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder'], $folderPath);
 
-		return new JSONResponse([
-			'folder' => $folderPath,
-			'exists' => true,
-			'games' => $games,
-		]);
+		$cache->set($key, $games, self::LIBRARY_CACHE_TTL);
+		return $games;
+	}
+
+	private function folderEtag(Folder $userFolder, string $path): string {
+		if ($path === '') {
+			return '';
+		}
+		try {
+			return $userFolder->get($path)->getEtag();
+		} catch (NotFoundException) {
+			return '';
+		}
+	}
+
+	/**
+	 * @param list<array<string, mixed>> $games
+	 */
+	private function sortGames(array &$games, string $sort, string $order): void {
+		$direction = $order === 'desc' ? -1 : 1;
+		usort($games, static function (array $a, array $b) use ($sort, $direction): int {
+			$result = match ($sort) {
+				'system' => strcasecmp($a['system'], $b['system']),
+				'size' => $a['size'] <=> $b['size'],
+				'mtime' => $a['mtime'] <=> $b['mtime'],
+				default => 0,
+			};
+			// Fall back to the name, so the order is always stable.
+			if ($result === 0) {
+				$result = strcasecmp($a['basename'], $b['basename']);
+				return $sort === 'name' ? $result * $direction : $result;
+			}
+			return $result * $direction;
+		});
 	}
 
 	/**
@@ -176,6 +261,8 @@ class PageController extends Controller {
 				'path' => $userFolder->getRelativePath($node->getPath()),
 				'basename' => $node->getName(),
 				'system' => $system,
+				'size' => $node->getSize(),
+				'mtime' => $node->getMTime(),
 			];
 		}
 	}

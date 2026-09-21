@@ -85,7 +85,7 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 		respondToGlobalEvents: settings.respond_to_global_events !== false,
 		retroarchConfig: {
 			video_smooth: settings.video_smooth === true,
-			fastforward_ratio: Number(settings.fastforward_ratio ?? 10),
+			fastforward_ratio: Number(settings.fastforward_ratio ?? 2),
 		},
 		resolveCoreJs(coreName) {
 			return coreUrl(`${coreName}_libretro.js`)

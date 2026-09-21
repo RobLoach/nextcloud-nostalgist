@@ -21,6 +21,8 @@
 	text-align: center;
 }
 
+/* Games library */
+
 .nostalgist .nostalgist-library {
 	width: 100%;
 	max-width: 1200px;
@@ -31,10 +33,78 @@
 	margin: 0 auto;
 }
 
+.nostalgist .nostalgist-library-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.nostalgist .nostalgist-library-header h2 {
+	margin: 0;
+}
+
+.nostalgist .nostalgist-library-controls {
+	display: flex;
+	gap: 4px;
+}
+
+.nostalgist .nostalgist-library-controls button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 38px;
+	height: 38px;
+	padding: 7px;
+	margin: 0;
+	border: none;
+	border-radius: var(--border-radius-large);
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.nostalgist .nostalgist-library-controls button:hover {
+	background-color: var(--color-background-hover);
+}
+
+.nostalgist .nostalgist-library-controls button.active {
+	background-color: var(--color-primary-element);
+}
+
+.nostalgist .nostalgist-library-controls button svg {
+	width: 20px;
+	height: 20px;
+	fill: var(--color-main-text);
+}
+
+.nostalgist .nostalgist-library-controls button.active svg {
+	fill: var(--color-primary-element-text);
+}
+
 .nostalgist .nostalgist-library-hint {
 	color: var(--color-text-maxcontrast);
 	margin-bottom: 12px;
 }
+
+.nostalgist .nostalgist-library-placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--color-text-maxcontrast);
+}
+
+.nostalgist .nostalgist-library-placeholder svg {
+	width: 50%;
+	height: 50%;
+	max-width: 48px;
+	max-height: 48px;
+	opacity: 0.5;
+	fill: currentColor;
+}
+
+/* Grid view */
 
 .nostalgist .nostalgist-library-grid {
 	display: grid;
@@ -59,24 +129,11 @@
 	box-shadow: 0 2px 8px var(--color-box-shadow);
 }
 
-.nostalgist .nostalgist-library-game-thumbnail {
+.nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail {
 	width: 100%;
 	aspect-ratio: 4 / 3;
 	object-fit: cover;
 	background-color: var(--color-background-dark);
-}
-
-.nostalgist .nostalgist-library-game-placeholder {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: var(--color-text-maxcontrast);
-}
-
-.nostalgist .nostalgist-library-game-placeholder svg {
-	width: 48px;
-	height: 48px;
-	opacity: 0.5;
 }
 
 .nostalgist .nostalgist-library-game-name {
@@ -94,4 +151,107 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+/* List view */
+
+.nostalgist .nostalgist-library-rows {
+	display: flex;
+	flex-direction: column;
+}
+
+.nostalgist .nostalgist-library-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 6px 8px;
+	border-radius: var(--border-radius);
+}
+
+.nostalgist .nostalgist-library-row:hover,
+.nostalgist .nostalgist-library-row:focus-visible {
+	background-color: var(--color-background-hover);
+}
+
+.nostalgist .nostalgist-library-rows .nostalgist-library-thumbnail {
+	width: 48px;
+	height: 36px;
+	object-fit: cover;
+	border-radius: var(--border-radius);
+	background-color: var(--color-background-dark);
+	flex-shrink: 0;
+}
+
+.nostalgist .nostalgist-library-row-name {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.nostalgist .nostalgist-library-row-system {
+	color: var(--color-text-maxcontrast);
+	font-size: 0.85em;
+	white-space: nowrap;
+}
+
+/* Table view */
+
+.nostalgist .nostalgist-library-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.nostalgist .nostalgist-library-table th {
+	text-align: start;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.nostalgist .nostalgist-library-table th button {
+	background-color: transparent;
+	border: none;
+	padding: 8px;
+	margin: 0;
+	font-weight: bold;
+	color: var(--color-text-maxcontrast);
+	cursor: pointer;
+	width: 100%;
+	text-align: start;
+}
+
+.nostalgist .nostalgist-library-table th button:hover {
+	color: var(--color-main-text);
+}
+
+.nostalgist .nostalgist-library-table td {
+	padding: 8px;
+	border-bottom: 1px solid var(--color-border);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 0;
+}
+
+.nostalgist .nostalgist-library-table td:first-child {
+	width: 55%;
+}
+
+.nostalgist .nostalgist-library-table tr:hover td {
+	background-color: var(--color-background-hover);
+}
+
+/* Pagination */
+
+.nostalgist .nostalgist-library-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-top: 16px;
+}
+
+.nostalgist .nostalgist-library-count {
+	color: var(--color-text-maxcontrast);
+	font-size: 0.9em;
 }

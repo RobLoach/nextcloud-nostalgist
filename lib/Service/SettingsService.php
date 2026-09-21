@@ -21,7 +21,7 @@ class SettingsService {
 		return [
 			'cores' => CoreMap::defaultCores(),
 			'video_smooth' => false,
-			'fastforward_ratio' => 10,
+			'fastforward_ratio' => 2,
 			'respond_to_global_events' => true,
 			'library_folder' => '/Games',
 			'thumbnails_folder' => '',
