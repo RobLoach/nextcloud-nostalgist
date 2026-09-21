@@ -148,6 +148,15 @@ export function createStatesPanel({ instance, romPath, flash, onDone }) {
 			}
 			row.appendChild(label)
 
+			// A state belongs to the exact dump it was made from.
+			if (state?.stale) {
+				const warning = document.createElement('span')
+				warning.className = 'arcade-states-stale'
+				warning.textContent = t('arcade', 'made from another copy of this game')
+				warning.title = t('arcade', 'The ROM has changed since this state was saved, so loading it may go wrong.')
+				row.appendChild(warning)
+			}
+
 			// The automatic slot is written by the player itself, and slots
 			// beyond the ones offered now are only there to be emptied.
 			if (slot !== AUTO_SLOT && slot <= data.slots) {

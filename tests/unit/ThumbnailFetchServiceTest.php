@@ -30,6 +30,22 @@ class ThumbnailFetchServiceTest extends TestCase {
 		return $settings;
 	}
 
+	public function testTheRegionOnTheCartridgeIsTriedBeforeTheUsualOnes(): void {
+		$candidates = $this->service->candidates('Mario.nes', 'Japan');
+		$withRegion = array_values(array_filter(
+			$candidates,
+			static fn (string $name): bool => str_contains($name, '('),
+		));
+		$this->assertSame('Mario (Japan)', $withRegion[0] ?? null);
+	}
+
+	public function testWithoutARegionTheUsualOnesAreTried(): void {
+		$this->assertSame(
+			['Mario', 'Mario (USA)', 'Mario (Europe)', 'Mario (World)', 'Mario (Japan)'],
+			$this->service->candidates('Mario.nes'),
+		);
+	}
+
 	public function testTheNameOfTheGameComesFirst(): void {
 		$candidates = $this->service->candidates('Super Mario Bros. (World).nes');
 		$this->assertSame('Super Mario Bros. (World)', $candidates[0]);

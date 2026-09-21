@@ -167,3 +167,9 @@
 .arcade-gallery-item button:focus-visible { opacity: 1; }
 .arcade-gallery-item button svg { width: 16px; height: 16px; fill: #fff; }
 .arcade-gallery-empty { font-size: 12px; color: rgba(255, 255, 255, 0.7); }
+
+.arcade-states-stale {
+	color: #e9a13b;
+	font-size: 11px;
+	margin-inline-start: 6px;
+}

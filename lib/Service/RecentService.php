@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Arcade\Service;
 
 use OCA\Arcade\AppInfo\Application;
-use OCA\Arcade\CoreMap;
 use OCP\Config\IUserConfig;
 use OCP\Files\IRootFolder;
 use OCP\ITagManager;
@@ -40,13 +39,22 @@ class RecentService {
 	/**
 	 * @return list<array<string, mixed>>
 	 */
+	/**
+	 * The games played last, newest first, as ids: what a game is called
+	 * and where it lives are the library's to say, and change when it is
+	 * renamed or moved.
+	 *
+	 * @return list<int>
+	 */
 	public function get(string $userId): array {
-		$stats = $this->stats($userId);
-		$recent = [];
+		$ids = [];
 		foreach ($this->read($userId, 'recent') as $entry) {
-			$recent[] = [...$entry, ...($stats[$entry['id'] ?? 0] ?? [])];
+			$id = (int)($entry['id'] ?? 0);
+			if ($id !== 0) {
+				$ids[] = $id;
+			}
 		}
-		return $recent;
+		return $ids;
 	}
 
 	/**
@@ -94,15 +102,15 @@ class RecentService {
 			$this->writeStats($userId, $stats);
 		}
 
+		if ($id === null) {
+			return;
+		}
 		// A game played again moves back to the front instead of repeating.
-		$recent = $this->without($this->read($userId, 'recent'), $path);
-		array_unshift($recent, [
-			'id' => $id,
-			'path' => $path,
-			'basename' => basename($path),
-			'system' => $this->systemFor($path),
-			...$counted,
-		]);
+		$recent = array_values(array_filter(
+			$this->read($userId, 'recent'),
+			static fn (array $entry): bool => (int)($entry['id'] ?? 0) !== $id,
+		));
+		array_unshift($recent, ['id' => $id]);
 		$this->write($userId, 'recent', array_slice($recent, 0, self::MAX_ENTRIES));
 	}
 
@@ -142,18 +150,6 @@ class RecentService {
 		}
 		$tags->addToFavorites($id);
 		return true;
-	}
-
-	/**
-	 * The system of a game, or "zip" for an archive that does not say which
-	 * it holds.
-	 */
-	public function systemFor(string $path): string {
-		$system = CoreMap::systemForPath($path);
-		if ($system !== null) {
-			return $system;
-		}
-		return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'zip' ? 'zip' : '';
 	}
 
 	/**
@@ -209,17 +205,6 @@ class RecentService {
 		}
 		$this->writeStats($userId, $stats);
 		$this->userConfig->deleteUserConfig($userId, Application::APP_ID, 'favorites');
-	}
-
-	/**
-	 * @param list<array<string, mixed>> $entries
-	 * @return list<array<string, mixed>>
-	 */
-	private function without(array $entries, string $path): array {
-		return array_values(array_filter(
-			$entries,
-			static fn (array $entry): bool => ($entry['path'] ?? '') !== $path,
-		));
 	}
 
 	/**

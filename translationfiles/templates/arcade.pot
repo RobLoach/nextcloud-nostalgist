@@ -265,6 +265,10 @@ msgstr ""
 msgid "Looking for box art in the background. It carries on without this page."
 msgstr ""
 
+#: src/panels/states.js
+msgid "made from another copy of this game"
+msgstr ""
+
 #: templates/settings.php
 msgid "Minute"
 msgstr ""
@@ -525,6 +529,10 @@ msgstr ""
 
 #: src/library.js
 msgid "The games library folder {folder} does not exist. Create it, or pick another folder in the Arcade personal settings."
+msgstr ""
+
+#: src/panels/states.js
+msgid "The ROM has changed since this state was saved, so loading it may go wrong."
 msgstr ""
 
 #: templates/admin.php

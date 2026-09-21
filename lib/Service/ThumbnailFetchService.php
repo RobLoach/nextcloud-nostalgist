@@ -82,7 +82,7 @@ class ThumbnailFetchService {
 			$tried++;
 
 			$image = null;
-			foreach ($this->candidates($game['basename']) as $candidate) {
+			foreach ($this->candidates($game['basename'], $game['region'] ?? '') as $candidate) {
 				$image = $this->download($client, $platform, $candidate);
 				if ($image !== null) {
 					break;
@@ -104,7 +104,7 @@ class ThumbnailFetchService {
 	 *
 	 * @return list<string>
 	 */
-	public function candidates(string $basename): array {
+	public function candidates(string $basename, string $region = ''): array {
 		$stem = pathinfo($basename, PATHINFO_FILENAME);
 		// The characters libretro writes as an underscore.
 		$stem = preg_replace('/[&*\/:`<>?\\\\|]/', '_', $stem) ?? $stem;
@@ -126,12 +126,17 @@ class ThumbnailFetchService {
 			}
 			$names[] = $bare;
 		}
+		// The region the cartridge itself names comes before the usual
+		// ones: it is the one the picture is most likely filed under.
+		$regions = $region === ''
+			? self::REGIONS
+			: ["($region)", ...self::REGIONS];
 		foreach ($names as $name) {
 			if (preg_match('/[(\[]/', $name) === 1) {
 				continue;
 			}
-			foreach (self::REGIONS as $region) {
-				$names[] = "$name $region";
+			foreach ($regions as $tag) {
+				$names[] = "$name $tag";
 			}
 		}
 		return array_values(array_unique(array_filter($names)));

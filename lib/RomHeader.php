@@ -111,8 +111,27 @@ class RomHeader {
 		$domestic = self::text(substr($data, 0x120, 48));
 		return [
 			'title' => $international !== '' ? $international : $domestic,
-			'region' => self::text(substr($data, 0x1F0, 3)),
+			'region' => self::megaDriveRegion(self::text(substr($data, 0x1F0, 3))),
 		];
+	}
+
+	/**
+	 * Mega Drive cartridges name their regions by letter, as many as they
+	 * were sold in. Said the way a picture of one is filed: all three is
+	 * the world.
+	 */
+	private static function megaDriveRegion(string $letters): string {
+		$letters = strtoupper($letters);
+		$regions = ['J' => 'Japan', 'U' => 'USA', 'E' => 'Europe'];
+		$found = array_values(array_filter(
+			$regions,
+			static fn (string $letter): bool => str_contains($letters, $letter),
+			ARRAY_FILTER_USE_KEY,
+		));
+		if (count($found) === count($regions)) {
+			return 'World';
+		}
+		return $found[0] ?? '';
 	}
 
 	/**

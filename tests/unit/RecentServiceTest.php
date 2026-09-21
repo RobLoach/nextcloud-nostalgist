@@ -96,15 +96,20 @@ class RecentServiceTest extends TestCase {
 		$this->assertSame([], $this->service()->get(self::USER));
 	}
 
+	public function testAGameThatIsGoneIsNotRemembered(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Nothing There.nes');
+		$this->assertSame([], $service->get(self::USER), 'there is no id to remember it by');
+	}
+
 	public function testGamesAreRememberedNewestFirst(): void {
 		$service = $this->service();
 		$service->record(self::USER, '/Games/NES/Mario.nes');
 		$service->record(self::USER, '/Games/SNES/Zelda.sfc');
 
-		$recent = $service->get(self::USER);
-		$this->assertCount(2, $recent);
-		$this->assertSame('Zelda.sfc', $recent[0]['basename']);
-		$this->assertSame('/Games/NES/Mario.nes', $recent[1]['path']);
+		// By file id: what a game is called is the library's to say, and
+		// changes when it is renamed.
+		$this->assertSame([104, 103], $service->get(self::USER));
 	}
 
 	public function testPlayingAgainMovesAGameBackToTheFront(): void {
@@ -113,9 +118,7 @@ class RecentServiceTest extends TestCase {
 		$service->record(self::USER, '/Games/Zelda.sfc');
 		$service->record(self::USER, '/Games/Mario.nes');
 
-		$recent = $service->get(self::USER);
-		$this->assertCount(2, $recent, 'a game is not remembered twice');
-		$this->assertSame('/Games/Mario.nes', $recent[0]['path']);
+		$this->assertSame([101, 102], $service->get(self::USER), 'a game is not remembered twice');
 	}
 
 	public function testOnlyTheLastTwelveGamesAreKept(): void {
@@ -125,8 +128,8 @@ class RecentServiceTest extends TestCase {
 		}
 		$recent = $service->get(self::USER);
 		$this->assertCount(12, $recent);
-		$this->assertSame('/Games/Game 20.nes', $recent[0]['path']);
-		$this->assertSame('/Games/Game 9.nes', $recent[11]['path']);
+		$this->assertSame(220, $recent[0], 'the twentieth game, played last');
+		$this->assertSame(209, $recent[11]);
 	}
 
 	public function testPlayTimeAddsUpAcrossSessions(): void {
@@ -134,7 +137,7 @@ class RecentServiceTest extends TestCase {
 		$service->record(self::USER, '/Games/Mario.nes');
 		$service->addPlayTime(self::USER, '/Games/Mario.nes', 300);
 		$service->addPlayTime(self::USER, '/Games/Mario.nes', 120);
-		$this->assertSame(420, $service->get(self::USER)[0]['seconds']);
+		$this->assertSame(420, $service->stats(self::USER)[101]['seconds']);
 	}
 
 	public function testPlayTimeSurvivesPlayingAgain(): void {
@@ -143,9 +146,9 @@ class RecentServiceTest extends TestCase {
 		$service->addPlayTime(self::USER, '/Games/Mario.nes', 300);
 		$service->record(self::USER, '/Games/Mario.nes');
 
-		$entry = $service->get(self::USER)[0];
-		$this->assertSame(300, $entry['seconds'], 'the time played is carried over');
-		$this->assertSame(2, $entry['plays']);
+		$counted = $service->stats(self::USER)[101];
+		$this->assertSame(300, $counted['seconds'], 'the time played is carried over');
+		$this->assertSame(2, $counted['plays']);
 	}
 
 	public function testWhatAGameWasPlayedForOutlivesTheRecentList(): void {
@@ -157,10 +160,7 @@ class RecentServiceTest extends TestCase {
 			$service->record(self::USER, "/Games/Game $i.nes");
 		}
 
-		$this->assertSame([], array_filter(
-			$service->get(self::USER),
-			static fn (array $entry): bool => $entry['path'] === '/Games/Mario.nes',
-		), 'it is out of the recent list');
+		$this->assertNotContains(101, $service->get(self::USER), 'it is out of the recent list');
 		$this->assertSame(
 			300,
 			$service->stats(self::USER)[101]['seconds'] ?? null,
@@ -172,14 +172,14 @@ class RecentServiceTest extends TestCase {
 		$service = $this->service();
 		$service->record(self::USER, '/Games/Mario.nes');
 		$service->addPlayTime(self::USER, '/Games/Mario.nes', 10 * 3600);
-		$this->assertSame(4 * 3600, $service->get(self::USER)[0]['seconds']);
+		$this->assertSame(4 * 3600, $service->stats(self::USER)[101]['seconds']);
 	}
 
 	public function testNegativePlayTimeIsIgnored(): void {
 		$service = $this->service();
 		$service->record(self::USER, '/Games/Mario.nes');
 		$service->addPlayTime(self::USER, '/Games/Mario.nes', -60);
-		$this->assertSame(0, $service->get(self::USER)[0]['seconds']);
+		$this->assertSame(0, $service->stats(self::USER)[101]['seconds']);
 	}
 
 	public function testAFavoriteIsTheStarOfTheFilesApp(): void {
@@ -216,15 +216,4 @@ class RecentServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('favorites', $this->stored, 'and the old list is gone');
 	}
 
-	public function testTheSystemIsFoundFromTheExtensionOrTheFolder(): void {
-		$service = $this->service();
-		$service->record(self::USER, '/Games/Mario.nes');
-		$this->assertSame('nes', $service->get(self::USER)[0]['system']);
-
-		$service->record(self::USER, '/Games/Nintendo - Super Nintendo Entertainment System/NHL 96.zip');
-		$this->assertSame('snes', $service->get(self::USER)[0]['system'], 'a zip takes the system of its folder');
-
-		$service->record(self::USER, '/Games/Unsorted/Mystery.zip');
-		$this->assertSame('zip', $service->get(self::USER)[0]['system'], 'and stays a zip when nothing says otherwise');
-	}
 }

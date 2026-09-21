@@ -122,7 +122,7 @@ class PageController extends Controller {
 			// when a file is written, so nothing else ever asks.
 			$this->queueMetadata();
 		}
-		$recent = $this->getRecent($userFolder, $games);
+		$recent = $this->getRecent($games);
 		$favorites = $this->getFavorites($games);
 		// The systems of the whole library, so the filter keeps offering
 		// them while a filter is active.
@@ -167,14 +167,27 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * The games played last, with the thumbnails of the library when they
-	 * are part of it, and without the ones that are gone.
+	 * The games played last, in the order they were played, drawn from the
+	 * library so they carry everything the library knows. A game that is
+	 * gone, or that lives outside the library folder, is left out.
 	 *
 	 * @param list<array<string, mixed>> $games
 	 * @return list<array<string, mixed>>
 	 */
-	private function getRecent(Folder $userFolder, array $games): array {
-		return $this->present($this->recentService->get((string)$this->userId), $userFolder, $games);
+	private function getRecent(array $games): array {
+		$byId = [];
+		foreach ($games as $game) {
+			$byId[$game['id'] ?? 0] = $game;
+		}
+		$stats = $this->recentService->stats((string)$this->userId);
+
+		$recent = [];
+		foreach ($this->recentService->get((string)$this->userId) as $id) {
+			if (isset($byId[$id])) {
+				$recent[] = [...$byId[$id], ...($stats[$id] ?? [])];
+			}
+		}
+		return $recent;
 	}
 
 	/**
@@ -200,26 +213,5 @@ class PageController extends Controller {
 		// The most played first, which is what a favorite is about.
 		usort($favorites, static fn (array $a, array $b): int => ($b['seconds'] ?? 0) <=> ($a['seconds'] ?? 0));
 		return $favorites;
-	}
-
-	/**
-	 * Fill in what the library knows about remembered games, and drop the
-	 * ones that are gone.
-	 *
-	 * @param list<array<string, mixed>> $entries
-	 * @param list<array<string, mixed>> $games
-	 * @return list<array<string, mixed>>
-	 */
-	private function present(array $entries, Folder $userFolder, array $games): array {
-		$byPath = array_column($games, null, 'path');
-		$present = [];
-		foreach ($entries as $entry) {
-			$path = $entry['path'] ?? '';
-			if ($path === '' || !$userFolder->nodeExists($path)) {
-				continue;
-			}
-			$present[] = isset($byPath[$path]) ? [...$byPath[$path], ...$entry] : $entry;
-		}
-		return $present;
 	}
 }

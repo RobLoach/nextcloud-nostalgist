@@ -92,7 +92,18 @@ class RomHeaderTest extends TestCase {
 		]);
 		$header = RomHeader::read($data, 'genesis');
 		$this->assertSame('SONIC THE HEDGEHOG 2', $header['title'], 'the name it goes by abroad');
-		$this->assertSame('JUE', $header['region']);
+		$this->assertSame('World', $header['region'], 'sold everywhere');
+	}
+
+	public function testAMegaDriveRegionIsSaidTheWayAPictureIsFiled(): void {
+		foreach (['U' => 'USA', 'E' => 'Europe', 'J' => 'Japan', 'JU' => 'Japan', 'UE' => 'USA'] as $letters => $region) {
+			$data = $this->rom([
+				0x100 => 'SEGA',
+				0x150 => str_pad('A GAME', 48),
+				0x1F0 => (string)$letters,
+			]);
+			$this->assertSame($region, RomHeader::read($data, 'genesis')['region'], "for $letters");
+		}
 	}
 
 	public function testAMegaDriveCartridgeFallsBackToItsNameAtHome(): void {

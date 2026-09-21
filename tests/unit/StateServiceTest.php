@@ -13,6 +13,8 @@ use OCP\Files\IAppData;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\Files\SimpleFS\ISimpleFile;
+use OCP\FilesMetadata\IFilesMetadataManager;
+use OCP\FilesMetadata\Model\IFilesMetadata;
 use OCP\Files\SimpleFS\ISimpleFolder;
 use PHPUnit\Framework\TestCase;
 
@@ -26,12 +28,34 @@ class StateServiceTest extends TestCase {
 	private array $files = [];
 	/** The id Nextcloud gave each path, for the paths that have one. */
 	private array $ids = [];
+	/** What each file id hashes to, for the ROMs that have been read. */
+	private array $checksums = [];
 
 	private function service(string $savesFolder = ''): StateService {
 		$settings = $this->createStub(SettingsService::class);
 		$settings->method('getUserSettings')->willReturn(['saves_folder' => $savesFolder]);
 
-		return new StateService($this->appDataFactory(), $this->rootFolder(), $settings);
+		return new StateService(
+			$this->appDataFactory(),
+			$this->rootFolder(),
+			$settings,
+			$this->metadataManager(),
+		);
+	}
+
+	/**
+	 * What Nextcloud knows a ROM hashes to, for the ones the tests say.
+	 */
+	private function metadataManager(): IFilesMetadataManager {
+		$manager = $this->createStub(IFilesMetadataManager::class);
+		$manager->method('getMetadata')->willReturnCallback(
+			function (int $id): IFilesMetadata {
+				$metadata = $this->createStub(IFilesMetadata::class);
+				$metadata->method('getString')->willReturn($this->checksums[$id] ?? '');
+				return $metadata;
+			},
+		);
+		return $manager;
 	}
 
 	// The app data, as a tree of simple folders.
@@ -328,6 +352,35 @@ class StateServiceTest extends TestCase {
 
 		$found = $service->thumbnailIndex(self::USER, ['/Games/Mario.nes']);
 		$this->assertSame(1, $found['/Games/Mario.nes']['slot'] ?? null);
+	}
+
+	public function testASaveIsMarkedWhenTheRomIsNoLongerTheOneItWasMadeFrom(): void {
+		$this->files[ltrim(self::GAME, '/')] = 'the rom';
+		$this->ids[ltrim(self::GAME, '/')] = 101;
+		$this->checksums[101] = 'the first dump';
+
+		$service = $this->service();
+		$service->save(self::USER, self::GAME, 1, 'a save');
+		$this->assertArrayNotHasKey('stale', $service->list(self::USER, self::GAME)[0]);
+
+		// The same game, a different dump of it.
+		$this->checksums[101] = 'another dump';
+		$this->assertTrue($service->list(self::USER, self::GAME)[0]['stale'] ?? false);
+	}
+
+	public function testASaveIsNotMarkedWhenNothingIsKnownOfTheRom(): void {
+		$this->files[ltrim(self::GAME, '/')] = 'the rom';
+		$this->ids[ltrim(self::GAME, '/')] = 101;
+
+		$service = $this->service();
+		$service->save(self::USER, self::GAME, 1, 'a save');
+		$this->checksums[101] = 'worked out later';
+
+		$this->assertArrayNotHasKey(
+			'stale',
+			$service->list(self::USER, self::GAME)[0],
+			'a checksum that arrived after the save says nothing about it',
+		);
 	}
 
 	public function testThumbnailsAndBatterySavesLiveAlongsideTheStates(): void {

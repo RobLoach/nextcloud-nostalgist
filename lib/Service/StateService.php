@@ -6,10 +6,12 @@ namespace OCA\Arcade\Service;
 
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\CoreMap;
+use OCA\Arcade\Listener\MetadataListener;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
+use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\Files\NotFoundException;
 use OCP\Files\SimpleFS\ISimpleFile;
 use OCP\Files\SimpleFS\ISimpleFolder;
@@ -59,6 +61,7 @@ class StateService {
 		private IAppDataFactory $appDataFactory,
 		private IRootFolder $rootFolder,
 		private SettingsService $settingsService,
+		private IFilesMetadataManager $metadataManager,
 	) {
 	}
 
@@ -226,14 +229,23 @@ class StateService {
 	}
 
 	/**
-	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool}>
+	 * A slot is marked stale when the ROM is no longer the dump the state
+	 * was made from, which the player warns about.
+	 *
+	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool, stale?: bool}>
 	 */
 	public function list(string $userId, string $romPath): array {
 		$folder = $this->getGameFolder($userId, $romPath, false);
-		if ($folder !== null || $this->savesFolderPath($userId) !== '') {
-			return $folder === null ? [] : $this->listFolder($folder);
+		$states = $folder !== null || $this->savesFolderPath($userId) !== ''
+			? ($folder === null ? [] : $this->listFolder($folder))
+			: $this->listAppData($userId, $romPath);
+		if ($states === [] || !$this->romChanged($userId, $romPath)) {
+			return $states;
 		}
-		return $this->listAppData($userId, $romPath);
+		foreach ($states as &$state) {
+			$state['stale'] = true;
+		}
+		return $states;
 	}
 
 	/**
@@ -561,8 +573,45 @@ class StateService {
 	private function remember(string $userId, string $romPath): void {
 		$folder = $this->userStates($userId, true);
 		if ($folder !== null) {
-			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath));
+			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath), $this->checksumOf($userId, $romPath));
 		}
+	}
+
+	/**
+	 * What the ROM hashes to, as far as Nextcloud knows. Empty for most:
+	 * it is only there when the upload brought a checksum, or when the
+	 * instance works them out.
+	 */
+	private function checksumOf(string $userId, string $romPath): string {
+		$id = $this->fileId($userId, $romPath);
+		if ($id === null) {
+			return '';
+		}
+		try {
+			return $this->metadataManager->getMetadata($id)->getString(MetadataListener::CHECKSUM);
+		} catch (\Throwable) {
+			return '';
+		}
+	}
+
+	/**
+	 * Whether the ROM has changed since its states were written: a state
+	 * belongs to the exact dump it was made from, and loading it into
+	 * another one goes wrong in ways that look like a broken save.
+	 */
+	private function romChanged(string $userId, string $romPath): bool {
+		$was = $this->gameEntry($userId, $this->key($userId, $romPath))['md5'] ?? '';
+		$now = $this->checksumOf($userId, $romPath);
+		return $was !== '' && $now !== '' && $was !== $now;
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private function gameEntry(string $userId, string $key): array {
+		$folder = $this->userStates($userId, false);
+		$entry = $folder === null ? null : ($this->readGames($folder)[$key] ?? null);
+		return is_array($entry) ? $entry : [];
 	}
 
 	private function readAnySram(Folder $folder): ?string {
@@ -614,7 +663,7 @@ class StateService {
 			$folder->newFile($name, $data);
 		}
 		if ($romPath !== '') {
-			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath));
+			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath), $this->checksumOf($userId, $romPath));
 		}
 	}
 
@@ -623,12 +672,13 @@ class StateService {
 	 * states for are listed alongside them. That is what tells apart a state
 	 * whose game is gone from one whose game is merely not being played.
 	 */
-	private function rememberGame(ISimpleFolder $folder, string $romPath, string $key): void {
+	private function rememberGame(ISimpleFolder $folder, string $romPath, string $key, string $checksum): void {
 		$games = $this->readGames($folder);
-		if (($games[$key] ?? null) === $romPath) {
+		$entry = ['path' => $romPath, 'md5' => $checksum];
+		if (($games[$key] ?? null) === $entry) {
 			return;
 		}
-		$games[$key] = $romPath;
+		$games[$key] = $entry;
 		$this->writeGames($folder, $games);
 	}
 
@@ -665,11 +715,19 @@ class StateService {
 	 */
 	public function gamesOf(string $userId): array {
 		$folder = $this->userStates($userId, false);
-		return $folder === null ? [] : $this->readGames($folder);
+		$games = [];
+		foreach ($folder === null ? [] : $this->readGames($folder) as $key => $entry) {
+			// Written as a bare path before the checksum was kept with it.
+			$path = is_array($entry) ? ($entry['path'] ?? '') : $entry;
+			if (is_string($path) && $path !== '') {
+				$games[(string)$key] = $path;
+			}
+		}
+		return $games;
 	}
 
 	/**
-	 * @return array<string, string>
+	 * @return array<string, mixed>
 	 */
 	private function readGames(ISimpleFolder $folder): array {
 		try {
@@ -684,7 +742,7 @@ class StateService {
 	}
 
 	/**
-	 * @param array<string, string> $games
+	 * @param array<string, mixed> $games
 	 */
 	private function writeGames(ISimpleFolder $folder, array $games): void {
 		$content = json_encode($games);

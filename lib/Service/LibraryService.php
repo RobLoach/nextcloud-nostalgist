@@ -242,11 +242,15 @@ class LibraryService {
 			return;
 		}
 		$index = $this->thumbnailService->buildIndex($thumbnails);
-		$titles = $this->titles($games);
+		$known = $this->knownOf($games);
 		foreach ($games as &$game) {
-			$title = $titles[$game['id']] ?? '';
+			$title = $known[$game['id']]['title'] ?? '';
+			$region = $known[$game['id']]['region'] ?? '';
 			if ($title !== '') {
 				$game['title'] = $title;
+			}
+			if ($region !== '') {
+				$game['region'] = $region;
 			}
 			$found = $this->thumbnailService->forGameNamed(
 				$index,
@@ -262,30 +266,30 @@ class LibraryService {
 	}
 
 	/**
-	 * The name each cartridge gives itself, for the games that have one
+	 * What each cartridge says about itself, for the games that have been
 	 * read. One query for the whole library.
 	 *
 	 * @param list<array<string, mixed>> $games
-	 * @return array<int, string>
+	 * @return array<int, array{title: string, region: string}>
 	 */
-	private function titles(array $games): array {
+	private function knownOf(array $games): array {
 		$ids = array_values(array_filter(array_column($games, 'id')));
 		if ($ids === []) {
 			return [];
 		}
-		$titles = [];
+		$known = [];
 		try {
 			foreach ($this->metadataManager->getMetadataForFiles($ids) as $id => $metadata) {
-				$title = $metadata->getString(MetadataListener::TITLE);
-				if ($title !== '') {
-					$titles[(int)$id] = $title;
-				}
+				$known[(int)$id] = [
+					'title' => $metadata->getString(MetadataListener::TITLE),
+					'region' => $metadata->getString(MetadataListener::REGION),
+				];
 			}
 		} catch (\Throwable) {
 			// Nothing has been read of the ROMs yet, which is no reason to
 			// go without the thumbnails that do match.
 		}
-		return $titles;
+		return $known;
 	}
 
 	/**
