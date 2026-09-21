@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Settings;
 
 use OCA\Nostalgist\AppInfo\Application;
+use OCA\Nostalgist\CoreOptions;
 use OCA\Nostalgist\Service\SettingsService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Settings\ISettings;
 use OCP\Util;
 
 /**
- * The folders new users start with, so an instance can be set up once
- * instead of by everybody.
+ * The folders new users start with, and the options of the cores, which
+ * hold for everybody playing them.
  */
 class Admin implements ISettings {
 	public function __construct(
@@ -26,6 +27,9 @@ class Admin implements ISettings {
 
 		return new TemplateResponse(Application::APP_ID, 'admin', [
 			'defaults' => $this->settingsService->getInstanceDefaults(),
+			'coreOptions' => CoreOptions::OPTIONS,
+			'systemsByCore' => CoreOptions::systemsByCore(),
+			'storedCoreOptions' => $this->settingsService->getCoreOptions(),
 		]);
 	}
 

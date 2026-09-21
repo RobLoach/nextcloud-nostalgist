@@ -31,3 +31,29 @@
 #nostalgist-settings .nostalgist-core-options p:last-child {
 	padding-bottom: 12px;
 }
+
+#nostalgist-settings .nostalgist-keys {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 4px 16px;
+	max-width: 700px;
+	margin-bottom: 12px;
+}
+
+#nostalgist-settings .nostalgist-key {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+#nostalgist-settings .nostalgist-key-binding {
+	min-width: 120px;
+	font-family: monospace;
+}
+
+#nostalgist-settings .nostalgist-key-binding.capturing {
+	border-color: var(--color-primary-element);
+	font-family: inherit;
+	font-style: italic;
+}

@@ -2,8 +2,8 @@
 /** @var array $_ */
 /** @var \OCP\IL10N $l */
 $settings = $_['settings'];
-$coreOptions = $_['coreOptions'];
-$systemsByCore = $_['systemsByCore'];
+$buttons = $_['buttons'];
+$hotkeys = $_['hotkeys'];
 ?>
 
 <div id="nostalgist-settings" class="section">
@@ -81,6 +81,38 @@ $systemsByCore = $_['systemsByCore'];
 		<output for="nostalgist-audio-latency"><?php p($settings['audio_latency']); ?> ms</output>
 	</p>
 
+	<h3><?php p($l->t('Controls')); ?></h3>
+	<p class="settings-hint"><?php p($l->t('Click a key to set it, then press the one to use. A key that works a button of the controller is left to the game.')); ?></p>
+
+	<h4><?php p($l->t('Controller')); ?></h4>
+	<div class="nostalgist-keys">
+		<?php foreach ($buttons as $name => $button): ?>
+			<div class="nostalgist-key">
+				<span><?php p($l->t($button['label'])); ?></span>
+				<button type="button" class="nostalgist-key-binding"
+					data-kind="buttons" data-binding="<?php p($name); ?>"
+					data-default="<?php p($button['default']); ?>"
+					data-code="<?php p($settings['buttons'][$name] ?? $button['default']); ?>"></button>
+			</div>
+		<?php endforeach; ?>
+	</div>
+
+	<h4><?php p($l->t('Player')); ?></h4>
+	<div class="nostalgist-keys">
+		<?php foreach ($hotkeys as $name => $hotkey): ?>
+			<div class="nostalgist-key">
+				<span><?php p($l->t($hotkey['label'])); ?></span>
+				<button type="button" class="nostalgist-key-binding"
+					data-kind="hotkeys" data-binding="<?php p($name); ?>"
+					data-default="<?php p($hotkey['default']); ?>"
+					data-code="<?php p($settings['hotkeys'][$name] ?? $hotkey['default']); ?>"></button>
+			</div>
+		<?php endforeach; ?>
+	</div>
+	<p>
+		<button type="button" id="nostalgist-keys-reset"><?php p($l->t('Put the keys back as they were')); ?></button>
+	</p>
+
 	<h3><?php p($l->t('Folders')); ?></h3>
 	<p>
 		<label for="nostalgist-library-folder"><?php p($l->t('Games library folder')); ?></label><br>
@@ -99,6 +131,8 @@ $systemsByCore = $_['systemsByCore'];
 			value="<?php p($settings['thumbnails_folder']); ?>">
 		<button type="button" class="nostalgist-folder-picker"
 			data-target="nostalgist-thumbnails-folder"><?php p($l->t('Browse …')); ?></button>
+		<button type="button" id="nostalgist-fetch-thumbnails"><?php p($l->t('Look for missing box art')); ?></button>
+		<span id="nostalgist-fetch-status" aria-live="polite"></span>
 	</p>
 	<p>
 		<label for="nostalgist-saves-folder"><?php p($l->t('Saves folder')); ?></label><br>
@@ -110,6 +144,15 @@ $systemsByCore = $_['systemsByCore'];
 			data-target="nostalgist-saves-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
 	<p>
+		<label for="nostalgist-system-folder"><?php p($l->t('System folder')); ?></label><br>
+		<em><?php p($l->t('BIOS files are read from this folder, by the name the core expects, such as colecovision.rom. Leave empty if no game needs one.')); ?></em><br>
+		<input type="text" id="nostalgist-system-folder" class="nostalgist-setting"
+			data-setting="system_folder"
+			value="<?php p($settings['system_folder']); ?>">
+		<button type="button" class="nostalgist-folder-picker"
+			data-target="nostalgist-system-folder"><?php p($l->t('Browse …')); ?></button>
+	</p>
+	<p>
 		<label for="nostalgist-screenshots-folder"><?php p($l->t('Screenshots folder')); ?></label><br>
 		<em><?php p($l->t('Screenshots taken in the player are saved to this folder. Leave empty to download them instead.')); ?></em><br>
 		<input type="text" id="nostalgist-screenshots-folder" class="nostalgist-setting"
@@ -118,39 +161,6 @@ $systemsByCore = $_['systemsByCore'];
 		<button type="button" class="nostalgist-folder-picker"
 			data-target="nostalgist-screenshots-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
-
-	<h3><?php p($l->t('Core options')); ?></h3>
-	<p class="settings-hint"><?php p($l->t('Options of the emulator cores themselves. Left on "Core default", the core decides.')); ?></p>
-	<?php foreach ($coreOptions as $core => $options): ?>
-		<details class="nostalgist-core-options">
-			<summary>
-				<?php p($core); ?>
-				<em><?php p(implode(', ', $systemsByCore[$core] ?? [])); ?></em>
-			</summary>
-			<?php foreach ($options as $key => $option): ?>
-				<p>
-					<?php /* Not through $l->t(): these come from CoreOptions, so they are
-					        not translatable anyway, and a "%" in them would be taken for
-					        a format specifier. */ ?>
-					<label for="nostalgist-option-<?php p($key); ?>"><?php p($option['label']); ?></label><br>
-					<select id="nostalgist-option-<?php p($key); ?>" class="nostalgist-core-option"
-						data-core="<?php p($core); ?>" data-option="<?php p($key); ?>">
-						<option value=""><?php p($l->t('Core default')); ?></option>
-						<?php foreach ($option['values'] as $value => $label): ?>
-							<option value="<?php p($value); ?>"
-								<?php if (($settings['core_options'][$core][$key] ?? '') === (string)$value) { p('selected'); } ?>>
-								<?php p($label); ?>
-							</option>
-						<?php endforeach; ?>
-					</select>
-				</p>
-			<?php endforeach; ?>
-			<p>
-				<button type="button" class="nostalgist-core-reset"
-					data-core="<?php p($core); ?>"><?php p($l->t('Reset this core to defaults')); ?></button>
-			</p>
-		</details>
-	<?php endforeach; ?>
 
 	<p>
 		<button id="nostalgist-save" class="primary"><?php p($l->t('Save')); ?></button>

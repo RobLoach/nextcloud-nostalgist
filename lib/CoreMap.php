@@ -23,6 +23,7 @@ class CoreMap {
 			'extensions' => ['nes', 'fds', 'unf', 'unif'],
 			'core' => 'fceumm',
 			'aliases' => ['nes', 'famicom', 'fc', 'nintendoentertainmentsystem', 'fds', 'famicomdisksystem', 'familycomputerdisksystem'],
+			'bios' => [],
 		],
 		'snes' => [
 			'label' => 'Super Nintendo',
@@ -32,6 +33,7 @@ class CoreMap {
 			'extensions' => ['sfc', 'smc'],
 			'core' => 'snes9x',
 			'aliases' => ['snes', 'sfc', 'superfamicom', 'supernintendo', 'supernes', 'supernintendoentertainmentsystem'],
+			'bios' => [],
 		],
 		'gb' => [
 			'label' => 'Game Boy',
@@ -41,6 +43,7 @@ class CoreMap {
 			'extensions' => ['gb'],
 			'core' => 'gambatte',
 			'aliases' => ['gb', 'gameboy'],
+			'bios' => ['gb_bios.bin'],
 		],
 		'gbc' => [
 			'label' => 'Game Boy Color',
@@ -50,6 +53,7 @@ class CoreMap {
 			'extensions' => ['gbc'],
 			'core' => 'gambatte',
 			'aliases' => ['gbc', 'gameboycolor'],
+			'bios' => ['gbc_bios.bin'],
 		],
 		'gba' => [
 			'label' => 'Game Boy Advance',
@@ -59,6 +63,7 @@ class CoreMap {
 			'extensions' => ['gba'],
 			'core' => 'mgba',
 			'aliases' => ['gba', 'gameboyadvance'],
+			'bios' => ['gba_bios.bin'],
 		],
 		'genesis' => [
 			'label' => 'Sega Genesis / Mega Drive',
@@ -68,6 +73,7 @@ class CoreMap {
 			'extensions' => ['md', 'gen', 'smd'],
 			'core' => 'genesis_plus_gx',
 			'aliases' => ['genesis', 'gen', 'md', 'megadrive', 'segagenesis', 'segamegadrive'],
+			'bios' => ['bios_MD.bin'],
 		],
 		'sms' => [
 			'label' => 'Sega Master System',
@@ -77,6 +83,7 @@ class CoreMap {
 			'extensions' => ['sms'],
 			'core' => 'genesis_plus_gx',
 			'aliases' => ['sms', 'mastersystem', 'segamastersystem', 'markiii', 'mark3'],
+			'bios' => ['bios.sms'],
 		],
 		'gamegear' => [
 			'label' => 'Sega Game Gear',
@@ -86,6 +93,7 @@ class CoreMap {
 			'extensions' => ['gg'],
 			'core' => 'genesis_plus_gx',
 			'aliases' => ['gg', 'gamegear', 'segagamegear'],
+			'bios' => ['bios.gg'],
 		],
 		'sega32x' => [
 			'label' => 'Sega 32X',
@@ -95,6 +103,7 @@ class CoreMap {
 			'extensions' => ['32x'],
 			'core' => 'picodrive',
 			'aliases' => ['32x', 'sega32x'],
+			'bios' => ['32X_G_BIOS.BIN', '32X_M_BIOS.BIN', '32X_S_BIOS.BIN'],
 		],
 		'pce' => [
 			'label' => 'PC Engine / TurboGrafx-16',
@@ -104,6 +113,7 @@ class CoreMap {
 			'extensions' => ['pce'],
 			'core' => 'mednafen_pce_fast',
 			'aliases' => ['pce', 'pcengine', 'turbografx', 'turbografx16', 'tg16'],
+			'bios' => ['syscard3.pce'],
 		],
 		'lynx' => [
 			'label' => 'Atari Lynx',
@@ -113,6 +123,7 @@ class CoreMap {
 			'extensions' => ['lnx'],
 			'core' => 'handy',
 			'aliases' => ['lynx', 'atarilynx'],
+			'bios' => ['lynxboot.img'],
 		],
 		'ngp' => [
 			'label' => 'Neo Geo Pocket',
@@ -122,6 +133,7 @@ class CoreMap {
 			'extensions' => ['ngp', 'ngc'],
 			'core' => 'mednafen_ngp',
 			'aliases' => ['ngp', 'ngpc', 'neogeopocket', 'neogeopocketcolor'],
+			'bios' => [],
 		],
 		'wonderswan' => [
 			'label' => 'WonderSwan',
@@ -131,6 +143,7 @@ class CoreMap {
 			'extensions' => ['ws', 'wsc'],
 			'core' => 'mednafen_wswan',
 			'aliases' => ['ws', 'wsc', 'wonderswan', 'wonderswancolor'],
+			'bios' => [],
 		],
 		'virtualboy' => [
 			'label' => 'Virtual Boy',
@@ -140,6 +153,7 @@ class CoreMap {
 			'extensions' => ['vb'],
 			'core' => 'mednafen_vb',
 			'aliases' => ['vb', 'virtualboy'],
+			'bios' => [],
 		],
 		'vectrex' => [
 			'label' => 'Vectrex',
@@ -149,6 +163,7 @@ class CoreMap {
 			'extensions' => ['vec'],
 			'core' => 'vecx',
 			'aliases' => ['vectrex'],
+			'bios' => [],
 		],
 		'coleco' => [
 			'label' => 'ColecoVision',
@@ -158,6 +173,7 @@ class CoreMap {
 			'extensions' => ['col'],
 			'core' => 'gearcoleco',
 			'aliases' => ['coleco', 'colecovision'],
+			'bios' => ['colecovision.rom'],
 		],
 	];
 
@@ -181,6 +197,15 @@ class CoreMap {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The BIOS files a system may ask for.
+	 *
+	 * @return list<string>
+	 */
+	public static function biosFor(string $systemId): array {
+		return self::SYSTEMS[$systemId]['bios'] ?? [];
 	}
 
 	/**

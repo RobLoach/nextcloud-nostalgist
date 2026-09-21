@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Service;
 
 use OCA\Nostalgist\AppInfo\Application;
+use OCA\Nostalgist\Controls;
 use OCA\Nostalgist\CoreOptions;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -14,7 +15,13 @@ class SettingsService {
 	public const AUTOSAVE_INTERVALS = [0, 30, 60, 120, 300, 600];
 
 	/** The folder settings an administrator can set for everyone. */
-	public const INSTANCE_DEFAULTS = ['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder'];
+	public const INSTANCE_DEFAULTS = [
+		'library_folder',
+		'thumbnails_folder',
+		'screenshots_folder',
+		'saves_folder',
+		'system_folder',
+	];
 
 	/**
 	 * Settings are read on nearly every request, sometimes several times.
@@ -44,7 +51,21 @@ class SettingsService {
 				$defaults[$key] = $value;
 			}
 		}
+		// The options of a core are the same for everybody playing it.
+		$defaults['core_options'] = $this->getCoreOptions();
 		return $defaults;
+	}
+
+	/**
+	 * @return array<string, array<string, string>>
+	 */
+	public function getCoreOptions(): array {
+		$stored = $this->appConfig->getValueString(Application::APP_ID, 'core_options');
+		if ($stored === '') {
+			return [];
+		}
+		$options = json_decode($stored, true);
+		return is_array($options) ? $this->sanitizeCoreOptions($options) : [];
 	}
 
 	/**
@@ -71,6 +92,13 @@ class SettingsService {
 				$this->appConfig->setValueString(Application::APP_ID, $key, (string)$sanitized[$key]);
 			}
 		}
+		if (array_key_exists('core_options', $sanitized)) {
+			$this->appConfig->setValueString(
+				Application::APP_ID,
+				'core_options',
+				json_encode($sanitized['core_options']),
+			);
+		}
 		$this->settings = [];
 		return $this->getInstanceDefaults();
 	}
@@ -94,7 +122,10 @@ class SettingsService {
 			'thumbnails_folder' => '',
 			'screenshots_folder' => '',
 			'saves_folder' => '',
+			'system_folder' => '',
 			'core_options' => [],
+			'buttons' => Controls::defaultButtons(),
+			'hotkeys' => Controls::defaultHotkeys(),
 		];
 	}
 
@@ -127,6 +158,8 @@ class SettingsService {
 	 */
 	public function setUserSettings(string $userId, array $settings): array {
 		$sanitized = $this->sanitize($settings);
+		// Those belong to the instance, not to whoever is playing.
+		unset($sanitized['core_options']);
 		$this->config->setUserValue($userId, Application::APP_ID, 'settings', json_encode($sanitized));
 		unset($this->settings[$userId]);
 		return $this->getUserSettings($userId);
@@ -171,7 +204,7 @@ class SettingsService {
 		}
 		// An empty folder means the feature is disabled; the library folder
 		// always has one.
-		foreach (['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder'] as $key) {
+		foreach (['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder', 'system_folder'] as $key) {
 			if (!array_key_exists($key, $settings) || !is_string($settings[$key])) {
 				continue;
 			}
@@ -184,6 +217,20 @@ class SettingsService {
 		}
 		if (isset($settings['core_options']) && is_array($settings['core_options'])) {
 			$sanitized['core_options'] = $this->sanitizeCoreOptions($settings['core_options']);
+		}
+		// A binding that is left out keeps whatever it had, so a page that
+		// knows nothing of the keyboard cannot wipe it.
+		if (isset($settings['buttons']) && is_array($settings['buttons'])) {
+			$sanitized['buttons'] = array_merge(
+				Controls::defaultButtons(),
+				Controls::sanitize($settings['buttons'], Controls::BUTTONS),
+			);
+		}
+		if (isset($settings['hotkeys']) && is_array($settings['hotkeys'])) {
+			$sanitized['hotkeys'] = array_merge(
+				Controls::defaultHotkeys(),
+				Controls::sanitize($settings['hotkeys'], Controls::HOTKEYS),
+			);
 		}
 		return $sanitized;
 	}

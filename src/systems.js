@@ -42,6 +42,14 @@ export function coreForSystem(systemId) {
 
 /**
  * @param {string} systemId the system id
+ * @return {string[]} the BIOS files the system may ask for
+ */
+export function biosForSystem(systemId) {
+	return systems[systemId]?.bios ?? []
+}
+
+/**
+ * @param {string} systemId the system id
  * @return {string} the short display name of the system
  */
 export function systemLabel(systemId) {

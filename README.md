@@ -98,8 +98,12 @@ listed.
 
 ### Player controls
 
-Space pauses, F goes fullscreen, S opens the save states, and Escape closes
-whatever panel is open.
+The keyboard works the controller: the arrow keys, X and Z for A and B, S
+and A for X and Y, Q and W for the shoulders, Enter for start and the right
+shift for select. Space pauses, T fast-forwards, F goes fullscreen, O opens
+the save states, P takes a screenshot, and Escape closes whatever panel is
+open. All of them can be changed in the personal settings, and a key that
+works a button of the controller is left to the game.
 
 A control bar overlays the bottom of the player with pause/resume, restart,
 a save state menu, mute, fast-forward, the RetroArch menu (core options,
@@ -146,13 +150,39 @@ Personal settings → Nostalgist:
 | Saves folder | empty | Save states and their screenshots, in your own files |
 | Screenshots folder | empty | Where the screenshot button saves images |
 | Thumbnails folder | empty | Images used as game thumbnails |
-| Core options | core defaults | Options of the emulator cores, per core |
+| System folder | empty | Where BIOS files are read from |
+| Controls | see above | The key of every button and of the player itself |
 
-Folder settings have a browse button that opens the NextCloud file picker,
-and each core has a button putting all of its options back to the defaults.
+Folder settings have a browse button that opens the NextCloud file picker.
+The thumbnails folder also has a button that goes looking for the box art of
+the games that have none; it runs as a background job, so it carries on
+after the page is closed, and says how it went when the page is opened
+again.
 
-Administration settings → Nostalgist sets the folders new users start with;
-everyone can still pick their own afterwards.
+Administration settings → Nostalgist holds what is the same for everybody:
+the folders new users start with, which each of them can still change, and
+the options of the emulator cores, which they cannot — an option of a core
+belongs to the core rather than to whoever is playing.
+
+### BIOS files
+
+A few systems ask for a BIOS file, and the ones that do look for it by the
+name their core expects. Point the system folder at a folder holding them
+and they are handed to the emulator as a game starts:
+
+| System | File |
+| --- | --- |
+| ColecoVision | `colecovision.rom` |
+| PC Engine CD | `syscard3.pce` |
+| Sega 32X | `32X_G_BIOS.BIN`, `32X_M_BIOS.BIN`, `32X_S_BIOS.BIN` |
+| Game Boy, Game Boy Color | `gb_bios.bin`, `gbc_bios.bin` |
+| Game Boy Advance | `gba_bios.bin` |
+| Master System, Game Gear | `bios.sms`, `bios.gg` |
+| Mega Drive | `bios_MD.bin` |
+| Atari Lynx | `lynxboot.img` |
+
+Only ColecoVision really needs one; for the rest the file is optional, and
+a missing one is quietly left out rather than keeping a game from starting.
 
 Thumbnails are matched by file name. With a thumbnails folder of `Thumbs`,
 `Games/NES/Mario.nes` uses `Thumbs/NES/Mario.png` and falls back to
@@ -300,6 +330,8 @@ lib/Controller/             Page, library, settings and save state endpoints
 lib/Listener/               Files and Viewer script loading, Content Security Policy
 lib/Migration/              Mimetype repair step
 lib/Command/                The occ cleanup command
+lib/BackgroundJob/          Looking for box art, away from the browser
+lib/Controls.php            What the keyboard does, and what it does by default
 lib/Service/                Settings, library, save states, thumbnails, history
 lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
@@ -314,6 +346,7 @@ src/icons.js                The icons of the player
 src/touch.js                Virtual gamepad
 src/settings.js             Personal settings page
 src/systems.js              System lookup shared by the frontend
+src/keys.js                 Keys, as the browser and RetroArch each name them
 tests/unit/                 Unit tests of the logic that has no dependencies
 templates/                  App page and settings markup
 css/player.css              The player overlay, also loaded inside Files
@@ -335,7 +368,7 @@ All of them are user-scoped and require a session.
 | GET/POST | `/apps/nostalgist/sram` | The in-game battery save |
 | POST | `/apps/nostalgist/recent` | Remember a game as played, and for how long |
 | POST | `/apps/nostalgist/favorite` | Make a game a favorite, or stop |
-| POST | `/apps/nostalgist/thumbnails/fetch` | Look for missing box art |
+| GET/POST | `/apps/nostalgist/thumbnails/fetch` | Ask for missing box art, and how it went |
 | GET/DELETE | `/apps/nostalgist/screenshots` | The screenshots of a game |
 
 Save states and battery saves are removed along with the game they belong

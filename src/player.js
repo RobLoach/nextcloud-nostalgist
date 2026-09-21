@@ -4,7 +4,8 @@ import { getCurrentUser, getRequestToken } from '@nextcloud/auth'
 import { defaultRemoteURL, defaultRootPath } from '@nextcloud/files/dav'
 import { translate as t } from '@nextcloud/l10n'
 import { generateFilePath, generateUrl } from '@nextcloud/router'
-import { coreForSystem, systemForFile } from './systems.js'
+import { inputConfig } from './keys.js'
+import { biosForSystem, coreForSystem, systemForFile } from './systems.js'
 
 const SRAM_SYNC_INTERVAL = 60 * 1000
 
@@ -82,16 +83,21 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 		throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: romName }))
 	}
 	const sram = await fetchSram(romPath)
+	const bios = await fetchBios(system.id, settings.system_folder ?? '')
 
 	return await Nostalgist.launch({
 		element,
 		core: coreForSystem(system.id),
 		rom,
+		// Only what was actually found: a core asked for a file it has not
+		// been given would stop rather than run without it.
+		...(bios.length === 0 ? {} : { bios }),
 		// Only set when there is one: an undefined value is still a present
 		// key, which Nostalgist would try to resolve as a file.
 		...(sram === null ? {} : { sram }),
 		respondToGlobalEvents: settings.respond_to_global_events !== false,
 		retroarchConfig: {
+			...inputConfig(settings.buttons),
 			video_smooth: settings.video_smooth === true,
 			video_scale_integer: settings.scale_integer === true,
 			fastforward_ratio: Number(settings.fastforward_ratio ?? 3),
@@ -106,6 +112,36 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 			return coreUrl(`${coreName}_libretro.wasm`)
 		},
 	})
+}
+
+/**
+ * Read the BIOS files of a system from the user's system folder.
+ *
+ * A core names the files it wants, and most games run without them, so
+ * whatever is missing is quietly left out.
+ *
+ * @param {string} systemId the system being played
+ * @param {string} folder the system folder of the user
+ * @return {Promise<File[]>} the files that were there
+ */
+async function fetchBios(systemId, folder) {
+	const names = biosForSystem(systemId)
+	if (folder === '' || names.length === 0 || getCurrentUser() === null) {
+		return []
+	}
+	const files = await Promise.all(names.map(async (name) => {
+		try {
+			const response = await fetch(davUrl(`${folder}/${name}`), { credentials: 'same-origin' })
+			if (!response.ok) {
+				return null
+			}
+			return new File([await response.blob()], name)
+		} catch (error) {
+			console.error(`Could not read the BIOS file ${name}`, error)
+			return null
+		}
+	}))
+	return files.filter((file) => file !== null)
 }
 
 /**

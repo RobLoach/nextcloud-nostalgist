@@ -167,7 +167,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		element.classList.toggle('active')
 	})
 
-	button(ICONS.fastForward, t('nostalgist', 'Fast-forward'), (element) => {
+	const fastForwardButton = button(ICONS.fastForward, t('nostalgist', 'Fast-forward'), (element) => {
 		instance.sendCommand('FAST_FORWARD')
 		element.classList.toggle('active')
 	})
@@ -178,7 +178,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		element.classList.toggle('active')
 	})
 
-	button(ICONS.screenshot, t('nostalgist', 'Screenshot'), async () => {
+	const screenshotButton = button(ICONS.screenshot, t('nostalgist', 'Screenshot'), async () => {
 		try {
 			const blob = await instance.screenshot()
 			const stem = (romName || 'nostalgist').replace(/\.[^.]+$/, '')
@@ -227,18 +227,30 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		})
 	}
 
-	// A handful of keys for what the buttons do, for playing without
-	// reaching for the mouse. Keys the game itself uses are left alone.
-	const shortcuts = {
-		Space: () => pauseButton.click(),
-		KeyF: () => fullscreenButton.click(),
-		KeyS: () => statesButton?.click(),
-		Escape: () => {
-			hideStates()
-			galleryPanel?.element.classList.add('hidden')
-			galleryButton?.classList.remove('active')
-		},
+	// The keys the player itself listens for, as they were set. A key that
+	// a game uses is left to the game: the emulator needs it more.
+	const controlKeys = new Set(Object.values(settings.buttons ?? {}))
+	const hotkeys = settings.hotkeys ?? {}
+	const actions = {
+		pause: () => pauseButton.click(),
+		fastForward: () => fastForwardButton.click(),
+		fullscreen: () => fullscreenButton.click(),
+		saveStates: () => statesButton?.click(),
+		screenshot: () => screenshotButton.click(),
 	}
+	const bound = {}
+	for (const [action, code] of Object.entries(hotkeys)) {
+		if (actions[action] !== undefined && !controlKeys.has(code)) {
+			bound[code] = actions[action]
+		}
+	}
+	// Closing whatever is open is the one key that is not up for debate.
+	bound.Escape = () => {
+		hideStates()
+		galleryPanel?.element.classList.add('hidden')
+		galleryButton?.classList.remove('active')
+	}
+
 	const onKeyDown = (event) => {
 		if (event.ctrlKey || event.altKey || event.metaKey) {
 			return
@@ -247,11 +259,11 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
 			return
 		}
-		const shortcut = shortcuts[event.code]
-		if (shortcut !== undefined) {
+		const action = bound[event.code]
+		if (action !== undefined) {
 			event.preventDefault()
 			event.stopPropagation()
-			shortcut()
+			action()
 		}
 	}
 	// Ahead of the emulator, which listens on the window for its own keys.

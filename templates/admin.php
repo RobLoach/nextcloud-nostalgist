@@ -2,6 +2,9 @@
 /** @var array $_ */
 /** @var \OCP\IL10N $l */
 $defaults = $_['defaults'];
+$coreOptions = $_['coreOptions'];
+$systemsByCore = $_['systemsByCore'];
+$settings = ['core_options' => $_['storedCoreOptions']];
 ?>
 
 <div id="nostalgist-settings" class="section" data-scope="admin">
@@ -13,6 +16,7 @@ $defaults = $_['defaults'];
 		'thumbnails_folder' => $l->t('Thumbnails folder'),
 		'saves_folder' => $l->t('Saves folder'),
 		'screenshots_folder' => $l->t('Screenshots folder'),
+		'system_folder' => $l->t('System folder, for BIOS files'),
 	] as $key => $label): ?>
 		<p>
 			<label for="nostalgist-<?php p($key); ?>"><?php p($label); ?></label><br>
@@ -21,6 +25,39 @@ $defaults = $_['defaults'];
 			<button type="button" class="nostalgist-folder-picker"
 				data-target="nostalgist-<?php p($key); ?>"><?php p($l->t('Browse …')); ?></button>
 		</p>
+	<?php endforeach; ?>
+
+	<h3><?php p($l->t('Core options')); ?></h3>
+	<p class="settings-hint"><?php p($l->t('Options of the emulator cores themselves. Left on "Core default", the core decides.')); ?></p>
+	<?php foreach ($coreOptions as $core => $options): ?>
+		<details class="nostalgist-core-options">
+			<summary>
+				<?php p($core); ?>
+				<em><?php p(implode(', ', $systemsByCore[$core] ?? [])); ?></em>
+			</summary>
+			<?php foreach ($options as $key => $option): ?>
+				<p>
+					<?php /* Not through $l->t(): these come from CoreOptions, so they are
+					        not translatable anyway, and a "%" in them would be taken for
+					        a format specifier. */ ?>
+					<label for="nostalgist-option-<?php p($key); ?>"><?php p($option['label']); ?></label><br>
+					<select id="nostalgist-option-<?php p($key); ?>" class="nostalgist-core-option"
+						data-core="<?php p($core); ?>" data-option="<?php p($key); ?>">
+						<option value=""><?php p($l->t('Core default')); ?></option>
+						<?php foreach ($option['values'] as $value => $label): ?>
+							<option value="<?php p($value); ?>"
+								<?php if (($settings['core_options'][$core][$key] ?? '') === (string)$value) { p('selected'); } ?>>
+								<?php p($label); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+			<?php endforeach; ?>
+			<p>
+				<button type="button" class="nostalgist-core-reset"
+					data-core="<?php p($core); ?>"><?php p($l->t('Reset this core to defaults')); ?></button>
+			</p>
+		</details>
 	<?php endforeach; ?>
 
 	<p>

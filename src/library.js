@@ -10,7 +10,6 @@ const PAGE_SIZE_KEY = 'nostalgist-library-page-size'
 
 const ICONS = {
 	star: 'M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.09L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z',
-	download: 'M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z',
 	grid: 'M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3',
 	list: 'M3,4H21V8H3V4M3,10H21V14H3V10M3,16H21V20H3V16Z',
 	table: 'M5,4H19A2,2 0 0,1 21,6V18A2,2 0 0,1 19,20H5A2,2 0 0,1 3,18V6A2,2 0 0,1 5,4M5,8V12H11V8H5M13,8V12H19V8H13M5,14V18H11V14H5M13,14V18H19V14H13Z',
@@ -511,7 +510,7 @@ function renderFilters(systems, reload) {
  * @param {Function} setView switches the view without reloading
  * @return {HTMLElement} the header, with the view switcher
  */
-function renderHeader(reload, setView, onStatus) {
+function renderHeader(reload, setView) {
 	const header = document.createElement('div')
 	header.className = 'nostalgist-library-header'
 
@@ -537,29 +536,6 @@ function renderHeader(reload, setView, onStatus) {
 		button.addEventListener('click', () => setView(view))
 		controls.appendChild(button)
 	}
-
-	const fetchArt = document.createElement('button')
-	fetchArt.type = 'button'
-	fetchArt.title = t('nostalgist', 'Look for missing box art')
-	fetchArt.setAttribute('aria-label', fetchArt.title)
-	fetchArt.innerHTML = icon(ICONS.download)
-	fetchArt.addEventListener('click', async () => {
-		fetchArt.disabled = true
-		onStatus(t('nostalgist', 'Looking for box art …'))
-		try {
-			const response = await post('/apps/nostalgist/thumbnails/fetch', {})
-			const result = await response.json()
-			onStatus(result.missing > 0
-				? t('nostalgist', 'Found {fetched} covers, {missing} to go. Run it again to carry on.', result)
-				: t('nostalgist', 'Found {fetched} covers.', result))
-			reload(true)
-		} catch (error) {
-			console.error('Could not look for box art', error)
-			onStatus(t('nostalgist', 'Could not look for box art. A thumbnails folder has to be set first.'))
-		}
-		fetchArt.disabled = false
-	})
-	controls.appendChild(fetchArt)
 
 	const refresh = document.createElement('button')
 	refresh.type = 'button'
@@ -663,13 +639,7 @@ export async function renderLibrary(container, onError) {
 		const searchWasFocused = container.querySelector('.nostalgist-library-search') === document.activeElement
 
 		container.innerHTML = ''
-		const status = document.createElement('p')
-		status.className = 'nostalgist-library-status'
-		status.setAttribute('aria-live', 'polite')
-		container.appendChild(renderHeader(load, setView, (message) => {
-			status.textContent = message
-		}))
-		container.appendChild(status)
+		container.appendChild(renderHeader(load, setView))
 
 		if (!data.exists || data.libraryTotal === 0) {
 			const hint = document.createElement('p')

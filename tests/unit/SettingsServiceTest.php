@@ -34,6 +34,27 @@ class SettingsServiceTest extends TestCase {
 		return json_decode($saved, true) ?? [];
 	}
 
+	/**
+	 * @return array<string, array<string, string>> the core options as stored
+	 */
+	private function saveInstance(array $settings): array {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$saved = '';
+		$appConfig->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$saved): bool {
+				if ($key === 'core_options') {
+					$saved = $value;
+				}
+				return true;
+			},
+		);
+		$appConfig->method('getValueString')->willReturnCallback(
+			fn (string $app, string $key): string => $key === 'core_options' ? $saved : '',
+		);
+		(new SettingsService($this->createStub(IConfig::class), $appConfig))->setInstanceDefaults($settings);
+		return json_decode($saved, true) ?? [];
+	}
+
 	public function testDefaultsAreReturnedWithoutStoredSettings(): void {
 		$settings = $this->service()->getUserSettings(self::USER);
 		$this->assertFalse($settings['video_smooth']);
@@ -133,12 +154,33 @@ class SettingsServiceTest extends TestCase {
 		$this->assertFalse($this->save(['autoload_on_start' => '0'])['autoload_on_start']);
 	}
 
+	public function testTheKeyboardIsBoundToTheControllerOutOfTheBox(): void {
+		$settings = $this->service()->getUserSettings(self::USER);
+		$this->assertSame('ArrowUp', $settings['buttons']['up']);
+		$this->assertSame('KeyX', $settings['buttons']['a']);
+		$this->assertSame('Space', $settings['hotkeys']['pause']);
+	}
+
+	public function testRebindingAKeyLeavesTheOthersWhereTheyWere(): void {
+		$saved = $this->save(['buttons' => ['a' => 'KeyM', 'made_up' => 'KeyN']]);
+		$this->assertSame('KeyM', $saved['buttons']['a'], 'the key that was set');
+		$this->assertSame('KeyZ', $saved['buttons']['b'], 'and the rest as they were');
+		$this->assertArrayNotHasKey('made_up', $saved['buttons']);
+	}
+
+	public function testCoreOptionsAreNotAUsersToSet(): void {
+		// They hold for everybody playing a core, so they live with the
+		// administration settings.
+		$saved = $this->save(['core_options' => ['fceumm' => ['fceumm_palette' => 'wavebeam']]]);
+		$this->assertArrayNotHasKey('core_options', $saved);
+	}
+
 	public function testUnknownSettingsAreDropped(): void {
 		$this->assertArrayNotHasKey('evil', $this->save(['evil' => 'value']));
 	}
 
 	public function testCoreOptionsAreCheckedAgainstWhatTheCoresOffer(): void {
-		$saved = $this->save([
+		$saved = $this->saveInstance([
 			'core_options' => [
 				'fceumm' => [
 					'fceumm_palette' => 'wavebeam',
@@ -148,6 +190,6 @@ class SettingsServiceTest extends TestCase {
 				'made_up_core' => ['option' => 'value'],
 			],
 		]);
-		$this->assertSame(['fceumm' => ['fceumm_palette' => 'wavebeam']], $saved['core_options']);
+		$this->assertSame(['fceumm' => ['fceumm_palette' => 'wavebeam']], $saved);
 	}
 }
