@@ -70,10 +70,14 @@ default). Three views are available and the choice is remembered:
 | List | Compact rows with small thumbnails |
 | Table | Sortable columns: name, system, size, modified |
 
-Large libraries are paged (24 to 240 games per page). The scan of the library
-folder is cached and keyed on the folder's ETag, so it is only walked again
-when something in it changes; the refresh button in the header forces a
-rescan. Up to 5000 games and six folder levels deep are listed.
+Games can be filtered by name and by system, and large libraries are paged
+(24 to 240 games per page). Filtering, sorting and paging all happen over
+the whole library, not just the page being shown.
+
+The scan of the library folder is cached and keyed on the folder's ETag, so
+it is only walked again when something in it changes; the refresh button in
+the header forces a rescan. Up to 5000 games and six folder levels deep are
+listed.
 
 ### Player controls
 
@@ -113,9 +117,25 @@ Personal settings → Nostalgist:
 
 Folder settings have a browse button that opens the NextCloud file picker.
 
-Thumbnails are matched by file name and subfolder, so with a thumbnails
-folder of `Thumbs`, `Games/NES/Mario.nes` uses `Thumbs/NES/Mario.png`, and
-falls back to `Thumbs/Mario.png`. PNG, JPEG, WebP and GIF are supported.
+Thumbnails are matched by file name. With a thumbnails folder of `Thumbs`,
+`Games/NES/Mario.nes` uses `Thumbs/NES/Mario.png` and falls back to
+`Thumbs/Mario.png`. PNG, JPEG, WebP and GIF are supported.
+
+The [libretro-thumbnails](https://github.com/libretro-thumbnails) layout
+works as well, so a pack can be dropped in unchanged:
+
+```
+Thumbs/Nintendo - Nintendo Entertainment System/Named_Boxarts/Mario.png
+Thumbs/Nintendo - Nintendo Entertainment System/Named_Titles/Mario.png
+Thumbs/Nintendo - Nintendo Entertainment System/Named_Snaps/Mario.png
+Thumbs/Nintendo - Nintendo Entertainment System/Named_Logos/Mario.png
+```
+
+Platform folders are matched by their No-Intro name as above, or by a short
+name like `SNES`. The library picks the image that suits the size it is
+drawing: box art in the grid, logos in the list and table, falling back to
+title screens and screenshots. Names containing `&*/:` and friends match the
+underscores libretro-thumbnails replaces them with.
 
 With a saves folder set, save states are written to your own files as
 `Saves/Mario/Slot 1.state` with `Slot 1.png` next to it, and the battery save
@@ -206,7 +226,7 @@ lib/AppInfo/Application.php Mimetype registration and event listeners
 lib/Controller/             Page, library, settings and save state endpoints
 lib/Listener/               Files and Viewer script loading, Content Security Policy
 lib/Migration/              Mimetype repair step
-lib/Service/                Settings and save state storage
+lib/Service/                Settings, save state storage, thumbnail matching
 lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
 src/library.js              Games library views and pagination
@@ -228,7 +248,7 @@ All of them are user-scoped and require a session.
 | Method | Route | Purpose |
 | --- | --- | --- |
 | GET | `/apps/nostalgist/` | The app page, `?file=` plays a game |
-| GET | `/apps/nostalgist/library` | Games, paged: `offset`, `limit`, `sort`, `order`, `refresh` |
+| GET | `/apps/nostalgist/library` | Games: `offset`, `limit`, `sort`, `order`, `search`, `system`, `refresh` |
 | GET/POST | `/apps/nostalgist/settings` | Personal settings |
 | GET | `/apps/nostalgist/states` | Save state slots of a game |
 | GET/POST/DELETE | `/apps/nostalgist/state` | A save state slot |

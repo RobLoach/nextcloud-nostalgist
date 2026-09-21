@@ -7,6 +7,7 @@ namespace OCA\Nostalgist\Controller;
 use OCA\Nostalgist\AppInfo\Application;
 use OCA\Nostalgist\CoreMap;
 use OCA\Nostalgist\Service\SettingsService;
+use OCA\Nostalgist\Service\ThumbnailService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -29,6 +30,8 @@ class PageController extends Controller {
 	private const LIBRARY_MAX_DEPTH = 6;
 	private const LIBRARY_MAX_PAGE_SIZE = 500;
 	private const LIBRARY_CACHE_TTL = 24 * 3600;
+	/** Bumped when the shape of a cached entry changes. */
+	private const LIBRARY_CACHE_VERSION = 2;
 
 	public function __construct(
 		string $appName,
@@ -37,6 +40,7 @@ class PageController extends Controller {
 		private SettingsService $settingsService,
 		private IRootFolder $rootFolder,
 		private ICacheFactory $cacheFactory,
+		private ThumbnailService $thumbnailService,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -75,6 +79,8 @@ class PageController extends Controller {
 		int $limit = 60,
 		string $sort = 'name',
 		string $order = 'asc',
+		string $search = '',
+		string $system = '',
 		bool $refresh = false,
 	): JSONResponse {
 		if ($this->userId === null) {
@@ -93,13 +99,22 @@ class PageController extends Controller {
 				'folder' => $folderPath,
 				'exists' => false,
 				'total' => 0,
+				'libraryTotal' => 0,
 				'offset' => 0,
 				'limit' => $limit,
+				'systems' => [],
 				'games' => [],
 			]);
 		}
 
 		$games = $this->getGames($folder, $userFolder, $folderPath, $settings, $refresh);
+		$libraryTotal = count($games);
+		// The systems of the whole library, so the filter keeps offering
+		// them while a filter is active.
+		$systems = array_values(array_unique(array_column($games, 'system')));
+		sort($systems);
+
+		$games = $this->filterGames($games, $search, $system);
 		$this->sortGames($games, $sort, $order);
 
 		$limit = max(1, min(self::LIBRARY_MAX_PAGE_SIZE, $limit));
@@ -109,11 +124,34 @@ class PageController extends Controller {
 			'folder' => $folderPath,
 			'exists' => true,
 			'total' => count($games),
+			'libraryTotal' => $libraryTotal,
 			'offset' => $offset,
 			'limit' => $limit,
-			'truncated' => count($games) >= self::LIBRARY_MAX_GAMES,
+			'truncated' => $libraryTotal >= self::LIBRARY_MAX_GAMES,
+			'systems' => $systems,
 			'games' => array_slice($games, $offset, $limit),
 		]);
+	}
+
+	/**
+	 * @param list<array<string, mixed>> $games
+	 * @return list<array<string, mixed>>
+	 */
+	private function filterGames(array $games, string $search, string $system): array {
+		$search = trim($search);
+		if ($search !== '') {
+			$games = array_filter(
+				$games,
+				static fn (array $game): bool => mb_stripos($game['basename'], $search) !== false,
+			);
+		}
+		if ($system !== '') {
+			$games = array_filter(
+				$games,
+				static fn (array $game): bool => $game['system'] === $system,
+			);
+		}
+		return array_values($games);
 	}
 
 	/**
@@ -128,6 +166,7 @@ class PageController extends Controller {
 		// Nextcloud propagates etags up the tree, so the library folder's
 		// etag changes whenever anything inside it does.
 		$key = implode('|', [
+			self::LIBRARY_CACHE_VERSION,
 			$this->userId,
 			$folderPath,
 			$folder->getEtag(),
@@ -185,13 +224,9 @@ class PageController extends Controller {
 	}
 
 	/**
-	 * Attach the file id of a matching thumbnail image to each game. A game
-	 * called Mario.nes matches Mario.png, Mario.jpg, etc. in the thumbnails
-	 * folder — first in the same subfolder the game is in relative to the
-	 * library (Games/NES/Mario.nes matches Thumbs/NES/Mario.png), then in
-	 * the thumbnails folder root.
+	 * Attach the matching images to each game, by type.
 	 *
-	 * @param list<array{path: string, basename: string, system: string}> $games
+	 * @param list<array<string, mixed>> $games
 	 */
 	private function addThumbnails(array &$games, Folder $userFolder, string $thumbnailsPath, string $libraryPath): void {
 		if ($thumbnailsPath === '') {
@@ -205,21 +240,12 @@ class PageController extends Controller {
 		if (!$thumbnails instanceof Folder) {
 			return;
 		}
+		$index = $this->thumbnailService->buildIndex($thumbnails);
 		foreach ($games as &$game) {
-			$stem = pathinfo($game['basename'], PATHINFO_FILENAME);
 			$subfolder = trim(dirname(substr($game['path'], strlen($libraryPath))), '/.');
-			$candidates = [];
-			foreach (['png', 'jpg', 'jpeg', 'webp', 'gif'] as $extension) {
-				if ($subfolder !== '') {
-					$candidates[] = "$subfolder/$stem.$extension";
-				}
-				$candidates[] = "$stem.$extension";
-			}
-			foreach ($candidates as $candidate) {
-				if ($thumbnails->nodeExists($candidate)) {
-					$game['thumbnail'] = $thumbnails->get($candidate)->getId();
-					break;
-				}
+			$found = $this->thumbnailService->forGame($index, $game['system'], $subfolder, $game['basename']);
+			if ($found !== []) {
+				$game['thumbnails'] = $found;
 			}
 		}
 	}

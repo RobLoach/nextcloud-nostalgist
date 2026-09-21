@@ -83,6 +83,18 @@
 	fill: var(--color-primary-element-text);
 }
 
+.nostalgist .nostalgist-library-filters {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-bottom: 16px;
+}
+
+.nostalgist .nostalgist-library-search {
+	flex: 1;
+	min-width: 180px;
+}
+
 .nostalgist .nostalgist-library-hint {
 	color: var(--color-text-maxcontrast);
 	margin-bottom: 12px;
@@ -136,6 +148,12 @@
 	background-color: var(--color-background-dark);
 }
 
+/* Box art is portrait and logos are wide, so show them whole. */
+.nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail-boxart,
+.nostalgist .nostalgist-library-grid .nostalgist-library-thumbnail-logo {
+	object-fit: contain;
+}
+
 .nostalgist .nostalgist-library-game-name {
 	padding: 8px 12px 0 12px;
 	font-weight: bold;
@@ -176,7 +194,7 @@
 .nostalgist .nostalgist-library-rows .nostalgist-library-thumbnail {
 	width: 48px;
 	height: 36px;
-	object-fit: cover;
+	object-fit: contain;
 	border-radius: var(--border-radius);
 	background-color: var(--color-background-dark);
 	flex-shrink: 0;

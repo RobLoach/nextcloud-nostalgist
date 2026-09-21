@@ -16,12 +16,21 @@ const ICONS = {
 	refresh: 'M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z',
 }
 
+// Boxarts are the cover of a game and read best big; logos are made to be
+// recognized small. The rest is used when those are missing.
+const THUMBNAIL_PREFERENCE = {
+	large: ['boxart', 'plain', 'title', 'snap', 'logo'],
+	small: ['logo', 'plain', 'boxart', 'title', 'snap'],
+}
+
 const state = {
 	view: localStorage.getItem(VIEW_KEY) ?? 'grid',
 	pageSize: Number(localStorage.getItem(PAGE_SIZE_KEY)) || 60,
 	sort: 'name',
 	order: 'asc',
 	offset: 0,
+	search: '',
+	system: '',
 }
 
 /**
@@ -73,15 +82,19 @@ function gameUrl(game) {
 
 /**
  * @param {object} game the game
- * @param {number} size the requested thumbnail size
+ * @param {number} size the requested thumbnail size in pixels
  * @return {HTMLElement} the thumbnail image, or a placeholder
  */
 function thumbnailFor(game, size) {
-	if (game.thumbnail) {
+	const available = game.thumbnails ?? {}
+	const preference = THUMBNAIL_PREFERENCE[size > 96 ? 'large' : 'small']
+	const type = preference.find((candidate) => available[candidate] !== undefined)
+
+	if (type !== undefined) {
 		const image = document.createElement('img')
-		image.className = 'nostalgist-library-thumbnail'
+		image.className = `nostalgist-library-thumbnail nostalgist-library-thumbnail-${type}`
 		image.src = generateUrl('/core/preview?fileId={fileId}&x={size}&y={size}&a=1', {
-			fileId: game.thumbnail,
+			fileId: available[type],
 			size,
 		})
 		image.alt = ''
@@ -287,6 +300,58 @@ function renderPagination(data, reload) {
 }
 
 /**
+ * @param {string[]} systems the systems present in the library
+ * @param {Function} reload reloads the library with new parameters
+ * @return {HTMLElement} the filters
+ */
+function renderFilters(systems, reload) {
+	const filters = document.createElement('div')
+	filters.className = 'nostalgist-library-filters'
+
+	const search = document.createElement('input')
+	search.type = 'search'
+	search.className = 'nostalgist-library-search'
+	search.placeholder = t('nostalgist', 'Search games …')
+	search.setAttribute('aria-label', t('nostalgist', 'Search games'))
+	search.value = state.search
+	let searchTimer = null
+	search.addEventListener('input', () => {
+		clearTimeout(searchTimer)
+		searchTimer = setTimeout(() => {
+			state.search = search.value
+			state.offset = 0
+			reload()
+		}, 300)
+	})
+	filters.appendChild(search)
+
+	const systemFilter = document.createElement('select')
+	systemFilter.className = 'nostalgist-library-system-filter'
+	systemFilter.setAttribute('aria-label', t('nostalgist', 'Filter by system'))
+	const all = document.createElement('option')
+	all.value = ''
+	all.textContent = t('nostalgist', 'All systems')
+	systemFilter.appendChild(all)
+	for (const system of systems) {
+		const option = document.createElement('option')
+		option.value = system
+		option.textContent = system === 'zip'
+			? t('nostalgist', 'ZIP archive')
+			: systemLabel(system)
+		option.selected = system === state.system
+		systemFilter.appendChild(option)
+	}
+	systemFilter.addEventListener('change', () => {
+		state.system = systemFilter.value
+		state.offset = 0
+		reload()
+	})
+	filters.appendChild(systemFilter)
+
+	return { element: filters, search }
+}
+
+/**
  * @param {Function} reload reloads the library with new parameters
  * @return {HTMLElement} the header, with the view switcher
  */
@@ -344,12 +409,15 @@ export async function renderLibrary(container, onError) {
 		let data
 		try {
 			const response = await fetch(generateUrl(
-				'/apps/nostalgist/library?offset={offset}&limit={limit}&sort={sort}&order={order}&refresh={refresh}',
+				'/apps/nostalgist/library?offset={offset}&limit={limit}&sort={sort}&order={order}'
+					+ '&search={search}&system={system}&refresh={refresh}',
 				{
 					offset: state.offset,
 					limit: state.pageSize,
 					sort: state.sort,
 					order: state.order,
+					search: state.search,
+					system: state.system,
 					refresh: refresh ? 1 : 0,
 				},
 			), { headers: { requesttoken: getRequestToken() ?? '' } })
@@ -366,10 +434,13 @@ export async function renderLibrary(container, onError) {
 	}
 
 	const render = (data) => {
+		// Typing in the search field re-renders, so put the caret back.
+		const searchWasFocused = container.querySelector('.nostalgist-library-search') === document.activeElement
+
 		container.innerHTML = ''
 		container.appendChild(renderHeader(load))
 
-		if (!data.exists || data.total === 0) {
+		if (!data.exists || data.libraryTotal === 0) {
 			const hint = document.createElement('p')
 			hint.className = 'nostalgist-library-hint'
 			hint.textContent = data.exists
@@ -387,6 +458,22 @@ export async function renderLibrary(container, onError) {
 			return
 		}
 
+		const filters = renderFilters(data.systems, load)
+		container.appendChild(filters.element)
+		if (searchWasFocused) {
+			filters.search.focus()
+			const end = filters.search.value.length
+			filters.search.setSelectionRange(end, end)
+		}
+
+		if (data.total === 0) {
+			const hint = document.createElement('p')
+			hint.className = 'nostalgist-library-hint'
+			hint.textContent = t('nostalgist', 'No games match the filters.')
+			container.appendChild(hint)
+			return
+		}
+
 		const views = {
 			grid: () => renderGrid(data.games),
 			list: () => renderList(data.games),
@@ -400,7 +487,9 @@ export async function renderLibrary(container, onError) {
 		if (data.truncated) {
 			const truncated = document.createElement('p')
 			truncated.className = 'nostalgist-library-hint'
-			truncated.textContent = t('nostalgist', 'Only the first {count} games are listed.', { count: data.total })
+			truncated.textContent = t('nostalgist', 'Only the first {count} games of the folder are listed.', {
+				count: data.libraryTotal,
+			})
 			container.appendChild(truncated)
 		}
 	}
