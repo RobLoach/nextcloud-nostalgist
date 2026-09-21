@@ -32,6 +32,11 @@ class RecentServiceTest extends TestCase {
 	];
 
 	private function service(): RecentService {
+		// Anything else the tests play is a file of its own.
+		for ($i = 1; $i <= 20; $i++) {
+			$this->files["/Games/Game $i.nes"] ??= 200 + $i;
+		}
+
 		$config = $this->createStub(IUserConfig::class);
 		$config->method('setValueString')->willReturnCallback(
 			function (string $user, string $app, string $key, string $value): bool {
@@ -158,8 +163,8 @@ class RecentServiceTest extends TestCase {
 		), 'it is out of the recent list');
 		$this->assertSame(
 			300,
-			$service->stats(self::USER)['/Games/Mario.nes']['seconds'] ?? null,
-			'but what it was played for is still counted',
+			$service->stats(self::USER)[101]['seconds'] ?? null,
+			'but what it was played for is still counted, under the id of the file',
 		);
 	}
 
@@ -207,7 +212,7 @@ class RecentServiceTest extends TestCase {
 
 		$service = $this->service();
 		$this->assertSame([101 => true], $service->favoriteIds(self::USER), 'the game that is still there');
-		$this->assertSame(90, $service->stats(self::USER)['/Games/Mario.nes']['seconds'] ?? null);
+		$this->assertSame(90, $service->stats(self::USER)[101]['seconds'] ?? null);
 		$this->assertArrayNotHasKey('favorites', $this->stored, 'and the old list is gone');
 	}
 

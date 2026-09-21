@@ -8,6 +8,7 @@ use OCA\Arcade\CoreMap;
 use OCA\Arcade\Listener\CleanupListener;
 use OCA\Arcade\Listener\CSPListener;
 use OCA\Arcade\Listener\LoadViewerListener;
+use OCA\Arcade\Preview\RomPreview;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -35,6 +36,9 @@ class Application extends App implements IBootstrap {
 		if (class_exists(LoadViewer::class)) {
 			$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
 		}
+		// Box art becomes the preview of a ROM, in the Files app and
+		// anywhere else Nextcloud shows one.
+		$context->registerPreviewProvider(RomPreview::class, RomPreview::mimeTypeRegex());
 	}
 
 	public function boot(IBootContext $context): void {

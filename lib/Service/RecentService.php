@@ -17,7 +17,8 @@ use OCP\ITags;
  * A favorite is the star of the Files app, kept where Files keeps it: by the
  * id of the file, so a game that is renamed or moved stays a favorite, and a
  * game starred in one place is starred in the other. What a game was played
- * for is ours, and is kept by path alongside.
+ * for is ours, and is kept by that same file id, so it survives a rename
+ * just as well.
  */
 class RecentService {
 	private const MAX_ENTRIES = 12;
@@ -40,7 +41,7 @@ class RecentService {
 		$stats = $this->stats($userId);
 		$recent = [];
 		foreach ($this->read($userId, 'recent') as $entry) {
-			$recent[] = [...$entry, ...($stats[$entry['path'] ?? ''] ?? [])];
+			$recent[] = [...$entry, ...($stats[$entry['id'] ?? 0] ?? [])];
 		}
 		return $recent;
 	}
@@ -67,9 +68,9 @@ class RecentService {
 	}
 
 	/**
-	 * What each game was played for, by path.
+	 * What each game was played for, by the id of its file.
 	 *
-	 * @return array<string, array<string, int>>
+	 * @return array<int, array<string, int>>
 	 */
 	public function stats(string $userId): array {
 		$stored = $this->userConfig->getValueString($userId, Application::APP_ID, 'stats', '');
@@ -78,21 +79,26 @@ class RecentService {
 	}
 
 	public function record(string $userId, string $path): void {
+		$id = $this->fileId($userId, $path);
 		$stats = $this->stats($userId);
-		$stats[$path] = [
-			'seconds' => (int)($stats[$path]['seconds'] ?? 0),
-			'plays' => (int)($stats[$path]['plays'] ?? 0) + 1,
+		$counted = [
+			'seconds' => (int)($stats[$id]['seconds'] ?? 0),
+			'plays' => (int)($stats[$id]['plays'] ?? 0) + 1,
 			'time' => time(),
 		];
-		$this->writeStats($userId, $stats);
+		if ($id !== null) {
+			$stats[$id] = $counted;
+			$this->writeStats($userId, $stats);
+		}
 
 		// A game played again moves back to the front instead of repeating.
 		$recent = $this->without($this->read($userId, 'recent'), $path);
 		array_unshift($recent, [
+			'id' => $id,
 			'path' => $path,
 			'basename' => basename($path),
 			'system' => $this->systemFor($path),
-			...$stats[$path],
+			...$counted,
 		]);
 		$this->write($userId, 'recent', array_slice($recent, 0, self::MAX_ENTRIES));
 	}
@@ -104,12 +110,16 @@ class RecentService {
 		if ($seconds <= 0) {
 			return;
 		}
+		$id = $this->fileId($userId, $path);
+		if ($id === null) {
+			return;
+		}
 		$stats = $this->stats($userId);
 		// A game whose start was never recorded still counts.
-		$stats[$path] = [
-			'seconds' => (int)($stats[$path]['seconds'] ?? 0) + min($seconds, self::MAX_SESSION),
-			'plays' => (int)($stats[$path]['plays'] ?? 0),
-			'time' => (int)($stats[$path]['time'] ?? time()),
+		$stats[$id] = [
+			'seconds' => (int)($stats[$id]['seconds'] ?? 0) + min($seconds, self::MAX_SESSION),
+			'plays' => (int)($stats[$id]['plays'] ?? 0),
+			'time' => (int)($stats[$id]['time'] ?? time()),
 		];
 		$this->writeStats($userId, $stats);
 	}
@@ -180,10 +190,11 @@ class RecentService {
 				continue;
 			}
 			$id = $this->fileId($userId, $path);
-			if ($id !== null) {
-				$tags->addToFavorites($id);
+			if ($id === null) {
+				continue;
 			}
-			$stats[$path] ??= [
+			$tags->addToFavorites($id);
+			$stats[$id] ??= [
 				'seconds' => (int)($entry['seconds'] ?? 0),
 				'plays' => (int)($entry['plays'] ?? 0),
 				'time' => (int)($entry['time'] ?? 0),
@@ -224,7 +235,7 @@ class RecentService {
 	}
 
 	/**
-	 * @param array<string, array<string, int>> $stats
+	 * @param array<int, array<string, int>> $stats
 	 */
 	private function writeStats(string $userId, array $stats): void {
 		if (count($stats) > self::MAX_STATS) {

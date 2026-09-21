@@ -100,17 +100,64 @@ export function systemById(systemId) {
 export function systemForFolderPath(path) {
 	const folders = (path || '').split('/').filter(Boolean).slice(0, -1)
 	for (const folder of folders.reverse()) {
-		for (const candidate of [folder, ...folder.split(/[-–]/)]) {
-			const normalized = candidate.toLowerCase().replace(/[^a-z0-9]/g, '')
-			if (normalized === '') {
-				continue
-			}
+		for (const candidate of folderCandidates(folder)) {
 			for (const [id, system] of Object.entries(systems)) {
-				if (normalized === id || (system.aliases ?? []).includes(normalized)) {
+				if (candidate === id || (system.aliases ?? []).includes(candidate)) {
 					return { id, ...system }
 				}
 			}
 		}
 	}
 	return null
+}
+
+/** Words that say nothing about which system a folder holds. */
+const NOISE = [
+	'rom', 'roms', 'game', 'games', 'iso', 'isos', 'collection', 'collections',
+	'library', 'set', 'sets', 'cart', 'carts', 'cartridge', 'cartridges',
+	'backup', 'backups', 'my', 'the', 'emulation', 'emulator', 'emulators',
+	'nointro', 'redump', 'tosec', 'goodset', 'usa', 'europe', 'japan', 'world',
+]
+
+/** Makers, whose name in front of a system says no more than the system. */
+const VENDORS = [
+	'nintendo', 'sega', 'snk', 'nec', 'atari', 'bandai', 'coleco', 'gce',
+	'hudson', 'smithengineering',
+]
+
+/**
+ * The normalized forms of a folder name worth looking up. Mirrors
+ * CoreMap::folderCandidates, which does the same on the server.
+ *
+ * @param {string} name the folder name
+ * @return {string[]} what to look for, in the order worth trying
+ */
+function folderCandidates(name) {
+	const candidates = []
+	for (const part of [name, ...name.split(/\s*[-–_+]\s*/)]) {
+		const words = part.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+		if (words.length === 0) {
+			continue
+		}
+		// Noise is only trimmed off the ends: "Game" in the middle of
+		// "Nintendo Game Boy" is the system, not padding.
+		const trimmed = [...words]
+		while (trimmed.length > 0 && NOISE.includes(trimmed[trimmed.length - 1])) {
+			trimmed.pop()
+		}
+		const lead = [...trimmed]
+		while (lead.length > 1 && NOISE.includes(lead[0])) {
+			lead.shift()
+		}
+		for (const form of [words, trimmed, lead]) {
+			if (form.length === 0) {
+				continue
+			}
+			candidates.push(form.join(''))
+			if (form.length > 1 && VENDORS.includes(form[0])) {
+				candidates.push(form.slice(1).join(''))
+			}
+		}
+	}
+	return [...new Set(candidates)].filter(Boolean)
 }

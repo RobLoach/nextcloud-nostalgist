@@ -14,3 +14,14 @@ namespace OCA\Viewer\Event {
 	class LoadViewer extends Event {
 	}
 }
+
+/**
+ * OCP\Image extends this one, which is internal to the server and so not
+ * shipped with the OCP package. Only its existence matters here.
+ */
+namespace OC {
+	class Image {
+		public function __construct() {
+		}
+	}
+}

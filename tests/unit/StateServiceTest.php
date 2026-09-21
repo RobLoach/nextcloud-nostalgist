@@ -24,6 +24,8 @@ class StateServiceTest extends TestCase {
 	private array $appData = [];
 	/** Everything the user folder holds, by path. */
 	private array $files = [];
+	/** The id Nextcloud gave each path, for the paths that have one. */
+	private array $ids = [];
 
 	private function service(string $savesFolder = ''): StateService {
 		$settings = $this->createStub(SettingsService::class);
@@ -199,6 +201,7 @@ class StateServiceTest extends TestCase {
 	private function userFile(string $path): File {
 		$file = $this->createStub(File::class);
 		$file->method('getName')->willReturn(basename($path));
+		$file->method('getId')->willReturnCallback(fn (): int => $this->ids[$path] ?? 0);
 		$file->method('getContent')->willReturnCallback(fn (): string => $this->files[$path]);
 		$file->method('getSize')->willReturnCallback(fn (): int => strlen($this->files[$path]));
 		$file->method('getMTime')->willReturn(2000);
@@ -255,6 +258,38 @@ class StateServiceTest extends TestCase {
 		$this->assertSame('automatic', $service->load(self::USER, self::GAME, StateService::AUTO_SLOT));
 		$this->assertSame('second', $service->load(self::USER, self::GAME, 2));
 		$this->assertNull($service->load(self::USER, self::GAME, 3), 'an empty slot holds nothing');
+	}
+
+	public function testSavesFollowAGameThatIsRenamed(): void {
+		$this->files[ltrim(self::GAME, '/')] = 'the rom';
+		$this->ids[ltrim(self::GAME, '/')] = 101;
+		$service = $this->service('/Saves');
+		$service->save(self::USER, self::GAME, 1, 'a save');
+		$service->saveSram(self::USER, self::GAME, 'a battery save');
+
+		// The same file, under another name, in another folder.
+		$renamed = '/Games/NES/Super Mario Bros.nes';
+		unset($this->files[ltrim(self::GAME, '/')], $this->ids[ltrim(self::GAME, '/')]);
+		$this->files[ltrim($renamed, '/')] = 'the rom';
+		$this->ids[ltrim($renamed, '/')] = 101;
+
+		$this->assertSame('a save', $service->load(self::USER, $renamed, 1), 'the save is found again');
+		$this->assertSame('a battery save', $service->loadSram(self::USER, $renamed));
+		$this->assertSame([1], array_column($service->list(self::USER, $renamed), 'slot'));
+	}
+
+	public function testGamesThatShareANameAreNotConfused(): void {
+		$this->files['Games/NES/Mario.nes'] = 'one';
+		$this->ids['Games/NES/Mario.nes'] = 101;
+		$this->files['Games/SNES/Mario.nes'] = 'another';
+		$this->ids['Games/SNES/Mario.nes'] = 202;
+
+		$service = $this->service();
+		$service->save(self::USER, '/Games/NES/Mario.nes', 1, 'the nes save');
+		$service->save(self::USER, '/Games/SNES/Mario.nes', 1, 'the snes save');
+
+		$this->assertSame('the nes save', $service->load(self::USER, '/Games/NES/Mario.nes', 1));
+		$this->assertSame('the snes save', $service->load(self::USER, '/Games/SNES/Mario.nes', 1));
 	}
 
 	public function testThumbnailsAndBatterySavesLiveAlongsideTheStates(): void {

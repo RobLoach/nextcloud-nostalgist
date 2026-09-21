@@ -169,7 +169,7 @@ class PageController extends Controller {
 		$favorites = [];
 		foreach ($games as $game) {
 			if (isset($ids[$game['id'] ?? 0])) {
-				$favorites[] = [...$game, ...($stats[$game['path'] ?? ''] ?? [])];
+				$favorites[] = [...$game, ...($stats[$game['id'] ?? 0] ?? [])];
 			}
 		}
 		// The most played first, which is what a favorite is about.

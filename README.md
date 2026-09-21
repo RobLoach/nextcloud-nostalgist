@@ -9,7 +9,8 @@ from your files and run in the browser.
 
 ## Features
 
-- Plays ROMs straight from the Files app, in the file viewer.
+- Plays ROMs straight from the Files app, in the file viewer, with box art
+  as their preview.
 - A games library page with grid, list and table views.
 - Three save state slots per game plus an automatic one, each with a
   screenshot, unique per user.
@@ -26,8 +27,8 @@ from your files and run in the browser.
 
 ## Installation
 
-Nextcloud 34 or 35, on PHP 8.2 or newer — Nextcloud 35 asks for 8.3 itself.
-A browser with WebAssembly, which is every current one.
+Nextcloud 34 or 35, on PHP 8.3 or newer. A browser with WebAssembly, which
+is every current one.
 
 It needs the **Files** app, for the games themselves, the favorites and the
 mimetypes, and the **Viewer** app, to play a ROM from the Files app. Both are
@@ -57,12 +58,19 @@ Open a ROM (for example a `.nes` file) and it starts playing in the file
 viewer, which is what the app registers itself with. ROMs are recognized by
 their mimetype, which the app teaches Nextcloud for every system it runs.
 
-Zipped ROMs are played from the Arcade page rather than from Files,
-since a `.zip` says nothing about what is in it. The system is then detected
-from the file inside the archive, or from the folder the game is stored in —
-short names and No-Intro platform names both work, so `Games/SNES/NHL 96.zip`
-and `Games/Nintendo - Super Nintendo Entertainment System/NHL 96.zip` are
-both recognized as Super Nintendo.
+The file menu has a **Play with Arcade** entry as well, for everything the
+viewer cannot take: a zipped ROM, whose `.zip` says nothing about what is
+inside, and a ROM whose mimetype Nextcloud has not learned yet. It goes by
+the file extension and by the folder the game is stored in, the way the
+Arcade page does, and opens the game there.
+
+The system of a zipped game is detected from the file inside the archive, or
+from the folder it is stored in. Short names, spelled out names and No-Intro
+platform names all work, with or without the maker in front and with a word
+like "ROMs" hung off the end, so `Games/SNES/NHL 96.zip`,
+`Games/Super Nintendo Games/NHL 96.zip` and
+`Games/Nintendo - Super Nintendo Entertainment System/NHL 96.zip` are all
+recognized as Super Nintendo.
 
 ROMs uploaded before the app was enabled keep their generic mimetype until
 the mimetype repair step runs, which happens on install and on upgrades. It
@@ -82,6 +90,11 @@ which every upload goes through, loads only apps that declare themselves a
 `filesystem` app — so Arcade declares it. Nextcloud does not let apps of that
 type be enabled for selected groups, so Arcade is enabled for everybody on
 the instance or for nobody.
+
+Games are given their box art as their Nextcloud preview, so a folder of
+ROMs looks like a shelf of games in the Files app. The picture is the one
+already in your thumbnails folder, only scaled; a game without one keeps the
+icon of its mimetype.
 
 ### From the Arcade page
 
@@ -143,7 +156,10 @@ is the state the player offers to continue from next time — or loads
 straight away, if that is turned on in the settings.
 
 States are stored per user and per game on the server, so every NextCloud
-user has their own saves, even for a shared ROM.
+user has their own saves, even for a shared ROM. A game is known by the id
+Nextcloud gave the file, so renaming a ROM or moving it to another folder
+keeps its saves, its battery save and how long it was played — the folder in
+the saves folder is brought along to the new name.
 
 In-game battery saves (SRAM) are restored when a game starts, and uploaded
 every minute and when the page closes, so progress saved through a game's own
@@ -337,12 +353,8 @@ composer test     # the unit test suite
 composer psalm    # static analysis
 ```
 
-The tests and psalm need PHP 8.3, even though the app itself runs on 8.2:
-they are checked against the `nextcloud/ocp` stubs of the newest supported
-server, which use typed class constants.
-
 Every push and pull request runs the same through GitHub Actions: PHP
-linting on 8.2 to 8.4, the test suite, static analysis, the JavaScript
+linting on 8.3 and 8.4, the test suite, static analysis, the JavaScript
 build, and a check that `appinfo/info.xml` validates against the app store
 schema and agrees with `package.json` on the version.
 
@@ -358,6 +370,7 @@ lib/CoreOptions.php         The core options offered in the settings
 lib/AppInfo/Application.php Mimetype registration and event listeners
 lib/Controller/             Page, library, settings and save state endpoints
 lib/Listener/               Files and Viewer script loading, Content Security Policy
+lib/Preview/                Box art as the Nextcloud preview of a ROM
 lib/Migration/              Repair steps: mimetypes on install, caches on disable
 lib/Command/                The occ cleanup and uninstall commands
 lib/BackgroundJob/          Looking for box art, away from the browser
@@ -369,6 +382,7 @@ lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library
 src/library.js              Games library views and pagination
 src/viewer.js               The Viewer handler, loaded on every Files page
+src/fileaction.js           The "Play with Arcade" entry in the file menu
 src/session.js              Everything a running game needs, loaded on demand
 src/player.js               Launcher, ROM fetching, zip extraction, SRAM
 src/toolbar.js              Player control bar
@@ -416,7 +430,7 @@ Outside of the files of a user, the app writes:
 
 | Where | What |
 | --- | --- |
-| `oc_preferences` | Personal settings, recently played, how long each game was played, and how a box art run went |
+| `oc_preferences` | Personal settings, recently played, how long each game was played (by file id), and how a box art run went |
 | `oc_appconfig` | Core options, thumbnail types, and the folder defaults of the instance |
 | `oc_jobs` | A queued box art lookup, while one is running |
 | `oc_mimetypes`, `oc_filecache` | The ROM mimetypes, and the files given them |

@@ -22,7 +22,7 @@ class CoreMap {
 			'mime' => 'application/x-nes-rom',
 			'extensions' => ['nes', 'fds', 'unf', 'unif'],
 			'core' => 'fceumm',
-			'aliases' => ['nes', 'famicom', 'fc', 'nintendoentertainmentsystem', 'fds', 'famicomdisksystem', 'familycomputerdisksystem'],
+			'aliases' => ['nes', 'famicom', 'fc', 'nintendoentertainmentsystem', 'entertainmentsystem', 'fds', 'famicomdisksystem', 'familycomputerdisksystem', 'famicon', 'nintendo8bit', '8bitnintendo'],
 			'bios' => [],
 		],
 		'snes' => [
@@ -32,7 +32,7 @@ class CoreMap {
 			'mime' => 'application/x-snes-rom',
 			'extensions' => ['sfc', 'smc'],
 			'core' => 'snes9x',
-			'aliases' => ['snes', 'sfc', 'superfamicom', 'supernintendo', 'supernes', 'supernintendoentertainmentsystem'],
+			'aliases' => ['snes', 'sfc', 'superfamicom', 'supernintendo', 'supernes', 'supernintendoentertainmentsystem', 'superentertainmentsystem', 'supernintendo16bit', 'superfamicon'],
 			'bios' => [],
 		],
 		'gb' => [
@@ -42,7 +42,7 @@ class CoreMap {
 			'mime' => 'application/x-gameboy-rom',
 			'extensions' => ['gb'],
 			'core' => 'gambatte',
-			'aliases' => ['gb', 'gameboy'],
+			'aliases' => ['gb', 'gameboy', 'dmg', 'gameboyclassic', 'gameboymono'],
 			'bios' => ['gb_bios.bin'],
 		],
 		'gbc' => [
@@ -52,7 +52,7 @@ class CoreMap {
 			'mime' => 'application/x-gameboy-color-rom',
 			'extensions' => ['gbc'],
 			'core' => 'gambatte',
-			'aliases' => ['gbc', 'gameboycolor'],
+			'aliases' => ['gbc', 'gameboycolor', 'gameboycolour', 'gbcolor'],
 			'bios' => ['gbc_bios.bin'],
 		],
 		'gba' => [
@@ -62,7 +62,7 @@ class CoreMap {
 			'mime' => 'application/x-gba-rom',
 			'extensions' => ['gba'],
 			'core' => 'mgba',
-			'aliases' => ['gba', 'gameboyadvance'],
+			'aliases' => ['gba', 'gameboyadvance', 'gbadvance'],
 			'bios' => ['gba_bios.bin'],
 		],
 		'genesis' => [
@@ -72,7 +72,7 @@ class CoreMap {
 			'mime' => 'application/x-genesis-rom',
 			'extensions' => ['md', 'gen', 'smd'],
 			'core' => 'genesis_plus_gx',
-			'aliases' => ['genesis', 'gen', 'md', 'megadrive', 'segagenesis', 'segamegadrive'],
+			'aliases' => ['genesis', 'gen', 'md', 'megadrive', 'segagenesis', 'segamegadrive', 'megadrivegenesis', 'genesismegadrive', 'segamd', 'megadrive16bit'],
 			'bios' => ['bios_MD.bin'],
 		],
 		'sms' => [
@@ -82,7 +82,7 @@ class CoreMap {
 			'mime' => 'application/x-sms-rom',
 			'extensions' => ['sms'],
 			'core' => 'genesis_plus_gx',
-			'aliases' => ['sms', 'mastersystem', 'segamastersystem', 'markiii', 'mark3'],
+			'aliases' => ['sms', 'mastersystem', 'segamastersystem', 'markiii', 'mark3', 'mastersystemmarkiii', 'sega8bit'],
 			'bios' => ['bios.sms'],
 		],
 		'gamegear' => [
@@ -102,7 +102,7 @@ class CoreMap {
 			'mime' => 'application/x-sega-32x-rom',
 			'extensions' => ['32x'],
 			'core' => 'picodrive',
-			'aliases' => ['32x', 'sega32x'],
+			'aliases' => ['32x', 'sega32x', 'genesis32x', 'megadrive32x', 'super32x', 'mega32x', 'sega32xmega'],
 			'bios' => ['32X_G_BIOS.BIN', '32X_M_BIOS.BIN', '32X_S_BIOS.BIN'],
 		],
 		'pce' => [
@@ -112,7 +112,7 @@ class CoreMap {
 			'mime' => 'application/x-pc-engine-rom',
 			'extensions' => ['pce'],
 			'core' => 'mednafen_pce_fast',
-			'aliases' => ['pce', 'pcengine', 'turbografx', 'turbografx16', 'tg16'],
+			'aliases' => ['pce', 'pcengine', 'turbografx', 'turbografx16', 'tg16', 'pcenngine', 'turbografx16pcengine', 'pcengineturbografx16', 'necpcengine'],
 			'bios' => ['syscard3.pce'],
 		],
 		'lynx' => [
@@ -122,7 +122,7 @@ class CoreMap {
 			'mime' => 'application/x-lynx-rom',
 			'extensions' => ['lnx'],
 			'core' => 'handy',
-			'aliases' => ['lynx', 'atarilynx'],
+			'aliases' => ['lynx', 'atarilynx', 'lynxhandheld'],
 			'bios' => ['lynxboot.img'],
 		],
 		'ngp' => [
@@ -132,7 +132,7 @@ class CoreMap {
 			'mime' => 'application/x-neo-geo-pocket-rom',
 			'extensions' => ['ngp', 'ngc'],
 			'core' => 'mednafen_ngp',
-			'aliases' => ['ngp', 'ngpc', 'neogeopocket', 'neogeopocketcolor'],
+			'aliases' => ['ngp', 'ngpc', 'neogeopocket', 'neogeopocketcolor', 'neogeopocketcolour', 'snkneogeopocket'],
 			'bios' => [],
 		],
 		'wonderswan' => [
@@ -142,7 +142,7 @@ class CoreMap {
 			'mime' => 'application/x-wonderswan-rom',
 			'extensions' => ['ws', 'wsc'],
 			'core' => 'mednafen_wswan',
-			'aliases' => ['ws', 'wsc', 'wonderswan', 'wonderswancolor'],
+			'aliases' => ['ws', 'wsc', 'wonderswan', 'wonderswancolor', 'wonderswancolour', 'bandaiwonderswan'],
 			'bios' => [],
 		],
 		'virtualboy' => [
@@ -152,7 +152,7 @@ class CoreMap {
 			'mime' => 'application/x-virtual-boy-rom',
 			'extensions' => ['vb'],
 			'core' => 'mednafen_vb',
-			'aliases' => ['vb', 'virtualboy'],
+			'aliases' => ['vb', 'virtualboy', 'nintendovirtualboy', 'vboy'],
 			'bios' => [],
 		],
 		'vectrex' => [
@@ -162,7 +162,7 @@ class CoreMap {
 			'mime' => 'application/x-vectrex-rom',
 			'extensions' => ['vec'],
 			'core' => 'vecx',
-			'aliases' => ['vectrex'],
+			'aliases' => ['vectrex', 'gcevectrex', 'smithengineeringvectrex'],
 			'bios' => [],
 		],
 		'coleco' => [
@@ -178,25 +178,86 @@ class CoreMap {
 	];
 
 	/**
-	 * Detect the system from a folder name like "SNES", "Super Nintendo",
-	 * or a No-Intro platform name like
-	 * "Nintendo - Super Nintendo Entertainment System", whose dash-separated
-	 * segments are matched individually.
+	 * Words that say nothing about which system a folder holds.
+	 */
+	private const NOISE = [
+		'rom', 'roms', 'game', 'games', 'iso', 'isos', 'collection', 'collections',
+		'library', 'set', 'sets', 'cart', 'carts', 'cartridge', 'cartridges',
+		'backup', 'backups', 'my', 'the', 'emulation', 'emulator', 'emulators',
+		'nointro', 'redump', 'tosec', 'goodset', 'usa', 'europe', 'japan', 'world',
+	];
+
+	/**
+	 * The makers, whose name in front of a system says nothing more than the
+	 * system does. "Nintendo - Game Boy Advance" and "Nintendo Game Boy
+	 * Advance" are the same shelf.
+	 */
+	private const VENDORS = [
+		'nintendo', 'sega', 'snk', 'nec', 'atari', 'bandai', 'coleco', 'gce',
+		'hudson', 'smithengineering',
+	];
+
+	/**
+	 * Detect the system from a folder name.
+	 *
+	 * Handles what people actually call these folders: short names ("SNES",
+	 * "GBA"), spelled out names ("Super Nintendo", "Game Boy Advance"),
+	 * No-Intro and Redump platform names whose dash-separated segments are
+	 * matched one by one ("Nintendo - Game Boy Advance"), the same without
+	 * the dashes ("Nintendo Game Boy Advance"), and any of those with a word
+	 * like "ROMs" or "Games" hung off the end.
 	 */
 	public static function systemForFolderName(string $name): ?string {
-		$candidates = [$name, ...(preg_split('/\s*[-–]\s*/', $name) ?: [])];
-		foreach ($candidates as $candidate) {
-			$normalized = preg_replace('/[^a-z0-9]/', '', strtolower($candidate));
-			if ($normalized === '') {
-				continue;
-			}
+		foreach (self::folderCandidates($name) as $candidate) {
 			foreach (self::SYSTEMS as $id => $system) {
-				if ($normalized === $id || in_array($normalized, $system['aliases'], true)) {
+				if ($candidate === $id || in_array($candidate, $system['aliases'], true)) {
 					return $id;
 				}
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The normalized forms of a folder name worth looking up, in the order
+	 * they are worth trying.
+	 *
+	 * @return list<string>
+	 */
+	private static function folderCandidates(string $name): array {
+		$candidates = [];
+		foreach ([$name, ...(preg_split('/\s*[-–_+]\s*/', $name) ?: [])] as $part) {
+			$words = array_values(array_filter(
+				preg_split('/[^a-z0-9]+/', strtolower($part)) ?: [],
+				static fn (string $word): bool => $word !== '',
+			));
+			if ($words === []) {
+				continue;
+			}
+
+			// Noise is only trimmed off the ends: "Game" in the middle of
+			// "Nintendo Game Boy" is the system, not padding. The maker in
+			// front goes too, so "Nintendo Game Boy" reads as "Game Boy".
+			$trimmed = $words;
+			while ($trimmed !== [] && in_array(end($trimmed), self::NOISE, true)) {
+				array_pop($trimmed);
+			}
+			$lead = $trimmed;
+			while (count($lead) > 1 && in_array($lead[0], self::NOISE, true)) {
+				array_shift($lead);
+			}
+
+			foreach ([$words, $trimmed, $lead] as $form) {
+				if ($form === []) {
+					continue;
+				}
+				$candidates[] = implode('', $form);
+				if (count($form) > 1 && in_array($form[0], self::VENDORS, true)) {
+					$candidates[] = implode('', array_slice($form, 1));
+				}
+			}
+		}
+		return array_values(array_unique(array_filter($candidates)));
 	}
 
 	/**

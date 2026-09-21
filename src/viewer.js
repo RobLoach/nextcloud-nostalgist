@@ -1,4 +1,5 @@
 import { translate as t } from '@nextcloud/l10n'
+import { registerPlayAction } from './fileaction.js'
 import { isPlayable, romMimes } from './systems.js'
 
 /**
@@ -123,6 +124,8 @@ const ArcadeViewer = {
 }
 
 function register() {
+	// The file menu entry does not depend on the Viewer being there.
+	registerPlayAction()
 	if (window.OCA?.Viewer?.registerHandler === undefined) {
 		return false
 	}

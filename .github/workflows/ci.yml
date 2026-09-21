@@ -19,8 +19,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The versions Nextcloud 34 and 35 run on.
-        php-version: ['8.2', '8.3', '8.4']
+        # The versions Nextcloud 34 and 35 run on, from the 8.3 the app asks for.
+        php-version: ['8.3', '8.4']
     steps:
       - uses: actions/checkout@v4
 

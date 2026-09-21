@@ -29,8 +29,28 @@ class CoreMapTest extends TestCase {
 			['GCE - Vectrex', 'vectrex'],
 			['Coleco - ColecoVision', 'coleco'],
 			['Atari - Lynx', 'lynx'],
+			// The maker in front, with or without the dashes.
+			['Nintendo Game Boy Advance', 'gba'],
+			['Sega Genesis', 'genesis'],
+			['SNK Neo Geo Pocket', 'ngp'],
+			['NEC TurboGrafx-16', 'pce'],
+			['Bandai WonderSwan Color', 'wonderswan'],
+			// A word hung off the end, or the front.
+			['SNES Roms', 'snes'],
+			['NES Games', 'nes'],
+			['Game Boy Color ROMs', 'gbc'],
+			['My GBA Games', 'gba'],
+			['Virtual Boy Games', 'virtualboy'],
+			['Master System Collection', 'sms'],
+			// "Game" in the middle of a name is the system, not padding.
+			['Game Gear', 'gamegear'],
+			['Nintendo Game Boy', 'gb'],
 			// Not a system.
 			['Games', null],
+			['Advance Wars', null],
+			['Nintendo', null],
+			['Downloads', null],
+			['Unsorted', null],
 			['', null],
 			['Roms', null],
 		];

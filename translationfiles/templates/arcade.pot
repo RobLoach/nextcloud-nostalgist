@@ -301,6 +301,10 @@ msgstr ""
 msgid "Pixel-perfect scaling (whole pixels, with borders)"
 msgstr ""
 
+#: src/fileaction.js
+msgid "Play with Arcade"
+msgstr ""
+
 #: templates/settings.php
 msgid "Player"
 msgstr ""
