@@ -12,7 +12,6 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
-use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
@@ -52,20 +51,12 @@ class PageController extends Controller {
 				: $this->settingsService->getUserSettings($this->userId),
 		);
 
-		$response = new TemplateResponse(
+		// The emulator's Content Security Policy needs are added globally by
+		// the CSPListener, so the default policy applies here.
+		return new TemplateResponse(
 			Application::APP_ID,
 			'index',
 		);
-
-		// Nostalgist.js compiles RetroArch cores to WebAssembly from blob: URLs,
-		// which the default policy blocks.
-		$csp = new ContentSecurityPolicy();
-		$csp->allowEvalWasm(true);
-		$csp->addAllowedScriptDomain('blob:');
-		$csp->addAllowedWorkerSrcDomain('blob:');
-		$response->setContentSecurityPolicy($csp);
-
-		return $response;
 	}
 
 	/**

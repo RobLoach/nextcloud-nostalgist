@@ -79,19 +79,35 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 		element,
 		core: coreForSystem(system.id, settings),
 		rom,
-		sram: sram ?? undefined,
+		// Only set when there is one: an undefined value is still a present
+		// key, which Nostalgist would try to resolve as a file.
+		...(sram === null ? {} : { sram }),
 		respondToGlobalEvents: settings.respond_to_global_events !== false,
 		retroarchConfig: {
 			video_smooth: settings.video_smooth === true,
 			fastforward_ratio: Number(settings.fastforward_ratio ?? 10),
 		},
 		resolveCoreJs(coreName) {
-			return generateFilePath('nostalgist', 'img', `cores/${coreName}_libretro.js`)
+			return coreUrl(`${coreName}_libretro.js`)
 		},
 		resolveCoreWasm(coreName) {
-			return generateFilePath('nostalgist', 'img', `cores/${coreName}_libretro.wasm`)
+			return coreUrl(`${coreName}_libretro.wasm`)
 		},
 	})
+}
+
+/**
+ * The core files are loaded from blob: URLs, where relative paths have no
+ * meaningful base, so they are resolved to absolute URLs here.
+ *
+ * @param {string} file name of the core file
+ * @return {string} the absolute URL of the core file
+ */
+function coreUrl(file) {
+	return new URL(
+		generateFilePath('nostalgist', 'img', `cores/${file}`),
+		window.location.origin,
+	).href
 }
 
 /**
