@@ -65,6 +65,7 @@ async function resolveRom(blob, romName, systemHint) {
  * @return {Promise<Nostalgist>} the running Nostalgist instance
  */
 export async function launchRom({ element, romUrl, romName, settings = {}, systemHint = null, romPath = '' }) {
+	const canSave = (settings.saves_folder ?? '') !== ''
 	// The core is a few megabytes of its own. Warming it in the browser
 	// cache now means it is there when Nostalgist asks, instead of being
 	// fetched after the ROM.
@@ -82,7 +83,7 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 	if (system === null) {
 		throw new Error(t('nostalgist', 'Unsupported ROM type: {file}', { file: romName }))
 	}
-	const sram = await fetchSram(romPath)
+	const sram = canSave ? await fetchSram(romPath) : null
 	const bios = await fetchBios(system.id, settings.system_folder ?? '')
 
 	return await Nostalgist.launch({
@@ -258,8 +259,8 @@ async function fetchSram(romPath) {
  * @param {string} romPath path identifying the game
  * @return {Function} stops the synchronization
  */
-export function startSramSync(instance, romPath) {
-	if (!romPath || getCurrentUser() === null) {
+export function startSramSync(instance, romPath, canSave = true) {
+	if (!romPath || !canSave || getCurrentUser() === null) {
 		return () => {}
 	}
 	const upload = async () => {

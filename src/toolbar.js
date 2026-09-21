@@ -7,6 +7,7 @@ import { createGalleryPanel } from './panels/gallery.js'
 import { offerResume } from './panels/resume.js'
 import { createStatesPanel } from './panels/states.js'
 import { davUrl } from './player.js'
+import { shortNameForPath } from './systems.js'
 import { attachTouchControls, isTouchDevice } from './touch.js'
 
 /**
@@ -87,7 +88,9 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		flash(t('nostalgist', 'Restarted'))
 	})
 
-	// Save states need a logged-in user; hide them on public share pages.
+	// Saving needs a logged-in user and somewhere of their own to put it,
+	// so on a public share, or without a saves folder, there is none.
+	const canSave = getCurrentUser() !== null && romPath && (settings.saves_folder ?? '') !== ''
 	let autosaveTimer = null
 	let statesPanel = null
 	let statesButton = null
@@ -95,7 +98,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		statesPanel?.element.classList.add('hidden')
 		statesButton?.classList.remove('active')
 	}
-	if (getCurrentUser() !== null && romPath) {
+	if (canSave) {
 		statesPanel = createStatesPanel({
 			instance,
 			romPath,
@@ -136,22 +139,6 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		}
 	}
 
-	// The screenshots of this game, which also live in the user's files.
-	let galleryPanel = null
-	let galleryButton = null
-	if (getCurrentUser() !== null && romPath) {
-		galleryPanel = createGalleryPanel({ romPath, flash })
-		galleryButton = button(ICONS.gallery, t('nostalgist', 'Screenshots'), (element) => {
-			const visible = !galleryPanel.element.classList.contains('hidden')
-			galleryPanel.element.classList.toggle('hidden', visible)
-			element.classList.toggle('active', !visible)
-			if (!visible) {
-				hideStates()
-				galleryPanel.refresh()
-			}
-		})
-	}
-
 	// Virtual gamepad for touch play.
 	let touchControls = null
 	if (isTouchDevice()) {
@@ -184,7 +171,9 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			const stem = (romName || 'nostalgist').replace(/\.[^.]+$/, '')
 			const folder = settings.screenshots_folder
 			if (folder && getCurrentUser() !== null) {
-				await saveScreenshot(folder, stem, blob)
+				// Under the system, so two games of the same name keep apart.
+				const system = shortNameForPath(romPath)
+				await saveScreenshot(system === '' ? folder : `${folder}/${system}`, stem, blob)
 				flash(t('nostalgist', 'Screenshot saved to {folder}', { folder }))
 				galleryPanel?.refresh()
 			} else {
@@ -200,6 +189,27 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			flash(t('nostalgist', 'Could not take a screenshot'))
 		}
 	})
+
+	// The screenshots of this game, which also live in the user's files.
+	let galleryPanel = null
+	let galleryButton = null
+	if (getCurrentUser() !== null && romPath && (settings.screenshots_folder ?? '') !== '') {
+		galleryPanel = createGalleryPanel({ romPath, flash })
+		galleryButton = button(ICONS.gallery, t('nostalgist', 'Screenshots'), (element) => {
+			const visible = !galleryPanel.element.classList.contains('hidden')
+			galleryPanel.element.classList.toggle('hidden', visible)
+			element.classList.toggle('active', !visible)
+			if (!visible) {
+				hideStates()
+				galleryPanel.refresh()
+			}
+		})
+		// Nothing to show until there is a screenshot of this game.
+		galleryButton.classList.add('hidden')
+		galleryPanel.count().then((count) => {
+			galleryButton.classList.toggle('hidden', count === 0)
+		})
+	}
 
 	const fullscreenButton = button(ICONS.fullscreen, t('nostalgist', 'Fullscreen'), () => {
 		if (document.fullscreenElement !== null) {

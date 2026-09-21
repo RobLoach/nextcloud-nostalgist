@@ -57,6 +57,20 @@ export function systemLabel(systemId) {
 }
 
 /**
+ * The short name of the system of a game at a path, for the folder its
+ * saves and screenshots are filed under. Empty when nothing says which
+ * system it is, so those stay where they always were.
+ *
+ * @param {string} path path of the game
+ * @return {string} the short name of the system, or an empty string
+ */
+export function shortNameForPath(path) {
+	const basename = (path || '').split('/').pop()
+	const system = systemForFile(basename) ?? systemForFolderPath(path)
+	return system?.short ?? ''
+}
+
+/**
  * @param {string} basename the file name
  * @param {string} [mime] the file mimetype, if known
  * @return {boolean} whether the player can (try to) run this file

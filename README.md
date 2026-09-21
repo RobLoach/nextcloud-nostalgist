@@ -106,9 +106,9 @@ control remapping and more), screenshot, and fullscreen. On touch devices a
 virtual gamepad is overlaid too — a D-pad with diagonals, A/B/X/Y, L/R,
 Start and Select — toggleable from the control bar.
 
-A screenshots button opens a gallery of every screenshot taken of the game,
-newest first, where they can be opened in the Files app or deleted. It needs
-a screenshots folder to be set, since that is where they are kept.
+Next to the screenshot button, a gallery button opens every screenshot taken
+of the game, newest first, where they can be opened in the Files app or
+deleted. It appears once there is something to show.
 
 The save state menu has three slots per game, each with a screenshot
 thumbnail and a timestamp; saving or loading a slot closes the menu and
@@ -146,7 +146,7 @@ Personal settings → Nostalgist:
 | Volume | 0 dB | Gain in decibels, -20 to 10 |
 | Audio latency | 64 ms | Raise it if the sound crackles |
 | Games library folder | `/Games` | Scanned for the games library page |
-| Saves folder | empty | Save states and their screenshots, in your own files |
+| Saves folder | empty | Save states and battery saves, in your own files. Without one, a game cannot be saved |
 | Screenshots folder | empty | Where the screenshot button saves images |
 | Thumbnails folder | empty | Images used as game thumbnails |
 | System folder | empty | Where BIOS files are read from |
@@ -161,7 +161,9 @@ again.
 Administration settings → Nostalgist holds what is the same for everybody:
 the folders new users start with, which each of them can still change, and
 the options of the emulator cores, which they cannot — an option of a core
-belongs to the core rather than to whoever is playing.
+belongs to the core rather than to whoever is playing. Each system also
+picks the kind of picture it is shown with there: box art, title screen,
+screenshot or logo, which is the `Named_*` folder it is taken from.
 
 ### BIOS files
 
@@ -304,6 +306,7 @@ npm install
 npm run build     # production bundles into js/
 npm run watch     # rebuild on change
 npm run cores     # extract the cores from the submodule
+npm run l10n      # collect the strings to translate
 
 composer install
 composer test     # the unit test suite
@@ -331,6 +334,8 @@ lib/Migration/              Mimetype repair step
 lib/Command/                The occ cleanup command
 lib/BackgroundJob/          Looking for box art, away from the browser
 lib/Controls.php            What the keyboard does, and what it does by default
+build/extract-l10n.mjs      Collects the strings to translate
+l10n/                       Translations, as Nextcloud reads them
 lib/Service/                Settings, library, save states, thumbnails, history
 lib/Settings/               Personal settings section
 src/main.js                 The app page: player or games library

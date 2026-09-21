@@ -1,4 +1,5 @@
 import { getRequestToken } from '@nextcloud/auth'
+import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { systemLabel } from './systems.js'
@@ -23,6 +24,9 @@ const THUMBNAIL_PREFERENCE = {
 	large: ['boxart', 'plain', 'title', 'snap', 'logo'],
 	small: ['logo', 'plain', 'boxart', 'title', 'snap'],
 }
+
+// What each system is shown with, as the administration settings have it.
+const thumbnailTypes = loadState('nostalgist', 'settings', {}).thumbnail_types ?? {}
 
 // Pages are cached for the tab, so coming back from a game paints the
 // library immediately while it is revalidated in the background.
@@ -161,7 +165,13 @@ function gameUrl(game) {
  */
 function thumbnailFor(game, size) {
 	const available = game.thumbnails ?? {}
-	const preference = THUMBNAIL_PREFERENCE[size > 96 ? 'large' : 'small']
+	// The kind chosen for the system comes first, then whatever suits the
+	// size it is drawn at.
+	const chosen = thumbnailTypes[game.system]
+	const preference = [
+		...(chosen === undefined ? [] : [chosen]),
+		...THUMBNAIL_PREFERENCE[size > 96 ? 'large' : 'small'],
+	]
 	const type = preference.find((candidate) => available[candidate] !== undefined)
 
 	const image = document.createElement('img')

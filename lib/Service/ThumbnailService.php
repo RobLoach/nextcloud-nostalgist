@@ -235,8 +235,8 @@ class ThumbnailService {
 	 */
 	public function indexScreenshots(Folder $folder): array {
 		$screenshots = [];
-		foreach ($folder->getDirectoryListing() as $node) {
-			if ($node instanceof Folder || !$this->isImage($node->getName())) {
+		foreach ($this->imagesIn($folder) as $node) {
+			if (!$this->isImage($node->getName())) {
 				continue;
 			}
 			$stem = pathinfo($node->getName(), PATHINFO_FILENAME);
@@ -268,8 +268,8 @@ class ThumbnailService {
 	public function screenshotsFor(Folder $folder, string $basename): array {
 		$keys = $this->screenshotKeys($basename);
 		$screenshots = [];
-		foreach ($folder->getDirectoryListing() as $node) {
-			if ($node instanceof Folder || !$this->isImage($node->getName())) {
+		foreach ($this->imagesIn($folder) as $node) {
+			if (!$this->isImage($node->getName())) {
 				continue;
 			}
 			$stem = pathinfo($node->getName(), PATHINFO_FILENAME);
@@ -286,6 +286,28 @@ class ThumbnailService {
 		}
 		usort($screenshots, static fn (array $a, array $b): int => $b['mtime'] <=> $a['mtime']);
 		return $screenshots;
+	}
+
+	/**
+	 * The images of a folder and of the folders in it, which is where the
+	 * screenshots of a system are kept.
+	 *
+	 * @return list<Node>
+	 */
+	private function imagesIn(Folder $folder): array {
+		$nodes = [];
+		foreach ($folder->getDirectoryListing() as $node) {
+			if (!$node instanceof Folder) {
+				$nodes[] = $node;
+				continue;
+			}
+			foreach ($node->getDirectoryListing() as $child) {
+				if (!$child instanceof Folder) {
+					$nodes[] = $child;
+				}
+			}
+		}
+		return $nodes;
 	}
 
 	private function looseStemKey(string $stem): string {

@@ -6,11 +6,15 @@ namespace OCA\Nostalgist\Service;
 
 use OCA\Nostalgist\AppInfo\Application;
 use OCA\Nostalgist\Controls;
+use OCA\Nostalgist\CoreMap;
 use OCA\Nostalgist\CoreOptions;
 use OCP\IAppConfig;
 use OCP\IConfig;
 
 class SettingsService {
+	/** The kinds of image a libretro thumbnail pack holds. */
+	public const THUMBNAIL_TYPES = ['boxart', 'title', 'snap', 'logo'];
+
 	/** How often a game may save itself, in seconds. 0 leaves it to you. */
 	public const AUTOSAVE_INTERVALS = [0, 30, 60, 120, 300, 600];
 
@@ -51,9 +55,37 @@ class SettingsService {
 				$defaults[$key] = $value;
 			}
 		}
-		// The options of a core are the same for everybody playing it.
+		// The options of a core are the same for everybody playing it, and
+		// so is the kind of picture a system is shown with.
 		$defaults['core_options'] = $this->getCoreOptions();
+		$defaults['thumbnail_types'] = $this->getThumbnailTypes();
 		return $defaults;
+	}
+
+	/**
+	 * @return array<string, string> system id => kind of image
+	 */
+	public function getThumbnailTypes(): array {
+		$stored = $this->appConfig->getValueString(Application::APP_ID, 'thumbnail_types');
+		if ($stored === '') {
+			return [];
+		}
+		$types = json_decode($stored, true);
+		return is_array($types) ? $this->sanitizeThumbnailTypes($types) : [];
+	}
+
+	/**
+	 * @param array<string, mixed> $types
+	 * @return array<string, string>
+	 */
+	private function sanitizeThumbnailTypes(array $types): array {
+		$sanitized = [];
+		foreach ($types as $system => $type) {
+			if (isset(CoreMap::SYSTEMS[$system]) && is_string($type) && in_array($type, self::THUMBNAIL_TYPES, true)) {
+				$sanitized[$system] = $type;
+			}
+		}
+		return $sanitized;
 	}
 
 	/**
@@ -92,12 +124,10 @@ class SettingsService {
 				$this->appConfig->setValueString(Application::APP_ID, $key, (string)$sanitized[$key]);
 			}
 		}
-		if (array_key_exists('core_options', $sanitized)) {
-			$this->appConfig->setValueString(
-				Application::APP_ID,
-				'core_options',
-				json_encode($sanitized['core_options']),
-			);
+		foreach (['core_options', 'thumbnail_types'] as $key) {
+			if (array_key_exists($key, $sanitized)) {
+				$this->appConfig->setValueString(Application::APP_ID, $key, json_encode($sanitized[$key]));
+			}
 		}
 		$this->settings = [];
 		return $this->getInstanceDefaults();
@@ -159,7 +189,7 @@ class SettingsService {
 	public function setUserSettings(string $userId, array $settings): array {
 		$sanitized = $this->sanitize($settings);
 		// Those belong to the instance, not to whoever is playing.
-		unset($sanitized['core_options']);
+		unset($sanitized['core_options'], $sanitized['thumbnail_types']);
 		$this->config->setUserValue($userId, Application::APP_ID, 'settings', json_encode($sanitized));
 		unset($this->settings[$userId]);
 		return $this->getUserSettings($userId);
@@ -217,6 +247,9 @@ class SettingsService {
 		}
 		if (isset($settings['core_options']) && is_array($settings['core_options'])) {
 			$sanitized['core_options'] = $this->sanitizeCoreOptions($settings['core_options']);
+		}
+		if (isset($settings['thumbnail_types']) && is_array($settings['thumbnail_types'])) {
+			$sanitized['thumbnail_types'] = $this->sanitizeThumbnailTypes($settings['thumbnail_types']);
 		}
 		// A binding that is left out keeps whatever it had, so a page that
 		// knows nothing of the keyboard cannot wipe it.

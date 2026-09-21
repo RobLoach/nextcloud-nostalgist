@@ -1,0 +1,511 @@
+# Translations of the Nostalgist app.
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/library.js
+msgid "{count} per page"
+msgstr ""
+
+#: src/library.js
+msgid "{first}–{last} of {total}"
+msgstr ""
+
+#: src/library.js
+msgid "{hours}h {minutes}m played"
+msgstr ""
+
+#: src/settings.js
+msgid "{message}, still going"
+msgstr ""
+
+#: src/library.js
+msgid "{minutes}m played"
+msgstr ""
+
+#: templates/settings.php
+msgid "10 minutes"
+msgstr ""
+
+#: templates/settings.php
+msgid "2 minutes"
+msgstr ""
+
+#: templates/settings.php
+msgid "30 seconds"
+msgstr ""
+
+#: templates/settings.php
+msgid "5 minutes"
+msgstr ""
+
+#: src/library.js
+msgid "Add to favorites"
+msgstr ""
+
+#: src/library.js
+msgid "All systems"
+msgstr ""
+
+#: templates/settings.php
+msgid "Audio latency, raise it if the sound crackles"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Auto — {date}"
+msgstr ""
+
+#: templates/settings.php
+msgid "BIOS files are read from this folder, by the name the core expects, such as colecovision.rom. Leave empty if no game needs one."
+msgstr ""
+
+#: templates/admin.php
+#: templates/settings.php
+msgid "Browse …"
+msgstr ""
+
+#: templates/settings.php
+msgid "Capture gamepad and keyboard input for the whole page while playing"
+msgstr ""
+
+#: src/settings.js
+msgid "Choose a folder"
+msgstr ""
+
+#: templates/settings.php
+msgid "Click a key to set it, then press the one to use. A key that works a button of the controller is left to the game."
+msgstr ""
+
+#: src/toolbar.js
+msgid "Close"
+msgstr ""
+
+#: templates/settings.php
+msgid "Configure how the Nostalgist retro game player behaves."
+msgstr ""
+
+#: src/panels/resume.js
+msgid "Continue"
+msgstr ""
+
+#: src/panels/resume.js
+msgid "Continue from slot {slot} ({date})?"
+msgstr ""
+
+#: templates/settings.php
+msgid "Continue from the latest save when a game starts, without asking"
+msgstr ""
+
+#: templates/settings.php
+msgid "Controller"
+msgstr ""
+
+#: templates/settings.php
+msgid "Controls"
+msgstr ""
+
+#: templates/admin.php
+msgid "Core default"
+msgstr ""
+
+#: templates/admin.php
+msgid "Core options"
+msgstr ""
+
+#: src/panels/gallery.js
+msgid "Could not delete the screenshot"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Could not delete the state"
+msgstr ""
+
+#: src/library.js
+msgid "Could not load the games library."
+msgstr ""
+
+#: src/panels/states.js
+msgid "Could not load the state"
+msgstr ""
+
+#: src/settings.js
+msgid "Could not save the settings"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Could not save the state"
+msgstr ""
+
+#: src/settings.js
+msgid "Could not start looking. A thumbnails folder has to be set first."
+msgstr ""
+
+#: src/main.js
+#: src/viewer.js
+msgid "Could not start the emulator: {error}"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Could not take a screenshot"
+msgstr ""
+
+#: src/panels/gallery.js
+#: src/panels/states.js
+msgid "Delete"
+msgstr ""
+
+#: src/panels/resume.js
+msgid "Dismiss"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Fast-forward"
+msgstr ""
+
+#: templates/settings.php
+msgid "Fast-forward speed"
+msgstr ""
+
+#: src/library.js
+msgid "Favorites"
+msgstr ""
+
+#: src/library.js
+msgid "Filter by system"
+msgstr ""
+
+#: templates/settings.php
+msgid "Folders"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Fullscreen"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Game restored"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Game saved"
+msgstr ""
+
+#: templates/settings.php
+msgid "Games in this folder are listed on the Nostalgist page."
+msgstr ""
+
+#: src/library.js
+msgid "Games library"
+msgstr ""
+
+#: templates/admin.php
+#: templates/settings.php
+msgid "Games library folder"
+msgstr ""
+
+#: src/library.js
+msgid "Games per page"
+msgstr ""
+
+#: src/library.js
+msgid "Grid view"
+msgstr ""
+
+#: templates/settings.php
+msgid "Images in this folder are used as game thumbnails, matched by file name: Mario.png is the thumbnail of Mario.nes. Leave empty to disable."
+msgstr ""
+
+#: src/library.js
+msgid "List view"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Load"
+msgstr ""
+
+#: templates/settings.php
+msgid "Look for missing box art"
+msgstr ""
+
+#: src/settings.js
+msgid "Looking for box art in the background. It carries on without this page."
+msgstr ""
+
+#: templates/settings.php
+msgid "Minute"
+msgstr ""
+
+#: src/library.js
+msgid "Modified"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Mute"
+msgstr ""
+
+#: src/library.js
+msgid "Name"
+msgstr ""
+
+#: templates/settings.php
+msgid "Never"
+msgstr ""
+
+#: src/library.js
+msgid "Next"
+msgstr ""
+
+#: src/library.js
+msgid "No games found in {folder}. Upload some ROMs there, or pick another folder in the Nostalgist personal settings."
+msgstr ""
+
+#: src/library.js
+msgid "No games match the filters."
+msgstr ""
+
+#: src/panels/gallery.js
+msgid "No screenshots of this game yet."
+msgstr ""
+
+#: src/player.js
+msgid "No supported ROM found in the archive"
+msgstr ""
+
+#: templates/admin.php
+#: templates/settings.php
+msgid "Nostalgist"
+msgstr ""
+
+#: src/library.js
+msgid "Only the first {count} games of the folder are listed."
+msgstr ""
+
+#: templates/admin.php
+msgid "Options of the emulator cores themselves. Left on \"Core default\", the core decides."
+msgstr ""
+
+#: src/toolbar.js
+msgid "Pause"
+msgstr ""
+
+#: templates/settings.php
+msgid "Pause the game while the tab is in the background"
+msgstr ""
+
+#: templates/admin.php
+msgid "Picture shown for %s"
+msgstr ""
+
+#: templates/settings.php
+msgid "Pixel-perfect scaling (whole pixels, with borders)"
+msgstr ""
+
+#: templates/settings.php
+msgid "Player"
+msgstr ""
+
+#: src/settings.js
+msgid "Press a key …"
+msgstr ""
+
+#: src/library.js
+msgid "Previous"
+msgstr ""
+
+#: templates/settings.php
+msgid "Put the keys back as they were"
+msgstr ""
+
+#: src/library.js
+msgid "Recently played"
+msgstr ""
+
+#: src/library.js
+msgid "Remove from favorites"
+msgstr ""
+
+#: src/library.js
+msgid "Rescan the library folder"
+msgstr ""
+
+#: templates/admin.php
+msgid "Reset this core to defaults"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Restart"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Restarted"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Resume"
+msgstr ""
+
+#: src/toolbar.js
+msgid "RetroArch menu"
+msgstr ""
+
+#: src/panels/states.js
+#: templates/admin.php
+#: templates/settings.php
+msgid "Save"
+msgstr ""
+
+#: src/panels/states.js
+#: src/toolbar.js
+msgid "Save states"
+msgstr ""
+
+#: templates/settings.php
+msgid "Save states and battery saves are stored here, under the system and the game. Without a folder, a game cannot be saved at all and the player says so."
+msgstr ""
+
+#: templates/settings.php
+msgid "Save the game automatically when closing the player"
+msgstr ""
+
+#: templates/settings.php
+msgid "Save the game to the Auto slot every"
+msgstr ""
+
+#: src/settings.js
+msgid "Saved"
+msgstr ""
+
+#: templates/admin.php
+#: templates/settings.php
+msgid "Saves folder"
+msgstr ""
+
+#: src/settings.js
+msgid "Saving …"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Saving the game …"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Screenshot"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Screenshot saved to {folder}"
+msgstr ""
+
+#: src/panels/gallery.js
+#: src/toolbar.js
+msgid "Screenshots"
+msgstr ""
+
+#: templates/admin.php
+#: templates/settings.php
+msgid "Screenshots folder"
+msgstr ""
+
+#: templates/settings.php
+msgid "Screenshots taken in the player are saved here, under the system. Leave empty to download them instead."
+msgstr ""
+
+#: src/library.js
+msgid "Search games"
+msgstr ""
+
+#: src/library.js
+msgid "Search games …"
+msgstr ""
+
+#: src/panels/gallery.js
+msgid "Set a screenshots folder in the Nostalgist settings to keep your screenshots."
+msgstr ""
+
+#: src/library.js
+msgid "Size"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Slot {slot} — {date}"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Slot {slot} — {date}, from an older version"
+msgstr ""
+
+#: src/panels/states.js
+msgid "Slot {slot} — empty"
+msgstr ""
+
+#: templates/settings.php
+msgid "Smooth video filtering (bilinear)"
+msgstr ""
+
+#: src/settings.js
+msgid "Starting …"
+msgstr ""
+
+#: src/panels/states.js
+msgid "State loaded from slot {slot}"
+msgstr ""
+
+#: src/panels/states.js
+msgid "State saved to slot {slot}"
+msgstr ""
+
+#: src/library.js
+msgid "System"
+msgstr ""
+
+#: templates/settings.php
+msgid "System folder"
+msgstr ""
+
+#: templates/admin.php
+msgid "System folder, for BIOS files"
+msgstr ""
+
+#: src/library.js
+msgid "Table view"
+msgstr ""
+
+#: src/settings.js
+msgid "The emulator has no name for that key, try another one"
+msgstr ""
+
+#: templates/admin.php
+msgid "The folders users start with. Everybody can pick their own afterwards."
+msgstr ""
+
+#: src/library.js
+msgid "The games library folder {folder} does not exist. Create it, or pick another folder in the Nostalgist personal settings."
+msgstr ""
+
+#: src/settings.js
+msgid "This key works a button of the controller, so the game gets it instead"
+msgstr ""
+
+#: templates/admin.php
+#: templates/settings.php
+msgid "Thumbnails folder"
+msgstr ""
+
+#: src/toolbar.js
+msgid "Touch controls"
+msgstr ""
+
+#: src/main.js
+#: src/player.js
+#: src/viewer.js
+msgid "Unsupported ROM type: {file}"
+msgstr ""
+
+#: templates/settings.php
+msgid "Volume, in decibels, 0 is as recorded"
+msgstr ""
+
+#: src/library.js
+msgid "ZIP archive"
+msgstr ""

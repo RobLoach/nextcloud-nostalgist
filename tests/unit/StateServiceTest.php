@@ -353,10 +353,11 @@ class StateServiceTest extends TestCase {
 		$service->saveThumbnail(self::USER, self::GAME, 1, 'a picture');
 		$service->saveSram(self::USER, self::GAME, 'a battery save');
 
-		$this->assertSame('first', $this->files['Saves/Mario/Slot 1.state'] ?? null);
-		$this->assertSame('automatic', $this->files['Saves/Mario/Auto.state'] ?? null, 'the automatic slot reads as Auto');
-		$this->assertSame('a picture', $this->files['Saves/Mario/Slot 1.png'] ?? null);
-		$this->assertSame('a battery save', $this->files['Saves/Mario/Mario.srm'] ?? null);
+		// Under the system, so two games of the same name keep apart.
+		$this->assertSame('first', $this->files['Saves/Nintendo/Mario/Slot 1.state'] ?? null);
+		$this->assertSame('automatic', $this->files['Saves/Nintendo/Mario/Auto.state'] ?? null, 'the automatic slot reads as Auto');
+		$this->assertSame('a picture', $this->files['Saves/Nintendo/Mario/Slot 1.png'] ?? null);
+		$this->assertSame('a battery save', $this->files['Saves/Nintendo/Mario/Mario.srm'] ?? null);
 
 		$this->assertSame('first', $service->load(self::USER, self::GAME, 1));
 		$this->assertSame([StateService::AUTO_SLOT, 1], array_column($service->list(self::USER, self::GAME), 'slot'));
@@ -367,7 +368,33 @@ class StateServiceTest extends TestCase {
 		$service->save(self::USER, self::GAME, 1, 'first');
 
 		$service->deleteAllForGame(self::USER, self::GAME);
-		$this->assertArrayNotHasKey('Saves/Mario/Slot 1.state', $this->files);
+		$this->assertArrayNotHasKey('Saves/Nintendo/Mario/Slot 1.state', $this->files);
+	}
+
+	public function testGamesOfTheSameNameOnDifferentSystemsKeepTheirOwnSaves(): void {
+		$service = $this->service('/Saves');
+		$service->save(self::USER, '/Games/NES/Mario.nes', 1, 'the Nintendo one');
+		$service->save(self::USER, '/Games/Genesis/Mario.md', 1, 'the Genesis one');
+
+		$this->assertSame('the Nintendo one', $service->load(self::USER, '/Games/NES/Mario.nes', 1));
+		$this->assertSame('the Genesis one', $service->load(self::USER, '/Games/Genesis/Mario.md', 1));
+		$this->assertSame('the Nintendo one', $this->files['Saves/Nintendo/Mario/Slot 1.state'] ?? null);
+		$this->assertSame('the Genesis one', $this->files['Saves/Genesis/Mario/Slot 1.state'] ?? null);
+	}
+
+	public function testSavesWrittenBeforeTheSystemWasPartOfThePathAreStillFound(): void {
+		// As an earlier version would have filed them.
+		$this->files['Saves/Mario/Slot 1.state'] = 'an old save';
+
+		$service = $this->service('/Saves');
+		$this->assertSame('an old save', $service->load(self::USER, self::GAME, 1));
+		$this->assertSame([1], array_column($service->list(self::USER, self::GAME), 'slot'));
+	}
+
+	public function testAGameThatDoesNotSayItsSystemKeepsSavingWhereItAlwaysDid(): void {
+		$service = $this->service('/Saves');
+		$service->save(self::USER, '/Games/Unsorted/Mystery.zip', 1, 'a state');
+		$this->assertSame('a state', $this->files['Saves/Mystery/Slot 1.state'] ?? null);
 	}
 
 	public function testOnlySlotsThatAreOfferedCanBeWritten(): void {

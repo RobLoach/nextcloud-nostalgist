@@ -5,6 +5,9 @@ $defaults = $_['defaults'];
 $coreOptions = $_['coreOptions'];
 $systemsByCore = $_['systemsByCore'];
 $settings = ['core_options' => $_['storedCoreOptions']];
+$systems = $_['systems'];
+$thumbnailTypes = $_['thumbnailTypes'];
+$storedTypes = $_['storedThumbnailTypes'];
 ?>
 
 <div id="nostalgist-settings" class="section" data-scope="admin">
@@ -47,6 +50,23 @@ $settings = ['core_options' => $_['storedCoreOptions']];
 						<?php foreach ($option['values'] as $value => $label): ?>
 							<option value="<?php p($value); ?>"
 								<?php if (($settings['core_options'][$core][$key] ?? '') === (string)$value) { p('selected'); } ?>>
+								<?php p($label); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</p>
+			<?php endforeach; ?>
+			<?php foreach ($systems as $systemId => $system): ?>
+				<?php if ($system['core'] !== $core) { continue; } ?>
+				<p>
+					<label for="nostalgist-thumbnail-<?php p($systemId); ?>">
+						<?php p($l->t('Picture shown for %s', [$system['short']])); ?>
+					</label><br>
+					<select id="nostalgist-thumbnail-<?php p($systemId); ?>" class="nostalgist-thumbnail-type"
+						data-system="<?php p($systemId); ?>">
+						<?php foreach ($thumbnailTypes as $type => $label): ?>
+							<option value="<?php p($type); ?>"
+								<?php if (($storedTypes[$systemId] ?? 'boxart') === $type) { p('selected'); } ?>>
 								<?php p($label); ?>
 							</option>
 						<?php endforeach; ?>

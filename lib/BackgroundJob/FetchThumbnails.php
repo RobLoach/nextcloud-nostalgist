@@ -28,8 +28,12 @@ use Psr\Log\LoggerInterface;
  * @psalm-suppress UnusedClass
  */
 class FetchThumbnails extends QueuedJob {
-	/** Games to look up in one run of the job. */
-	private const BATCH = 50;
+	/**
+	 * Games to look up in one run. Every one of them is a few requests to
+	 * a server on the other side of the internet, so a run stays small and
+	 * the job queues itself again for the rest.
+	 */
+	public const BATCH = 10;
 
 	public function __construct(
 		ITimeFactory $time,

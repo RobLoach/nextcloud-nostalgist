@@ -104,5 +104,21 @@ export function createGalleryPanel({ romPath, flash }) {
 		}
 	}
 
-	return { element, refresh }
+	/**
+	 * @return {Promise<number>} how many screenshots this game has
+	 */
+	const count = async () => {
+		try {
+			const response = await api(generateUrl(
+				'/apps/nostalgist/screenshots?file={file}',
+				{ file: romPath },
+			))
+			const data = await response.json()
+			return data.screenshots.length
+		} catch (error) {
+			return 0
+		}
+	}
+
+	return { element, refresh, count }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Service;
 
 use OCA\Nostalgist\AppInfo\Application;
+use OCA\Nostalgist\CoreMap;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -310,6 +311,22 @@ class StateService {
 		return $found;
 	}
 
+	/**
+	 * Where the saves of a game live: under the system it belongs to, so
+	 * that two games of the same name do not share a folder.
+	 */
+	private function gameFolderPath(string $savesPath, string $romPath): string {
+		$stem = pathinfo(basename($romPath), PATHINFO_FILENAME);
+		$system = CoreMap::shortNameForPath($romPath);
+		$folder = trim($savesPath, '/');
+		return $system === '' ? "$folder/$stem" : "$folder/$system/$stem";
+	}
+
+	/** Where they lived before the system was part of the path. */
+	private function legacyGameFolderPath(string $savesPath, string $romPath): string {
+		return trim($savesPath, '/') . '/' . pathinfo(basename($romPath), PATHINFO_FILENAME);
+	}
+
 	private function savesFolderPath(string $userId): string {
 		return $this->settingsService->getUserSettings($userId)['saves_folder'];
 	}
@@ -325,16 +342,20 @@ class StateService {
 			return null;
 		}
 		$userFolder = $this->rootFolder->getUserFolder($userId);
-		$stem = pathinfo(basename($romPath), PATHINFO_FILENAME);
-		$path = trim($savesPath, '/') . '/' . $stem;
+		$path = $this->gameFolderPath($savesPath, $romPath);
 
-		try {
-			$node = $userFolder->get($path);
-			return $node instanceof Folder ? $node : null;
-		} catch (NotFoundException) {
-			if (!$create) {
-				return null;
+		foreach ([$path, $this->legacyGameFolderPath($savesPath, $romPath)] as $candidate) {
+			try {
+				$node = $userFolder->get($candidate);
+				if ($node instanceof Folder) {
+					return $node;
+				}
+			} catch (NotFoundException) {
+				// Looked for where it would be now, then where it used to be.
 			}
+		}
+		if (!$create) {
+			return null;
 		}
 
 		// Create the folders one level at a time.

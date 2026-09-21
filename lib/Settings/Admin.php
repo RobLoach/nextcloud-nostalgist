@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Nostalgist\Settings;
 
 use OCA\Nostalgist\AppInfo\Application;
+use OCA\Nostalgist\CoreMap;
 use OCA\Nostalgist\CoreOptions;
 use OCA\Nostalgist\Service\SettingsService;
 use OCP\AppFramework\Http\TemplateResponse;
@@ -30,6 +31,14 @@ class Admin implements ISettings {
 			'coreOptions' => CoreOptions::OPTIONS,
 			'systemsByCore' => CoreOptions::systemsByCore(),
 			'storedCoreOptions' => $this->settingsService->getCoreOptions(),
+			'systems' => CoreMap::SYSTEMS,
+			'thumbnailTypes' => [
+				'boxart' => 'Box art',
+				'title' => 'Title screen',
+				'snap' => 'Screenshot',
+				'logo' => 'Logo',
+			],
+			'storedThumbnailTypes' => $this->settingsService->getThumbnailTypes(),
 		]);
 	}
 

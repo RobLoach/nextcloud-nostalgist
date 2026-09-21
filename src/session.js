@@ -30,7 +30,7 @@ export async function startSession({ canvas, container, filename, basename, sour
 		systemHint: systemForFolderPath(filename),
 		romPath: filename,
 	})
-	const stopSramSync = startSramSync(instance, filename)
+	const stopSramSync = startSramSync(instance, filename, (settings.saves_folder ?? '') !== '')
 	const stopPlayTime = recordRecent(filename)
 	const detachToolbar = attachToolbar({
 		container,

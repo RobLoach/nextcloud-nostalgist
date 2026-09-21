@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Nostalgist\Controller;
 
+use OCA\Nostalgist\Service\SettingsService;
 use OCA\Nostalgist\Service\StateService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -31,6 +32,7 @@ class StateController extends Controller {
 		string $appName,
 		IRequest $request,
 		private StateService $stateService,
+		private SettingsService $settingsService,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -39,7 +41,7 @@ class StateController extends Controller {
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/states')]
 	public function list(string $file = ''): JSONResponse {
-		if ($this->userId === null || $file === '') {
+		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
 		}
 		return new JSONResponse([
@@ -108,7 +110,7 @@ class StateController extends Controller {
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/sram')]
 	public function getSram(string $file = ''): Response {
-		if ($this->userId === null || $file === '') {
+		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
 		}
 		$sram = $this->stateService->loadSram($this->userId, $file);
@@ -121,7 +123,7 @@ class StateController extends Controller {
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'POST', url: '/sram')]
 	public function saveSram(string $file = ''): JSONResponse {
-		if ($this->userId === null || $file === '') {
+		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
 		}
 		$sram = $this->readBody(self::MAX_STATE_SIZE);
@@ -153,6 +155,9 @@ class StateController extends Controller {
 	private function isValidRequest(string $file, int $slot): bool {
 		return $this->userId !== null
 			&& $file !== ''
+			// Saves live in the files of the user, so there has to be a
+			// folder to put them in.
+			&& $this->settingsService->getUserSettings($this->userId)['saves_folder'] !== ''
 			// Slot 0 is the one written when a game is closed.
 			&& $slot >= StateService::AUTO_SLOT
 			&& $slot <= StateService::HIGHEST_SLOT;

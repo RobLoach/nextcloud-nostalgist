@@ -1,9 +1,7 @@
 import { getRequestToken } from '@nextcloud/auth'
-import { FilePickerType, getFilePickerBuilder } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { keyLabel, retroarchKey } from './keys.js'
-import '@nextcloud/dialogs/style.css'
 
 const container = document.getElementById('nostalgist-settings')
 
@@ -11,6 +9,12 @@ const container = document.getElementById('nostalgist-settings')
  * @param {HTMLInputElement} input the folder input to fill
  */
 async function pickFolder(input) {
+	// The file picker weighs more than the rest of this page put together,
+	// so it is fetched when somebody actually goes looking for a folder.
+	const [{ FilePickerType, getFilePickerBuilder }] = await Promise.all([
+		import(/* webpackChunkName: 'picker' */ '@nextcloud/dialogs'),
+		import(/* webpackChunkName: 'picker' */ '@nextcloud/dialogs/style.css'),
+	])
 	const picker = getFilePickerBuilder(t('nostalgist', 'Choose a folder'))
 		.setMultiSelect(false)
 		.setMimeTypeFilter(['httpd/unix-directory'])
@@ -46,6 +50,10 @@ async function save() {
 			settings[kind] = bindings
 		}
 	}
+	settings.thumbnail_types = {}
+	container.querySelectorAll('.nostalgist-thumbnail-type').forEach((element) => {
+		settings.thumbnail_types[element.dataset.system] = element.value
+	})
 	settings.core_options = {}
 	container.querySelectorAll('.nostalgist-core-option').forEach((element) => {
 		if (element.value !== '') {
@@ -152,6 +160,24 @@ function showBinding(element) {
 }
 
 /**
+ * Say so where a key of the player is also a key of the controller: the
+ * game gets it, and the player is left waiting for a key that never comes.
+ */
+function showShadowedHotkeys() {
+	const taken = new Set(
+		[...container.querySelectorAll('.nostalgist-key-binding[data-kind="buttons"]')]
+			.map((element) => element.dataset.code),
+	)
+	container.querySelectorAll('.nostalgist-key-binding[data-kind="hotkeys"]').forEach((element) => {
+		const shadowed = taken.has(element.dataset.code)
+		element.classList.toggle('shadowed', shadowed)
+		element.title = shadowed
+			? t('nostalgist', 'This key works a button of the controller, so the game gets it instead')
+			: ''
+	})
+}
+
+/**
  * Ask for the box art of the games that have none. The looking itself runs
  * as a background job, so this only starts it and reports what it says.
  */
@@ -208,6 +234,7 @@ if (container !== null) {
 		showBinding(element)
 		element.addEventListener('click', () => captureKey(element))
 	})
+	showShadowedHotkeys()
 	document.getElementById('nostalgist-keys-reset')?.addEventListener('click', () => {
 		container.querySelectorAll('.nostalgist-key-binding').forEach((element) => {
 			element.dataset.code = element.dataset.default ?? element.dataset.code

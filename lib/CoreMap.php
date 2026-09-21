@@ -200,6 +200,37 @@ class CoreMap {
 	}
 
 	/**
+	 * The system of a game at a path: from its extension, or from the
+	 * folders it is stored in when the extension does not tell, as for
+	 * zipped ROMs. Null when nothing says.
+	 */
+	public static function systemForPath(string $path): ?string {
+		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+		$system = self::extensionSystemMap()[$extension] ?? null;
+		if ($system !== null) {
+			return $system;
+		}
+		$folders = array_slice(explode('/', trim($path, '/')), 0, -1);
+		foreach (array_reverse($folders) as $folder) {
+			$fromFolder = self::systemForFolderName($folder);
+			if ($fromFolder !== null) {
+				return $fromFolder;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The short name of the system of a game, for the folder its saves and
+	 * screenshots are filed under. Empty when the system is unknown, so
+	 * that those stay where they always were.
+	 */
+	public static function shortNameForPath(string $path): string {
+		$system = self::systemForPath($path);
+		return $system === null ? '' : self::SYSTEMS[$system]['short'];
+	}
+
+	/**
 	 * The BIOS files a system may ask for.
 	 *
 	 * @return list<string>

@@ -143,22 +143,14 @@ class RecentService {
 	}
 
 	/**
-	 * The system of a game, from its extension, or from the folders it is
-	 * stored in when the extension does not tell, as for zipped ROMs.
+	 * The system of a game, or "zip" for an archive that does not say which
+	 * it holds.
 	 */
 	private function systemFor(string $path): string {
-		$extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-		$system = CoreMap::extensionSystemMap()[$extension] ?? null;
+		$system = CoreMap::systemForPath($path);
 		if ($system !== null) {
 			return $system;
 		}
-		$folders = array_slice(explode('/', trim($path, '/')), 0, -1);
-		foreach (array_reverse($folders) as $folder) {
-			$fromFolder = CoreMap::systemForFolderName($folder);
-			if ($fromFolder !== null) {
-				return $fromFolder;
-			}
-		}
-		return $extension === 'zip' ? 'zip' : '';
+		return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'zip' ? 'zip' : '';
 	}
 }

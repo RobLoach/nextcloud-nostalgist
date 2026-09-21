@@ -10,7 +10,8 @@ $hotkeys = $_['hotkeys'];
 	<h2><?php p($l->t('Nostalgist')); ?></h2>
 	<p class="settings-hint"><?php p($l->t('Configure how the Nostalgist retro game player behaves.')); ?></p>
 
-	<h3><?php p($l->t('Player')); ?></h3>
+	<details class="nostalgist-section" open>
+		<summary><?php p($l->t('Player')); ?></summary>
 	<p>
 		<input type="checkbox" id="nostalgist-smooth" class="checkbox nostalgist-setting"
 			data-setting="video_smooth" <?php if ($settings['video_smooth']) { p('checked'); } ?>>
@@ -81,7 +82,10 @@ $hotkeys = $_['hotkeys'];
 		<output for="nostalgist-audio-latency"><?php p($settings['audio_latency']); ?> ms</output>
 	</p>
 
-	<h3><?php p($l->t('Controls')); ?></h3>
+	</details>
+
+	<details class="nostalgist-section">
+		<summary><?php p($l->t('Controls')); ?></summary>
 	<p class="settings-hint"><?php p($l->t('Click a key to set it, then press the one to use. A key that works a button of the controller is left to the game.')); ?></p>
 
 	<h4><?php p($l->t('Controller')); ?></h4>
@@ -113,7 +117,10 @@ $hotkeys = $_['hotkeys'];
 		<button type="button" id="nostalgist-keys-reset"><?php p($l->t('Put the keys back as they were')); ?></button>
 	</p>
 
-	<h3><?php p($l->t('Folders')); ?></h3>
+	</details>
+
+	<details class="nostalgist-section">
+		<summary><?php p($l->t('Folders')); ?></summary>
 	<p>
 		<label for="nostalgist-library-folder"><?php p($l->t('Games library folder')); ?></label><br>
 		<em><?php p($l->t('Games in this folder are listed on the Nostalgist page.')); ?></em><br>
@@ -136,7 +143,7 @@ $hotkeys = $_['hotkeys'];
 	</p>
 	<p>
 		<label for="nostalgist-saves-folder"><?php p($l->t('Saves folder')); ?></label><br>
-		<em><?php p($l->t('Save states and their screenshots are stored in this folder, one subfolder per game. Leave empty to store them internally.')); ?></em><br>
+		<em><?php p($l->t('Save states and battery saves are stored here, under the system and the game. Without a folder, a game cannot be saved at all and the player says so.')); ?></em><br>
 		<input type="text" id="nostalgist-saves-folder" class="nostalgist-setting"
 			data-setting="saves_folder"
 			value="<?php p($settings['saves_folder']); ?>">
@@ -154,13 +161,15 @@ $hotkeys = $_['hotkeys'];
 	</p>
 	<p>
 		<label for="nostalgist-screenshots-folder"><?php p($l->t('Screenshots folder')); ?></label><br>
-		<em><?php p($l->t('Screenshots taken in the player are saved to this folder. Leave empty to download them instead.')); ?></em><br>
+		<em><?php p($l->t('Screenshots taken in the player are saved here, under the system. Leave empty to download them instead.')); ?></em><br>
 		<input type="text" id="nostalgist-screenshots-folder" class="nostalgist-setting"
 			data-setting="screenshots_folder"
 			value="<?php p($settings['screenshots_folder']); ?>">
 		<button type="button" class="nostalgist-folder-picker"
 			data-target="nostalgist-screenshots-folder"><?php p($l->t('Browse …')); ?></button>
 	</p>
+
+	</details>
 
 	<p>
 		<button id="nostalgist-save" class="primary"><?php p($l->t('Save')); ?></button>
