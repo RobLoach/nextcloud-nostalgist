@@ -29,14 +29,10 @@ class CSPListener implements IEventListener {
 		$csp = new EmptyContentSecurityPolicy();
 		$csp->allowEvalWasm(true);
 		$csp->addAllowedScriptDomain('blob:');
-		// Browsers that do not support worker-src fall back to child-src,
-		// and to default-src when neither is set, which blocks the cores.
+		// Without worker-src the cores fall through to default-src, which
+		// blocks them. Nextcloud 34 dropped child-src, the fallback older
+		// browsers used, so worker-src is all there is to set.
 		$csp->addAllowedWorkerSrcDomain('blob:');
-		if (method_exists($csp, 'addAllowedChildSrcDomain')) {
-			// Nextcloud 33 still has child-src. 34 dropped it, worker-src
-			// being enough for every browser it supports.
-			$csp->addAllowedChildSrcDomain('blob:');
-		}
 		$csp->addAllowedFrameDomain('blob:');
 		// The emulator fetches its core, ROM and save data as blobs.
 		$csp->addAllowedConnectDomain('blob:');

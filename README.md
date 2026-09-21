@@ -25,8 +25,8 @@ from your files and run in the browser.
 
 ## Installation
 
-Nextcloud 33 to 35, on PHP 8.2 or newer. A browser with WebAssembly, which
-is every current one.
+Nextcloud 34 or 35, on PHP 8.2 or newer — Nextcloud 35 asks for 8.3 itself.
+A browser with WebAssembly, which is every current one.
 
 1. Download the app
 
