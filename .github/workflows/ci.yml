@@ -65,7 +65,10 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        # Without install scripts: the only one that matters here checks the
+        # vue-loader version for single file components, which this app does
+        # not use.
+        run: npm install --no-audit --no-fund --ignore-scripts
 
       - name: Build
         run: npm run build
@@ -86,10 +89,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, libxml
+          coverage: none
+
       - name: Validate info.xml against the Nextcloud schema
         run: |
-          curl -sSfo info.xsd https://apps.nextcloud.com/schema/apps/info.xsd
-          xmllint --noout --schema info.xsd appinfo/info.xml
+          curl -sSfo /tmp/info.xsd https://apps.nextcloud.com/schema/apps/info.xsd
+          php -r '
+            $doc = new DOMDocument();
+            $doc->load("appinfo/info.xml");
+            libxml_use_internal_errors(true);
+            if ($doc->schemaValidate("/tmp/info.xsd")) {
+              echo "info.xml validates\n";
+              exit(0);
+            }
+            foreach (libxml_get_errors() as $error) {
+              fwrite(STDERR, trim($error->message) . "\n");
+            }
+            exit(1);
+          '
 
       - name: Check the versions match
         run: |
