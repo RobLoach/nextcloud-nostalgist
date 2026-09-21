@@ -1,0 +1,121 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OCA\Arcade\Tests\Unit;
+
+use OCA\Arcade\RomHeader;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * What a cartridge says about itself, and what it takes for that to be
+ * believed.
+ */
+class RomHeaderTest extends TestCase {
+	/**
+	 * A stretch of bytes with something written at a given place.
+	 */
+	private function rom(array $parts, int $size = RomHeader::BYTES): string {
+		$data = str_repeat("\x00", $size);
+		foreach ($parts as $offset => $bytes) {
+			$data = substr_replace($data, $bytes, $offset, strlen($bytes));
+		}
+		return $data;
+	}
+
+	private function gameBoy(string $title): string {
+		return $this->rom([
+			0x104 => "\xCE\xED\x66\x66",
+			0x134 => $title,
+		]);
+	}
+
+	/**
+	 * The header is believed when the checksum and its complement add up.
+	 */
+	private function superNintendo(string $title, int $country = 0x01, int $offset = 0x7FC0): string {
+		$checksum = 0x1234;
+		$header = str_pad(substr($title, 0, 21), 21, ' ');
+		$header .= str_repeat("\x00", 4);
+		$header .= chr($country);
+		$header .= str_repeat("\x00", 2);
+		$header .= pack('v', $checksum ^ 0xFFFF) . pack('v', $checksum);
+		return $this->rom([$offset => $header]);
+	}
+
+	public function testAGameBoyCartridgeGivesItsTitle(): void {
+		$this->assertSame(
+			'SUPER MARIOLAND',
+			RomHeader::read($this->gameBoy('SUPER MARIOLAND'), 'gb')['title'],
+		);
+	}
+
+	public function testAGameBoyTitleIsPaddedWithNothing(): void {
+		$this->assertSame('TETRIS', RomHeader::read($this->gameBoy("TETRIS\x00\x00\x00"), 'gb')['title']);
+	}
+
+	public function testWithoutTheLogoThereIsNoHeader(): void {
+		$data = $this->rom([0x134 => 'NOT A CARTRIDGE']);
+		$this->assertSame('', RomHeader::read($data, 'gb')['title']);
+	}
+
+	public function testAGameBoyAdvanceCartridgeGivesItsTitle(): void {
+		$data = $this->rom([0x04 => "\x24\xFF\xAE\x51", 0xA0 => 'METROID4']);
+		$this->assertSame('METROID4', RomHeader::read($data, 'gba')['title']);
+	}
+
+	public function testASuperNintendoCartridgeGivesItsTitleAndCountry(): void {
+		$header = RomHeader::read($this->superNintendo('SUPER MARIOWORLD'), 'snes');
+		$this->assertSame('SUPER MARIOWORLD', $header['title']);
+		$this->assertSame('USA', $header['region']);
+	}
+
+	public function testASuperNintendoHeaderIsFoundWhereverItIs(): void {
+		foreach ([0x7FC0, 0xFFC0, 0x7FC0 + 0x200, 0xFFC0 + 0x200] as $offset) {
+			$header = RomHeader::read($this->superNintendo('ZELDA', 0x00, $offset), 'snes');
+			$this->assertSame('ZELDA', $header['title'], "not found at $offset");
+			$this->assertSame('Japan', $header['region']);
+		}
+	}
+
+	public function testASuperNintendoHeaderThatDoesNotAddUpIsNotAHeader(): void {
+		$data = $this->rom([0x7FC0 => str_pad('LOOKS LIKE A TITLE', 32, "\x01")]);
+		$this->assertSame('', RomHeader::read($data, 'snes')['title']);
+	}
+
+	public function testAMegaDriveCartridgeIsKnownAbroadByItsOtherName(): void {
+		$data = $this->rom([
+			0x100 => 'SEGA MEGA DRIVE ',
+			0x120 => str_pad('SONIC THE HEDGEHOG', 48),
+			0x150 => str_pad('SONIC THE HEDGEHOG 2', 48),
+			0x1F0 => 'JUE',
+		]);
+		$header = RomHeader::read($data, 'genesis');
+		$this->assertSame('SONIC THE HEDGEHOG 2', $header['title'], 'the name it goes by abroad');
+		$this->assertSame('JUE', $header['region']);
+	}
+
+	public function testAMegaDriveCartridgeFallsBackToItsNameAtHome(): void {
+		$data = $this->rom([0x100 => 'SEGA GENESIS    ', 0x120 => str_pad('PUYO PUYO', 48)]);
+		$this->assertSame('PUYO PUYO', RomHeader::read($data, 'genesis')['title']);
+	}
+
+	public function testBinaryWhereTextShouldBeIsNotATitle(): void {
+		$this->assertSame('', RomHeader::read($this->gameBoy("\x80\x81\x82"), 'gb')['title']);
+	}
+
+	public function testSystemsWithNothingToSayAreLetBe(): void {
+		foreach (['nes', 'pce', 'vectrex', 'wonderswan', 'zip'] as $system) {
+			$this->assertSame(
+				['title' => '', 'region' => ''],
+				RomHeader::read($this->gameBoy('SOMETHING'), $system),
+				"$system carries no title the app reads",
+			);
+		}
+	}
+
+	public function testAFileTooShortToHoldAHeaderIsNoTrouble(): void {
+		$this->assertSame(['title' => '', 'region' => ''], RomHeader::read('', 'snes'));
+		$this->assertSame(['title' => '', 'region' => ''], RomHeader::read('a few bytes', 'gb'));
+	}
+}

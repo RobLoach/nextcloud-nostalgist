@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OCA\Arcade\Migration;
+
+use OCA\Arcade\Listener\MetadataListener;
+use OCP\FilesMetadata\IFilesMetadataManager;
+use OCP\FilesMetadata\Model\IMetadataValueWrapper;
+use OCP\Migration\IOutput;
+use OCP\Migration\IRepairStep;
+
+/**
+ * Declares what the app files against a ROM, so Nextcloud knows the keys,
+ * indexes them, and lets nothing else write them.
+ *
+ * Declaring is a repair step on purpose: the manager says so, since it
+ * writes a config value that is not meant to be touched on every request.
+ *
+ * @psalm-suppress UnusedClass
+ */
+class RegisterMetadata implements IRepairStep {
+	public function __construct(
+		private IFilesMetadataManager $metadataManager,
+	) {
+	}
+
+	public function getName(): string {
+		return 'Declare what Arcade knows about a ROM';
+	}
+
+	public function run(IOutput $output): void {
+		foreach ([
+			MetadataListener::SYSTEM,
+			MetadataListener::TITLE,
+			MetadataListener::REGION,
+			MetadataListener::CHECKSUM,
+		] as $key) {
+			$this->metadataManager->initMetadata(
+				$key,
+				IMetadataValueWrapper::TYPE_STRING,
+				true,
+				IMetadataValueWrapper::EDIT_FORBIDDEN,
+			);
+		}
+		$output->info('The system, title, region and checksum of a ROM are known and searchable.');
+	}
+}

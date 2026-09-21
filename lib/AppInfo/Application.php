@@ -8,6 +8,7 @@ use OCA\Arcade\CoreMap;
 use OCA\Arcade\Listener\CleanupListener;
 use OCA\Arcade\Listener\CSPListener;
 use OCA\Arcade\Listener\LoadViewerListener;
+use OCA\Arcade\Listener\MetadataListener;
 use OCA\Arcade\Preview\RomPreview;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
@@ -16,6 +17,8 @@ use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\Files\IMimeTypeDetector;
 use OCP\Files\Events\Node\NodeDeletedEvent;
+use OCP\FilesMetadata\Event\MetadataBackgroundEvent;
+use OCP\FilesMetadata\Event\MetadataLiveEvent;
 use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 use OCP\User\Events\UserDeletedEvent;
 
@@ -36,6 +39,9 @@ class Application extends App implements IBootstrap {
 		if (class_exists(LoadViewer::class)) {
 			$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
 		}
+		// What is true of the ROM itself is filed with the file.
+		$context->registerEventListener(MetadataLiveEvent::class, MetadataListener::class);
+		$context->registerEventListener(MetadataBackgroundEvent::class, MetadataListener::class);
 		// Box art becomes the preview of a ROM, in the Files app and
 		// anywhere else Nextcloud shows one.
 		$context->registerPreviewProvider(RomPreview::class, RomPreview::mimeTypeRegex());

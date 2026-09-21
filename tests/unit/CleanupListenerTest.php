@@ -6,6 +6,7 @@ namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\Listener\CleanupListener;
 use OCA\Arcade\Service\StateService;
+use OCP\App\IAppManager;
 use OCP\EventDispatcher\Event;
 use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Files\File;
@@ -19,25 +20,54 @@ use Psr\Log\LoggerInterface;
 class CleanupListenerTest extends TestCase {
 	private StateService&MockObject $stateService;
 	private CleanupListener $listener;
+	/** Whether the deleted file has a trash to fall into. */
+	private bool $trashbin = false;
 
 	protected function setUp(): void {
 		$this->stateService = $this->createMock(StateService::class);
+		$appManager = $this->createStub(IAppManager::class);
+		$appManager->method('isEnabledForUser')->willReturnCallback(
+			fn (string $appId): bool => $appId === 'files_trashbin' && $this->trashbin,
+		);
 		$this->listener = new CleanupListener(
 			$this->stateService,
+			$appManager,
 			$this->createStub(LoggerInterface::class),
 		);
 	}
 
-	private function fileEvent(string $path, string $owner = 'alice'): NodeDeletedEvent {
+	private function fileEvent(string $path, string $owner = 'alice', int $id = 101): NodeDeletedEvent {
 		$user = $this->createStub(IUser::class);
 		$user->method('getUID')->willReturn($owner);
 
 		$file = $this->createStub(File::class);
 		$file->method('getName')->willReturn(basename($path));
 		$file->method('getPath')->willReturn($path);
+		$file->method('getId')->willReturn($id);
 		$file->method('getOwner')->willReturn($user);
 
 		return new NodeDeletedEvent($file);
+	}
+
+	public function testAGameInTheTrashKeepsItsSaves(): void {
+		// It can be restored, with the same id and the same name, and a
+		// player who restores it has not asked to lose their saves.
+		$this->trashbin = true;
+		$this->stateService->expects($this->never())->method('deleteAllForGame');
+		$this->stateService->expects($this->never())->method('deleteAllForFileId');
+
+		$this->listener->handle($this->fileEvent('/alice/files/Games/NES/Mario.nes'));
+	}
+
+	public function testEmptyingTheTrashTakesTheSavesWithIt(): void {
+		$this->trashbin = true;
+		$this->stateService->expects($this->once())
+			->method('deleteAllForFileId')
+			->with('alice', 101);
+
+		$this->listener->handle(
+			$this->fileEvent('/alice/files_trashbin/files/Mario.nes.d1700000000'),
+		);
 	}
 
 	public function testDeletingAGameTakesItsSavesWithIt(): void {

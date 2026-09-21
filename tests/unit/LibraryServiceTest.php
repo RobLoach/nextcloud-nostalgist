@@ -7,6 +7,7 @@ namespace OCA\Arcade\Tests\Unit;
 use OCA\Arcade\Service\LibraryService;
 use OCA\Arcade\Service\StateService;
 use OCA\Arcade\Service\ThumbnailService;
+use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
 use PHPUnit\Framework\TestCase;
 
@@ -18,6 +19,7 @@ class LibraryServiceTest extends TestCase {
 			$this->createStub(ICacheFactory::class),
 			new ThumbnailService(),
 			$this->createStub(StateService::class),
+			$this->createStub(IFilesMetadataManager::class),
 		);
 	}
 

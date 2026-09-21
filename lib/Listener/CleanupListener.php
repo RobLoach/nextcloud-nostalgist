@@ -10,6 +10,7 @@ use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Files\Events\Node\NodeDeletedEvent;
 use OCP\Files\Folder;
+use OCP\App\IAppManager;
 use OCP\User\Events\UserDeletedEvent;
 use Psr\Log\LoggerInterface;
 
@@ -22,6 +23,7 @@ use Psr\Log\LoggerInterface;
 class CleanupListener implements IEventListener {
 	public function __construct(
 		private StateService $stateService,
+		private IAppManager $appManager,
 		private LoggerInterface $logger,
 	) {
 	}
@@ -46,22 +48,43 @@ class CleanupListener implements IEventListener {
 			// their states until they are deleted one by one.
 			return;
 		}
-		$extension = strtolower(pathinfo($node->getName(), PATHINFO_EXTENSION));
-		if ($extension !== 'zip' && !isset(CoreMap::extensionSystemMap()[$extension])) {
-			return;
-		}
 		$owner = $node->getOwner();
 		if ($owner === null) {
 			return;
 		}
 		$userId = $owner->getUID();
+		$path = $node->getPath();
+
+		// The trash puts the hour of the deletion after the name, so what
+		// it holds is "Mario.nes.d1700000000".
+		$name = preg_replace('/\.d\d+$/', '', $node->getName()) ?? $node->getName();
+		$extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+		if ($extension !== 'zip' && !isset(CoreMap::extensionSystemMap()[$extension])) {
+			return;
+		}
+
+		// A game emptied out of the trash is gone for good. Its path there
+		// says nothing of where it used to be, but its file id is the one
+		// it always had, and that is what its states are filed under.
+		if (str_starts_with($path, '/' . $userId . '/files_trashbin/')) {
+			$this->stateService->deleteAllForFileId($userId, $node->getId());
+			return;
+		}
+
 		// The states of a game are keyed by its path in the user folder,
 		// which is what the path of the node holds after its prefix.
-		$prefix = '/' . $userId . '/files';
-		$path = $node->getPath();
+		$prefix = '/' . $userId . '/files/';
 		if (!str_starts_with($path, $prefix)) {
 			return;
 		}
-		$this->stateService->deleteAllForGame($userId, substr($path, strlen($prefix)));
+
+		// A deleted game that went to the trash can come back, with the
+		// same file id and the same name, and a player who restores it
+		// would not expect to have lost their saves. They go when the
+		// trash lets go of it, or with `occ arcade:cleanup`.
+		if ($this->appManager->isEnabledForUser('files_trashbin', $owner)) {
+			return;
+		}
+		$this->stateService->deleteAllForGame($userId, substr($path, strlen($prefix) - 1));
 	}
 }

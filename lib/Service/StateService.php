@@ -178,6 +178,30 @@ class StateService {
 	}
 
 	/**
+	 * Drop everything kept for a game that is gone for good, known only by
+	 * the id its file had. What is in the app data is filed under that id,
+	 * and the path the game last had is remembered next to it.
+	 */
+	public function deleteAllForFileId(string $userId, int $fileId): void {
+		$key = (string)$fileId;
+		$was = $this->gamesOf($userId)[$key] ?? null;
+		foreach ($this->slots() as $slot) {
+			$this->deleteAppData($userId, $this->fileName($key, $slot, 'state'));
+			$this->deleteAppData($userId, $this->fileName($key, $slot, 'png'));
+		}
+		$this->deleteAppData($userId, $this->sramFileName($key));
+		if (is_string($was)) {
+			$this->getGameFolder($userId, $was, false)?->delete();
+		}
+		$folder = $this->userStates($userId, false);
+		if ($folder !== null) {
+			$games = $this->readGames($folder);
+			unset($games[$key]);
+			$this->writeGames($folder, $games);
+		}
+	}
+
+	/**
 	 * Drop everything kept for a user, for when the user is deleted. Their
 	 * own files, and so any saves folder, are removed by Nextcloud itself.
 	 */

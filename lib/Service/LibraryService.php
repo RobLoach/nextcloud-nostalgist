@@ -6,8 +6,10 @@ namespace OCA\Arcade\Service;
 
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\CoreMap;
+use OCA\Arcade\Listener\MetadataListener;
 use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
+use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
 
 /**
@@ -29,6 +31,7 @@ class LibraryService {
 		private ICacheFactory $cacheFactory,
 		private ThumbnailService $thumbnailService,
 		private StateService $stateService,
+		private IFilesMetadataManager $metadataManager,
 	) {
 	}
 
@@ -190,13 +193,50 @@ class LibraryService {
 			return;
 		}
 		$index = $this->thumbnailService->buildIndex($thumbnails);
+		$titles = $this->titles($games);
 		foreach ($games as &$game) {
 			$subfolder = trim(dirname(substr($game['path'], strlen($libraryPath))), '/.');
 			$found = $this->thumbnailService->forGame($index, $game['system'], $subfolder, $game['basename']);
+			$title = $titles[$game['id']] ?? '';
+			if ($title !== '') {
+				$game['title'] = $title;
+			}
+			// A file called "rom1.gb" is filed under nothing at all, but
+			// the cartridge inside knows what it is called.
+			if ($found === [] && $title !== '') {
+				$found = $this->thumbnailService->forGame($index, $game['system'], $subfolder, $title);
+			}
 			if ($found !== []) {
 				$game['thumbnails'] = $found;
 			}
 		}
+	}
+
+	/**
+	 * The name each cartridge gives itself, for the games that have one
+	 * read. One query for the whole library.
+	 *
+	 * @param list<array<string, mixed>> $games
+	 * @return array<int, string>
+	 */
+	private function titles(array $games): array {
+		$ids = array_values(array_filter(array_column($games, 'id')));
+		if ($ids === []) {
+			return [];
+		}
+		$titles = [];
+		try {
+			foreach ($this->metadataManager->getMetadataForFiles($ids) as $id => $metadata) {
+				$title = $metadata->getString(MetadataListener::TITLE);
+				if ($title !== '') {
+					$titles[(int)$id] = $title;
+				}
+			}
+		} catch (\Throwable) {
+			// Nothing has been read of the ROMs yet, which is no reason to
+			// go without the thumbnails that do match.
+		}
+		return $titles;
 	}
 
 	/**

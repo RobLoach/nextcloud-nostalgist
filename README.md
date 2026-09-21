@@ -20,7 +20,8 @@ from your files and run in the browser.
 - Zipped ROMs, extracted in the browser.
 - Thumbnails for your games, matched from a folder of images, downloaded
   from the libretro thumbnail server, or taken from their own screenshots
-  and save states.
+  and save states — and matched on the name the cartridge gives itself when
+  the file name says nothing.
 - Favorites shared with the Files app -- the same star -- and how long
   each game was played.
 - Works on publicly shared files and folders.
@@ -90,6 +91,15 @@ which every upload goes through, loads only apps that declare themselves a
 `filesystem` app — so Arcade declares it. Nextcloud does not let apps of that
 type be enabled for selected groups, so Arcade is enabled for everybody on
 the instance or for nobody.
+
+Cartridges carry the name the console shows, and the app reads it: Game Boy,
+Game Boy Advance, Super Nintendo and Mega Drive headers all say what the game
+is called, and Super Nintendo and Mega Drive say which region it was sold in.
+That name is what box art is matched on when the file name finds nothing, so
+a ROM called `rom1.gb` still gets the cover of Super Mario Land. It is read
+once, in the background, and filed against the file by Nextcloud, along with
+the MD5 of the ROM — the one the desktop client sent if it sent one, and one
+of the app's own otherwise. All four are searchable.
 
 Games are given their box art as their Nextcloud preview, so a folder of
 ROMs looks like a shelf of games in the Files app. The picture is the one
@@ -375,6 +385,7 @@ lib/Migration/              Repair steps: mimetypes on install, caches on disabl
 lib/Command/                The occ cleanup and uninstall commands
 lib/BackgroundJob/          Looking for box art, away from the browser
 lib/Controls.php            What the keyboard does, and what it does by default
+lib/RomHeader.php           The name a cartridge gives itself
 build/extract-l10n.mjs      Collects the strings to translate
 l10n/                       Translations, as Nextcloud reads them
 lib/Service/                Settings, library, save states, thumbnails, history
@@ -418,7 +429,9 @@ All of them are user-scoped and require a session.
 | GET/DELETE | `/apps/arcade/screenshots` | The screenshots of a game |
 
 Save states and battery saves are removed along with the game they belong
-to, and with the user they belong to. `occ arcade:cleanup` sweeps up
+to, and with the user they belong to — but a game deleted into the trash
+keeps them, since it can be restored, with the same file id and the same
+name. They go when the trash lets go of it. `occ arcade:cleanup` sweeps up
 what event listeners cannot catch, such as a whole folder of games deleted
 in one go; `--dry-run` reports without removing. States written by versions before
 0.14 live in one flat folder instead of one per user; they are still read,
@@ -434,6 +447,7 @@ Outside of the files of a user, the app writes:
 | `oc_appconfig` | Core options, thumbnail types, and the folder defaults of the instance |
 | `oc_jobs` | A queued box art lookup, while one is running |
 | `oc_mimetypes`, `oc_filecache` | The ROM mimetypes, and the files given them |
+| `oc_files_metadata` | The system, title, region and MD5 of each ROM, by file id |
 | `appdata_*/arcade/` | Save states and battery saves, for as long as no saves folder is set |
 
 Favorites are not in that list: they are the favorites of the Files app,
