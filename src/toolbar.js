@@ -189,9 +189,10 @@ async function api(url, options = {}) {
  * @param {import('nostalgist').Nostalgist} options.instance the running emulator
  * @param {string} options.romPath path identifying the game
  * @param {Function} options.flash shows a status message
- * @return {{element: HTMLElement, refresh: Function}} the panel
+ * @param {Function} options.onDone called after a slot was saved or loaded
+ * @return {{element: HTMLElement, refresh: Function, load: Function}} the panel
  */
-function createStatesPanel({ instance, romPath, flash }) {
+function createStatesPanel({ instance, romPath, flash, onDone }) {
 	const element = document.createElement('div')
 	element.className = 'nostalgist-states hidden'
 
@@ -235,7 +236,7 @@ function createStatesPanel({ instance, romPath, flash }) {
 				}).catch(() => {})
 			}
 			flash(t('nostalgist', 'State saved to slot {slot}', { slot }))
-			await refresh()
+			onDone()
 		} catch (error) {
 			console.error('Could not save the state', error)
 			flash(t('nostalgist', 'Could not save the state'))
@@ -247,6 +248,7 @@ function createStatesPanel({ instance, romPath, flash }) {
 			const response = await api(stateUrl('/state', romPath, slot))
 			await instance.loadState(await response.blob())
 			flash(t('nostalgist', 'State loaded from slot {slot}', { slot }))
+			onDone()
 		} catch (error) {
 			console.error('Could not load the state', error)
 			flash(t('nostalgist', 'Could not load the state'))
@@ -429,9 +431,20 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 
 	// Save states need a logged-in user; hide them on public share pages.
 	let statesPanel = null
+	let statesButton = null
 	if (getCurrentUser() !== null && romPath) {
-		statesPanel = createStatesPanel({ instance, romPath, flash })
-		button(ICONS.save, t('nostalgist', 'Save states'), (element) => {
+		statesPanel = createStatesPanel({
+			instance,
+			romPath,
+			flash,
+			// Saving or loading a slot is the end of the interaction, so get
+			// the panel out of the way and back to the game.
+			onDone: () => {
+				statesPanel.element.classList.add('hidden')
+				statesButton?.classList.remove('active')
+			},
+		})
+		statesButton = button(ICONS.save, t('nostalgist', 'Save states'), (element) => {
 			const visible = !statesPanel.element.classList.contains('hidden')
 			statesPanel.element.classList.toggle('hidden', visible)
 			element.classList.toggle('active', !visible)
