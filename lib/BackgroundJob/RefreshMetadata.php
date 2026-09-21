@@ -31,11 +31,12 @@ use Psr\Log\LoggerInterface;
  */
 class RefreshMetadata extends QueuedJob {
 	/**
-	 * Games handed over in one run. Each one queues a job of its own that
-	 * opens the file, so a run stays small and this one comes back for the
-	 * rest.
+	 * Games handed over in one run. Each one only queues a job of its own
+	 * -- the file is opened there, not here -- while working out which are
+	 * left asks after the whole library, so the batch is big enough that
+	 * the asking is not the bulk of the work.
 	 */
-	public const BATCH = 50;
+	public const BATCH = 200;
 
 	public function __construct(
 		ITimeFactory $time,

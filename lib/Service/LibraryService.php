@@ -23,15 +23,12 @@ use OCP\ICacheFactory;
 class LibraryService {
 	/**
 	 * What a library is walked to, unless an administrator says otherwise.
-	 * The stored settings carry the instance values, so the limits arrive
-	 * with everything else a scan is given.
+	 * SettingsService offers these as the defaults of the instance, so the
+	 * limits arrive with everything else a scan is given.
 	 */
 	public const MAX_GAMES = 5000;
 	public const MAX_DEPTH = 6;
-	private const CACHE_TTL = 24 * 3600;
-
-	/** @var array{games: int, depth: int} the limits of the scan under way */
-	private array $limits = ['games' => self::MAX_GAMES, 'depth' => self::MAX_DEPTH];
+	public const CACHE_TTL = 24 * 3600;
 	/** Bumped when the shape of a cached entry changes. */
 	private const CACHE_VERSION = 5;
 
@@ -144,11 +141,11 @@ class LibraryService {
 		$extensionMap = CoreMap::extensionSystemMap();
 		// Zipped ROMs are extracted in the browser when launched.
 		$extensionMap['zip'] = 'zip';
-		$this->limits = [
+		$limits = [
 			'games' => (int)($settings['max_games'] ?? self::MAX_GAMES),
 			'depth' => (int)($settings['max_depth'] ?? self::MAX_DEPTH),
 		];
-		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, []);
+		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, [], $limits);
 		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder'], $folderPath);
 
 		// Only what the list draws is worth keeping: a big library would
@@ -209,17 +206,17 @@ class LibraryService {
 		$index = $this->thumbnailService->buildIndex($thumbnails);
 		$titles = $this->titles($games);
 		foreach ($games as &$game) {
-			$subfolder = trim(dirname(substr($game['path'], strlen($libraryPath))), '/.');
-			$found = $this->thumbnailService->forGame($index, $game['system'], $subfolder, $game['basename']);
 			$title = $titles[$game['id']] ?? '';
 			if ($title !== '') {
 				$game['title'] = $title;
 			}
-			// A file called "rom1.gb" is filed under nothing at all, but
-			// the cartridge inside knows what it is called.
-			if ($found === [] && $title !== '') {
-				$found = $this->thumbnailService->forGame($index, $game['system'], $subfolder, $title);
-			}
+			$found = $this->thumbnailService->forGameNamed(
+				$index,
+				$game['system'],
+				$this->thumbnailService->subfolderOf($game['path'], $libraryPath),
+				$game['basename'],
+				$title,
+			);
 			if ($found !== []) {
 				$game['thumbnails'] = $found;
 			}
@@ -257,17 +254,34 @@ class LibraryService {
 	 * @param array<string, string> $extensionMap extension => system id
 	 * @param list<array{path: string, basename: string, system: string}> $games
 	 * @param list<string> $parents folder names between the library root and here
+	 * @param array{games: int, depth: int} $limits how far this scan goes
 	 */
-	private function findRoms(Folder $folder, Folder $userFolder, array $extensionMap, array &$games, int $depth, array $parents): void {
-		if ($depth > $this->limits['depth'] || count($games) >= $this->limits['games']) {
+	private function findRoms(
+		Folder $folder,
+		Folder $userFolder,
+		array $extensionMap,
+		array &$games,
+		int $depth,
+		array $parents,
+		array $limits,
+	): void {
+		if ($depth > $limits['depth'] || count($games) >= $limits['games']) {
 			return;
 		}
 		foreach ($folder->getDirectoryListing() as $node) {
-			if (count($games) >= $this->limits['games']) {
+			if (count($games) >= $limits['games']) {
 				return;
 			}
 			if ($node instanceof Folder) {
-				$this->findRoms($node, $userFolder, $extensionMap, $games, $depth + 1, [...$parents, $node->getName()]);
+				$this->findRoms(
+					$node,
+					$userFolder,
+					$extensionMap,
+					$games,
+					$depth + 1,
+					[...$parents, $node->getName()],
+					$limits,
+				);
 				continue;
 			}
 			$extension = strtolower(pathinfo($node->getName(), PATHINFO_EXTENSION));

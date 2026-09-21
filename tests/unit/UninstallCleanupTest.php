@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Arcade\BackgroundJob\FetchThumbnails;
+use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\Migration\UninstallCleanup;
 use OCP\BackgroundJob\IJobList;
 use OCP\ICache;
@@ -48,14 +48,17 @@ class UninstallCleanupTest extends TestCase {
 		(new UninstallCleanup($jobList, $cacheFactory))->run($this->createStub(IOutput::class));
 	}
 
-	public function testQueuedBoxArtLookupsAreDropped(): void {
+	public function testEveryJobTheAppQueuesIsDropped(): void {
 		$this->runStep();
-		$this->assertSame([FetchThumbnails::class], $this->removedJobs);
+		$this->assertSame(Application::JOBS, $this->removedJobs);
 	}
 
-	public function testBothCachesAreCleared(): void {
+	public function testEveryCacheTheAppFillsIsCleared(): void {
 		$this->runStep();
-		$this->assertSame(['arcade_library', 'arcade_fetch'], $this->clearedCaches);
+		$this->assertSame(
+			array_map(static fn (string $cache): string => Application::APP_ID . $cache, Application::CACHES),
+			$this->clearedCaches,
+		);
 	}
 
 	public function testTheStepIsGivenNothingItCouldDeleteUserDataWith(): void {

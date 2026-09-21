@@ -76,8 +76,9 @@ class MetadataListener implements IEventListener {
 				return;
 			}
 			// The file is read once: the front of it is the header, and the
-			// rest of the same stream is what is hashed.
-			$front = (string)fread($handle, RomHeader::BYTES);
+			// rest of the same stream is what is hashed. Systems whose
+			// cartridges carry no name the app reads skip the first part.
+			$front = RomHeader::handles($system) ? (string)fread($handle, RomHeader::BYTES) : '';
 			$header = RomHeader::read($front, $system);
 			if ($header['title'] !== '') {
 				$metadata->setString(self::TITLE, $header['title'], true);

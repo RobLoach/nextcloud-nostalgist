@@ -27,6 +27,9 @@ class RecentService {
 	/** How many games keep a record of being played. */
 	private const MAX_STATS = 200;
 
+	/** The users whose old list of favorites has been looked at already. */
+	private array $migrated = [];
+
 	public function __construct(
 		private IUserConfig $userConfig,
 		private ITagManager $tagManager,
@@ -175,6 +178,10 @@ class RecentService {
 	 * what those games were played for is kept.
 	 */
 	private function migrateLegacyFavorites(string $userId): void {
+		if (isset($this->migrated[$userId])) {
+			return;
+		}
+		$this->migrated[$userId] = true;
 		$legacy = $this->read($userId, 'favorites');
 		if ($legacy === []) {
 			return;

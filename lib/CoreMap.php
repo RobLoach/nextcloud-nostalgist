@@ -162,7 +162,7 @@ class CoreMap {
 			'mime' => 'application/x-vectrex-rom',
 			'extensions' => ['vec'],
 			'core' => 'vecx',
-			'aliases' => ['vectrex', 'gcevectrex', 'smithengineeringvectrex'],
+			'aliases' => ['vectrex', 'gcevectrex'],
 			'bios' => [],
 		],
 		'coleco' => [
@@ -194,7 +194,7 @@ class CoreMap {
 	 */
 	private const VENDORS = [
 		'nintendo', 'sega', 'snk', 'nec', 'atari', 'bandai', 'coleco', 'gce',
-		'hudson', 'smithengineering',
+		'hudson',
 	];
 
 	/**
@@ -257,7 +257,7 @@ class CoreMap {
 				}
 			}
 		}
-		return array_values(array_unique(array_filter($candidates)));
+		return array_values(array_unique($candidates));
 	}
 
 	/**

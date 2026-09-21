@@ -203,9 +203,9 @@ class SettingsService {
 			'system_folder' => '',
 			'core_options' => [],
 			'fetch_enabled' => true,
-			'max_games' => 5000,
-			'max_depth' => 6,
-			'cache_ttl' => 24 * 3600,
+			'max_games' => LibraryService::MAX_GAMES,
+			'max_depth' => LibraryService::MAX_DEPTH,
+			'cache_ttl' => LibraryService::CACHE_TTL,
 			'buttons' => Controls::defaultButtons(),
 			'hotkeys' => Controls::defaultHotkeys(),
 		];

@@ -8,6 +8,7 @@ $settings = ['core_options' => $_['storedCoreOptions']];
 $systems = $_['systems'];
 $thumbnailTypes = $_['thumbnailTypes'];
 $storedTypes = $_['storedThumbnailTypes'];
+$limits = $_['limits'];
 ?>
 
 <div id="arcade-settings" class="section" data-scope="admin">
@@ -45,14 +46,16 @@ $storedTypes = $_['storedThumbnailTypes'];
 	<h3><?php p($l->t('Library scanning')); ?></h3>
 	<p class="settings-hint"><?php p($l->t('How far a games library folder is walked, and how long the result is kept.')); ?></p>
 	<?php foreach ([
-		'max_games' => [$l->t('Games listed at most'), 100, 100000],
-		'max_depth' => [$l->t('Folders deep at most'), 1, 12],
-		'cache_ttl' => [$l->t('Seconds a scan is kept'), 60, 604800],
-	] as $key => [$label, $min, $max]): ?>
+		'max_games' => $l->t('Games listed at most'),
+		'max_depth' => $l->t('Folders deep at most'),
+		'cache_ttl' => $l->t('Seconds a scan is kept'),
+	] as $key => $label): ?>
 		<p>
 			<label for="arcade-<?php p($key); ?>"><?php p($label); ?></label><br>
+			<?php /* The bounds the settings clamp to, so the two cannot disagree. */ ?>
 			<input type="number" id="arcade-<?php p($key); ?>" class="arcade-setting"
-				data-setting="<?php p($key); ?>" min="<?php p($min); ?>" max="<?php p($max); ?>"
+				data-setting="<?php p($key); ?>" min="<?php p($limits[$key]['min']); ?>"
+				max="<?php p($limits[$key]['max']); ?>"
 				value="<?php p($defaults[$key]); ?>">
 		</p>
 	<?php endforeach; ?>

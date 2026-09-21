@@ -106,6 +106,36 @@ class ThumbnailServiceTest extends TestCase {
 		$this->assertSame(108, $thumbnails['plain'] ?? null);
 	}
 
+	public function testTheNameOnTheCartridgeIsTriedWhenTheFileNameFindsNothing(): void {
+		$index = $this->service->buildIndex($this->thumbnailsFolder());
+		$this->assertSame(
+			[],
+			$this->service->forGameNamed($index, 'nes', 'NES', 'rom1.nes', ''),
+			'nothing to go on',
+		);
+		$this->assertSame(
+			104,
+			$this->service->forGameNamed($index, 'nes', 'NES', 'rom1.nes', 'Super Mario Bros. 3')['plain'] ?? null,
+			'found under the name the cartridge gives itself',
+		);
+	}
+
+	public function testTheFileNameWinsOverTheNameOnTheCartridge(): void {
+		$index = $this->service->buildIndex($this->thumbnailsFolder());
+		$found = $this->service->forGameNamed($index, 'nes', 'NES', 'Super Mario Bros. 3.nes', 'Something Else');
+		$this->assertSame(104, $found['plain'] ?? null);
+	}
+
+	public function testTheFolderOfAGameIsTakenFromItsPath(): void {
+		$this->assertSame('NES', $this->service->subfolderOf('/Games/NES/Mario.nes', '/Games'));
+		$this->assertSame('', $this->service->subfolderOf('/Games/Mario.nes', '/Games'));
+		$this->assertSame(
+			'Elsewhere',
+			$this->service->subfolderOf('/Elsewhere/Mario.nes', '/Games'),
+			'a game outside the library keeps the folder it is in',
+		);
+	}
+
 	public function testGamesWithoutAnImageFindNothing(): void {
 		$index = $this->service->buildIndex($this->thumbnailsFolder());
 		$this->assertSame([], $this->service->forGame($index, 'nes', 'NES', 'An Unknown Game.nes'));

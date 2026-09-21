@@ -55,6 +55,40 @@ class ThumbnailService {
 	}
 
 	/**
+	 * The folder a game sits in, as the matching wants it: what is left of
+	 * its path once the library folder in front of it is taken off.
+	 */
+	public function subfolderOf(string $path, string $libraryPath): string {
+		$library = '/' . trim($libraryPath, '/');
+		$relative = str_starts_with($path, $library . '/') ? substr($path, strlen($library)) : $path;
+		return trim(dirname($relative), '/.');
+	}
+
+	/**
+	 * The images of a game, by the names it may be filed under: the name of
+	 * the file first, then what the cartridge calls itself, which is all a
+	 * game named "rom1.gb" has to go on.
+	 *
+	 * @param Index $index
+	 * @return array<string, int> type => file id
+	 */
+	public function forGameNamed(
+		array $index,
+		string $systemId,
+		string $subfolder,
+		string $basename,
+		string $title = '',
+	): array {
+		$found = $this->forGame($index, $systemId, $subfolder, $basename);
+		if ($found === [] && $title !== '') {
+			// A title is not a file name: "Super Mario Bros. 3" would lose
+			// its 3 to anything that goes looking for an extension.
+			$found = $this->forGame($index, $systemId, $subfolder, $title, true);
+		}
+		return $found;
+	}
+
+	/**
 	 * The images of a game, by type: boxart, title, snap, logo or plain.
 	 *
 	 * An exact file name match wins. Failing that, a loose match ignores
@@ -64,9 +98,16 @@ class ThumbnailService {
 	 * @param Index $index
 	 * @return array<string, int> type => file id
 	 */
-	public function forGame(array $index, string $systemId, string $subfolder, string $basename): array {
-		$exact = $this->stemKey($basename);
-		$loose = $this->looseKey($basename);
+	public function forGame(
+		array $index,
+		string $systemId,
+		string $subfolder,
+		string $basename,
+		bool $isTitle = false,
+	): array {
+		$stem = $isTitle ? $basename : pathinfo($basename, PATHINFO_FILENAME);
+		$exact = $this->stemToKey($stem);
+		$loose = $this->looseStem($stem);
 
 		// The platform folder of the system first, then the folder the game
 		// itself is in, then the root of the thumbnails folder.
@@ -196,7 +237,11 @@ class ThumbnailService {
 	 * matches "Super Mario All-Stars + Super Mario World.png".
 	 */
 	private function looseKey(string $name): string {
-		$value = $this->transliterate(mb_strtolower(pathinfo($name, PATHINFO_FILENAME)));
+		return $this->looseStem(pathinfo($name, PATHINFO_FILENAME));
+	}
+
+	private function looseStem(string $stem): string {
+		$value = $this->transliterate(mb_strtolower($stem));
 		$value = preg_replace('/[(\[][^)\]]*[)\]]/u', ' ', $value) ?? $value;
 		$value = preg_replace('/,\s*(the|a|an)\s*$/u', '', trim($value)) ?? $value;
 		$value = preg_replace('/^(the|a|an)\s+/u', '', $value) ?? $value;

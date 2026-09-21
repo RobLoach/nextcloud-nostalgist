@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
-use OCA\Arcade\BackgroundJob\FetchThumbnails;
+use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\Command\Uninstall;
 use OCA\Arcade\CoreMap;
+use OCA\Arcade\Migration\UninstallCleanup;
 use OCP\Config\IUserConfig;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IAppData;
@@ -97,8 +98,9 @@ class UninstallTest extends TestCase {
 			$config,
 			$appConfig,
 			$appDataFactory,
-			$jobList,
-			$cacheFactory,
+			// The real one: the command and the repair step drop the same
+			// things, and that is the point of it being shared.
+			new UninstallCleanup($jobList, $cacheFactory),
 			$mimeTypeLoader,
 		));
 	}
@@ -163,8 +165,12 @@ class UninstallTest extends TestCase {
 		$this->tester()->execute(['--force' => true], ['interactive' => false]);
 
 		$this->assertSame(['states'], $this->deleted);
-		$this->assertSame([FetchThumbnails::class], $this->removedJobs);
-		$this->assertSame(['arcade_library', 'arcade_fetch'], $this->clearedCaches);
+		$this->assertSame(Application::JOBS, $this->removedJobs, 'every job the app queues');
+		$this->assertSame(
+			array_map(static fn (string $cache): string => Application::APP_ID . $cache, Application::CACHES),
+			$this->clearedCaches,
+			'every cache the app fills',
+		);
 		$this->assertSame(
 			['preferences:arcade', 'appconfig:arcade'],
 			$this->forgottenApps,

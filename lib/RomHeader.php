@@ -19,6 +19,16 @@ class RomHeader {
 	/** Enough for the headers of every system below, SNES HiROM included. */
 	public const BYTES = 0x10200;
 
+	/** The systems whose cartridges carry a name the app can read. */
+	private const READABLE = ['gb', 'gbc', 'gba', 'snes', 'genesis', 'sega32x'];
+
+	/**
+	 * Whether reading the front of this system's files is worth the read.
+	 */
+	public static function handles(string $system): bool {
+		return in_array($system, self::READABLE, true);
+	}
+
 	/**
 	 * @return array{title: string, region: string} empty strings when the
 	 *                                              file does not say

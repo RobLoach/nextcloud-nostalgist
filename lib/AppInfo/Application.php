@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\AppInfo;
 
+use OCA\Arcade\BackgroundJob\FetchThumbnails;
+use OCA\Arcade\BackgroundJob\RefreshMetadata;
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\Listener\CleanupListener;
 use OCA\Arcade\Listener\CSPListener;
@@ -23,6 +25,14 @@ use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 use OCP\User\Events\UserDeletedEvent;
 
 class Application extends App implements IBootstrap {
+	/**
+	 * The caches the app fills, and the jobs it queues. Both are dropped
+	 * when the app is disabled or removed, so a new one of either belongs
+	 * in this list and nowhere else.
+	 */
+	public const CACHES = ['_library', '_fetch', '_preview'];
+	public const JOBS = [FetchThumbnails::class, RefreshMetadata::class];
+
 	public const APP_ID = 'arcade';
 
 	/** @psalm-suppress PossiblyUnusedMethod */

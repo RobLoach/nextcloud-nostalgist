@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OCA\Arcade\Migration;
 
 use OCA\Arcade\AppInfo\Application;
-use OCA\Arcade\BackgroundJob\FetchThumbnails;
 use OCP\BackgroundJob\IJobList;
 use OCP\ICacheFactory;
 use OCP\Migration\IOutput;
@@ -35,17 +34,24 @@ class UninstallCleanup implements IRepairStep {
 	}
 
 	public function run(IOutput $output): void {
-		// Cron would drop these by itself once the class cannot be loaded,
-		// with a warning in the log on the way. This is the quiet way.
-		$this->jobList->remove(FetchThumbnails::class);
-
-		foreach (['_library', '_fetch'] as $cache) {
-			$this->cacheFactory->createDistributed(Application::APP_ID . $cache)->clear();
-		}
-
+		$this->dropTransientWork();
 		$output->info(
 			'Queued box art lookups and cached listings are gone. Settings, '
 			. 'recently played and save states are kept: `occ arcade:uninstall` removes those.',
 		);
+	}
+
+	/**
+	 * The queued work and the caches, which are the app's to drop whenever
+	 * it stops: cron would drop the jobs by itself once the class cannot be
+	 * loaded, with a warning in the log on the way. This is the quiet way.
+	 */
+	public function dropTransientWork(): void {
+		foreach (Application::JOBS as $job) {
+			$this->jobList->remove($job);
+		}
+		foreach (Application::CACHES as $cache) {
+			$this->cacheFactory->createDistributed(Application::APP_ID . $cache)->clear();
+		}
 	}
 }

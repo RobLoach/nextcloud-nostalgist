@@ -36,6 +36,16 @@ class StateService {
 	 */
 	public const HIGHEST_SLOT = 6;
 
+	/**
+	 * Removing one game asks for the folders of the app data a few dozen
+	 * times over. They cannot change within a request, so they are found
+	 * once. A null means not looked for yet; the user folder may be looked
+	 * for and not be there.
+	 */
+	private ?ISimpleFolder $statesRoot = null;
+	/** @var array<string, ISimpleFolder|false> */
+	private array $userStates = [];
+
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
 		private IRootFolder $rootFolder,
@@ -50,8 +60,7 @@ class StateService {
 			$this->remember($userId, $romPath);
 			return;
 		}
-		$key = $this->key($userId, $romPath);
-		$this->writeAppData($userId, $this->fileName($key, $slot, 'state'), $data, $romPath, $key);
+		$this->writeAppData($userId, $this->fileName($this->key($userId, $romPath), $slot, 'state'), $data, $romPath);
 	}
 
 	public function saveThumbnail(string $userId, string $romPath, int $slot, string $data): void {
@@ -100,8 +109,7 @@ class StateService {
 			$this->remember($userId, $romPath);
 			return;
 		}
-		$key = $this->key($userId, $romPath);
-		$this->writeAppData($userId, $this->sramFileName($key), $data, $romPath, $key);
+		$this->writeAppData($userId, $this->sramFileName($this->key($userId, $romPath)), $data, $romPath);
 	}
 
 	public function loadSram(string $userId, string $romPath): ?string {
@@ -193,12 +201,7 @@ class StateService {
 		if (is_string($was)) {
 			$this->getGameFolder($userId, $was, false)?->delete();
 		}
-		$folder = $this->userStates($userId, false);
-		if ($folder !== null) {
-			$games = $this->readGames($folder);
-			unset($games[$key]);
-			$this->writeGames($folder, $games);
-		}
+		$this->forgetKeys($userId, $key);
 	}
 
 	/**
@@ -520,13 +523,7 @@ class StateService {
 		}
 	}
 
-	private function writeAppData(
-		string $userId,
-		string $name,
-		string $data,
-		string $romPath = '',
-		string $key = '',
-	): void {
+	private function writeAppData(string $userId, string $name, string $data, string $romPath = ''): void {
 		$folder = $this->userStates($userId, true);
 		if ($folder === null) {
 			return;
@@ -537,7 +534,7 @@ class StateService {
 			$folder->newFile($name, $data);
 		}
 		if ($romPath !== '') {
-			$this->rememberGame($folder, $romPath, $key === '' ? $this->key($userId, $romPath) : $key);
+			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath));
 		}
 	}
 
@@ -562,6 +559,22 @@ class StateService {
 		}
 		$games = $this->readGames($folder);
 		unset($games[$this->key($userId, $romPath)], $games[$this->pathKey($romPath)]);
+		$this->writeGames($folder, $games);
+	}
+
+	/**
+	 * Drop what the app data remembers of a game, by the names it is
+	 * filed under.
+	 */
+	private function forgetKeys(string $userId, string ...$keys): void {
+		$folder = $this->userStates($userId, false);
+		if ($folder === null) {
+			return;
+		}
+		$games = $this->readGames($folder);
+		foreach ($keys as $key) {
+			unset($games[$key]);
+		}
 		$this->writeGames($folder, $games);
 	}
 
@@ -636,10 +649,6 @@ class StateService {
 	}
 
 	/**
-	 * Reads from the folder of the user, and failing that from the flat
-	 * names used before the states were kept per user.
-	 */
-	/**
 	 * The name it has now, then the names it had in older versions: first
 	 * under the hash of its path, then, before states were kept per user,
 	 * flat in the states folder.
@@ -686,20 +695,34 @@ class StateService {
 	}
 
 	private function statesRoot(): ISimpleFolder {
+		if ($this->statesRoot !== null) {
+			return $this->statesRoot;
+		}
 		$appData = $this->appDataFactory->get(Application::APP_ID);
 		try {
-			return $appData->getFolder('states');
+			return $this->statesRoot = $appData->getFolder('states');
 		} catch (NotFoundException) {
-			return $appData->newFolder('states');
+			return $this->statesRoot = $appData->newFolder('states');
 		}
 	}
 
 	private function userStates(string $userId, bool $create): ?ISimpleFolder {
+		$found = $this->userStates[$userId] ?? null;
+		if ($found instanceof ISimpleFolder) {
+			return $found;
+		}
+		if ($found === false && !$create) {
+			return null;
+		}
 		$root = $this->statesRoot();
 		try {
-			return $root->getFolder($this->userKey($userId));
+			return $this->userStates[$userId] = $root->getFolder($this->userKey($userId));
 		} catch (NotFoundException) {
-			return $create ? $root->newFolder($this->userKey($userId)) : null;
+			if (!$create) {
+				$this->userStates[$userId] = false;
+				return null;
+			}
+			return $this->userStates[$userId] = $root->newFolder($this->userKey($userId));
 		}
 	}
 

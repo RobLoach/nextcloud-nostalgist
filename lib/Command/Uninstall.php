@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace OCA\Arcade\Command;
 
 use OCA\Arcade\AppInfo\Application;
-use OCA\Arcade\BackgroundJob\FetchThumbnails;
 use OCA\Arcade\CoreMap;
-use OCP\BackgroundJob\IJobList;
+use OCA\Arcade\Migration\UninstallCleanup;
 use OCP\Config\IUserConfig;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IMimeTypeLoader;
 use OCP\IAppConfig;
-use OCP\ICacheFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -36,8 +34,7 @@ class Uninstall extends Command {
 		private IUserConfig $userConfig,
 		private IAppConfig $appConfig,
 		private IAppDataFactory $appDataFactory,
-		private IJobList $jobList,
-		private ICacheFactory $cacheFactory,
+		private UninstallCleanup $cleanup,
 		private IMimeTypeLoader $mimeTypeLoader,
 	) {
 		parent::__construct();
@@ -132,10 +129,7 @@ class Uninstall extends Command {
 
 	private function forgetWork(bool $dryRun, OutputInterface $output): void {
 		if (!$dryRun) {
-			$this->jobList->remove(FetchThumbnails::class);
-			foreach (['_library', '_fetch'] as $cache) {
-				$this->cacheFactory->createDistributed(Application::APP_ID . $cache)->clear();
-			}
+			$this->cleanup->dropTransientWork();
 		}
 		$verb = $dryRun ? 'Would drop' : 'Dropped';
 		$output->writeln("$verb the queued box art lookups and the cached listings");

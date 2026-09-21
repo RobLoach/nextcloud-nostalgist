@@ -6,6 +6,7 @@ namespace OCA\Arcade\Preview;
 
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\CoreMap;
+use OCA\Arcade\Listener\MetadataListener;
 use OCA\Arcade\Service\SettingsService;
 use OCA\Arcade\Service\ThumbnailService;
 use OCP\Files\File;
@@ -13,6 +14,7 @@ use OCP\Files\FileInfo;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
 use OCP\IImage;
 use OCP\Image;
@@ -35,6 +37,7 @@ class RomPreview implements IProviderV2 {
 		private IRootFolder $rootFolder,
 		private SettingsService $settingsService,
 		private ThumbnailService $thumbnailService,
+		private IFilesMetadataManager $metadataManager,
 		private ICacheFactory $cacheFactory,
 	) {
 	}
@@ -78,6 +81,19 @@ class RomPreview implements IProviderV2 {
 	}
 
 	/**
+	 * What the cartridge calls itself, for a game whose file has been read.
+	 * Most have not been, and a game is not left without its box art over
+	 * a name it never had.
+	 */
+	private function title(File $file): string {
+		try {
+			return $this->metadataManager->getMetadata($file->getId())->getString(MetadataListener::TITLE);
+		} catch (\Throwable) {
+			return '';
+		}
+	}
+
+	/**
 	 * OCP\Image is the only way an app can make one, and it takes its
 	 * methods from the interface.
 	 */
@@ -104,15 +120,12 @@ class RomPreview implements IProviderV2 {
 				return null;
 			}
 
-			$library = '/' . trim($settings['library_folder'], '/');
-			$subfolder = str_starts_with($path, $library . '/')
-				? trim(dirname(substr($path, strlen($library))), '/.')
-				: trim(dirname($path), '/.');
-			$found = $this->thumbnailService->forGame(
+			$found = $this->thumbnailService->forGameNamed(
 				$index,
 				CoreMap::systemForPath($path) ?? '',
-				$subfolder,
+				$this->thumbnailService->subfolderOf($path, $settings['library_folder']),
 				basename($path),
+				$this->title($file),
 			);
 			if ($found === []) {
 				return null;
