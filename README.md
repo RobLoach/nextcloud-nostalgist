@@ -98,8 +98,11 @@ is called, and Super Nintendo and Mega Drive say which region it was sold in.
 That name is what box art is matched on when the file name finds nothing, so
 a ROM called `rom1.gb` still gets the cover of Super Mario Land. It is read
 once, in the background, and filed against the file by Nextcloud, along with
-the MD5 of the ROM — the one the desktop client sent if it sent one, and one
-of the app's own otherwise. All four are searchable.
+the MD5 of the ROM, if the upload brought one: desktop clients send a
+checksum, browsers do not. Working one out instead means reading the whole
+file, so an administrator has to ask for that. All four are searchable, and
+a ROM with nothing to read — an NES cartridge carries no title, and without
+checksums there is nothing else to look for — is never opened at all.
 
 Nextcloud reads a file's metadata when the file is written, so ROMs that were
 already there when the app arrived have never been asked. The rescan button
@@ -222,6 +225,7 @@ Administration settings → Arcade holds what is the same for everybody:
 | --- | --- | --- |
 | Folder defaults | as above | What new users start with, and each can still change |
 | Look up box art | On | Whether the server may ask the libretro thumbnail server at all |
+| Work out ROM checksums | Off | Whether to read a whole ROM to hash it, when the upload brought no checksum |
 | Games listed at most | 5000 | How many games one library scan lists |
 | Folders deep at most | 6 | How far into a library folder the scan goes |
 | Seconds a scan is kept | 86400 | How long the result of a scan is cached |

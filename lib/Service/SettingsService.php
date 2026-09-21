@@ -36,6 +36,7 @@ class SettingsService {
 	 */
 	public const INSTANCE_ONLY = [
 		'fetch_enabled' => true,
+		'hash_roms' => true,
 		'max_games' => ['min' => 100, 'max' => 100000],
 		'max_depth' => ['min' => 1, 'max' => 12],
 		'cache_ttl' => ['min' => 60, 'max' => 7 * 24 * 3600],
@@ -203,6 +204,9 @@ class SettingsService {
 			'system_folder' => '',
 			'core_options' => [],
 			'fetch_enabled' => true,
+			// Reading a whole ROM to hash it is not something to do to an
+			// instance without being asked.
+			'hash_roms' => false,
 			'max_games' => LibraryService::MAX_GAMES,
 			'max_depth' => LibraryService::MAX_DEPTH,
 			'cache_ttl' => LibraryService::CACHE_TTL,

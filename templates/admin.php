@@ -43,6 +43,18 @@ $limits = $_['limits'];
 		<?php p($l->t('This is the only thing the app has the server itself fetch from the internet. Turned off, the button is gone and games are shown with the pictures in your own files.')); ?>
 	</p>
 
+	<h3><?php p($l->t('ROM checksums')); ?></h3>
+	<p>
+		<input type="checkbox" id="arcade-hash-roms" class="checkbox arcade-setting"
+			data-setting="hash_roms" <?php if ($defaults['hash_roms']) { p('checked'); } ?>>
+		<label for="arcade-hash-roms">
+			<?php p($l->t('Work out the checksum of a ROM the server was not given one for')); ?>
+		</label>
+	</p>
+	<p class="settings-hint">
+		<?php p($l->t('Checksums that arrive with an upload are always kept. Working one out means reading the whole file, in the background, once per game — on object storage that is a download of each ROM.')); ?>
+	</p>
+
 	<h3><?php p($l->t('Library scanning')); ?></h3>
 	<p class="settings-hint"><?php p($l->t('How far a games library folder is walked, and how long the result is kept.')); ?></p>
 	<?php foreach ([

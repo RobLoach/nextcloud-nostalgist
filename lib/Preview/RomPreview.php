@@ -111,27 +111,11 @@ class RomPreview implements IProviderV2 {
 		}
 		try {
 			$userFolder = $this->rootFolder->getUserFolder($userId);
-			$path = $userFolder->getRelativePath($file->getPath());
-			if ($path === null) {
+			$pictureId = $this->pictureId($userId, $userFolder, $file, $settings);
+			if ($pictureId === 0) {
 				return null;
 			}
-			$index = $this->index($userId, $userFolder, $settings['thumbnails_folder']);
-			if ($index === []) {
-				return null;
-			}
-
-			$found = $this->thumbnailService->forGameNamed(
-				$index,
-				CoreMap::systemForPath($path) ?? '',
-				$this->thumbnailService->subfolderOf($path, $settings['library_folder']),
-				basename($path),
-				$this->title($file),
-			);
-			if ($found === []) {
-				return null;
-			}
-
-			$node = $userFolder->getFirstNodeById((int)reset($found));
+			$node = $userFolder->getFirstNodeById($pictureId);
 			return $node instanceof File ? $node->getContent() : null;
 		} catch (NotFoundException|\Throwable) {
 			return null;
@@ -139,14 +123,46 @@ class RomPreview implements IProviderV2 {
 	}
 
 	/**
-	 * Walking the thumbnails folder for every preview would be wasteful, so
-	 * what was found is kept for a few minutes.
+	 * The picture filed for one game, and nothing else.
+	 *
+	 * The index of a thumbnails folder holds an entry for every image in
+	 * it, which for a libretro pack is tens of thousands; unpacking all of
+	 * that to answer for one ROM, once per preview and once per size, is
+	 * the wrong thing to keep. What is kept instead is the answer: one
+	 * number per game, with a zero for "looked, and there is none".
+	 *
+	 * @param array<string, mixed> $settings
+	 */
+	private function pictureId(string $userId, Folder $userFolder, File $file, array $settings): int {
+		$cache = $this->cacheFactory->createDistributed(Application::APP_ID . '_preview');
+		$key = $userId . '|' . $settings['thumbnails_folder'] . '|' . $file->getId();
+		$cached = $cache->get($key);
+		if (is_int($cached)) {
+			return $cached;
+		}
+
+		$path = $userFolder->getRelativePath($file->getPath());
+		$found = $path === null ? [] : $this->thumbnailService->forGameNamed(
+			$this->index($userId, $userFolder, $settings['thumbnails_folder']),
+			CoreMap::systemForPath($path) ?? '',
+			$this->thumbnailService->subfolderOf($path, $settings['library_folder']),
+			basename($path),
+			$this->title($file),
+		);
+		$pictureId = $found === [] ? 0 : (int)reset($found);
+		$cache->set($key, $pictureId, self::INDEX_TTL);
+		return $pictureId;
+	}
+
+	/**
+	 * Walking the thumbnails folder for every game that has no answer kept
+	 * would be wasteful, so the walk is kept for a few minutes too.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function index(string $userId, Folder $userFolder, string $thumbnailsPath): array {
 		$cache = $this->cacheFactory->createDistributed(Application::APP_ID . '_preview');
-		$key = $userId . '|' . $thumbnailsPath;
+		$key = 'index|' . $userId . '|' . $thumbnailsPath;
 		$cached = $cache->get($key);
 		if (is_array($cached)) {
 			return $cached;

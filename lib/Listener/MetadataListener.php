@@ -6,6 +6,7 @@ namespace OCA\Arcade\Listener;
 
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\RomHeader;
+use OCA\Arcade\Service\SettingsService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\Files\File;
@@ -38,6 +39,7 @@ class MetadataListener implements IEventListener {
 	private const MAX_HASH_SIZE = 64 * 1024 * 1024;
 
 	public function __construct(
+		private SettingsService $settingsService,
 		private LoggerInterface $logger,
 	) {
 	}
@@ -55,19 +57,34 @@ class MetadataListener implements IEventListener {
 			return;
 		}
 
-		// Cheap enough for the scan itself.
-		$event->getMetadata()->setString(self::SYSTEM, $system, true);
+		// Both are had without reading a byte of the file: the system from
+		// the name, the checksum from what the client sent with the upload.
+		$metadata = $event->getMetadata();
+		$metadata->setString(self::SYSTEM, $system, true);
+		$given = $this->givenChecksum($node);
+		if ($given !== '') {
+			$metadata->setString(self::CHECKSUM, $given, true);
+		}
+
 		if ($event instanceof MetadataLiveEvent) {
-			// The rest needs the file read, which the background pass does.
-			$event->requestBackgroundJob();
+			// Opening the file is only worth a background job when there is
+			// something in it to read.
+			if (RomHeader::handles($system) || ($given === '' && $this->hashingWanted())) {
+				$event->requestBackgroundJob();
+			}
 			return;
 		}
 		if ($event instanceof MetadataBackgroundEvent) {
-			$this->readTheRom($event, $node, $system);
+			$this->readTheRom($event, $node, $system, $given);
 		}
 	}
 
-	private function readTheRom(MetadataBackgroundEvent $event, File $node, string $system): void {
+	private function readTheRom(
+		MetadataBackgroundEvent $event,
+		File $node,
+		string $system,
+		string $given,
+	): void {
 		$metadata = $event->getMetadata();
 		$handle = false;
 		try {
@@ -87,9 +104,8 @@ class MetadataListener implements IEventListener {
 				$metadata->setString(self::REGION, $header['region'], true);
 			}
 
-			$checksum = $this->md5($node, $handle, $front);
-			if ($checksum !== '') {
-				$metadata->setString(self::CHECKSUM, $checksum, true);
+			if ($given === '' && $this->hashingWanted() && $node->getSize() <= self::MAX_HASH_SIZE) {
+				$metadata->setString(self::CHECKSUM, $this->hash($handle, $front), true);
 			}
 		} catch (\Throwable $e) {
 			$this->logger->debug('Could not read the header of a ROM', ['exception' => $e]);
@@ -101,20 +117,30 @@ class MetadataListener implements IEventListener {
 	}
 
 	/**
-	 * The one the client gave when it uploaded the file, and failing that
-	 * one of our own. Desktop clients send theirs; browsers do not.
-	 *
-	 * @param resource $handle the file, already read up to $front
+	 * The checksum the client worked out on the way up, if it sent one.
+	 * Desktop clients do; browsers do not.
 	 */
-	private function md5(File $node, $handle, string $front): string {
+	private function givenChecksum(File $node): string {
 		foreach (explode(' ', $node->getChecksum()) as $checksum) {
 			if (str_starts_with(strtoupper($checksum), 'MD5:')) {
 				return strtolower(substr($checksum, 4));
 			}
 		}
-		if ($node->getSize() > self::MAX_HASH_SIZE) {
-			return '';
-		}
+		return '';
+	}
+
+	/**
+	 * Working a checksum out means reading the whole ROM, so an
+	 * administrator has to ask for it.
+	 */
+	private function hashingWanted(): bool {
+		return (bool)$this->settingsService->getDefaults()['hash_roms'];
+	}
+
+	/**
+	 * @param resource $handle the file, already read up to $front
+	 */
+	private function hash($handle, string $front): string {
 		$context = hash_init('md5');
 		hash_update($context, $front);
 		hash_update_stream($context, $handle);

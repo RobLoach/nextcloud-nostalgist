@@ -78,6 +78,10 @@ msgstr ""
 msgid "Capture gamepad and keyboard input for the whole page while playing"
 msgstr ""
 
+#: templates/admin.php
+msgid "Checksums that arrive with an upload are always kept. Working one out means reading the whole file, in the background, once per game — on object storage that is a download of each ROM."
+msgstr ""
+
 #: src/settings.js
 msgid "Choose a folder"
 msgstr ""
@@ -381,6 +385,10 @@ msgstr ""
 msgid "RetroArch menu"
 msgstr ""
 
+#: templates/admin.php
+msgid "ROM checksums"
+msgstr ""
+
 #: src/panels/states.js
 #: templates/admin.php
 #: templates/settings.php
@@ -548,6 +556,10 @@ msgstr ""
 
 #: templates/settings.php
 msgid "Which of the pictures in your thumbnails folder a system is shown with, when it has more than one."
+msgstr ""
+
+#: templates/admin.php
+msgid "Work out the checksum of a ROM the server was not given one for"
 msgstr ""
 
 #: src/library.js

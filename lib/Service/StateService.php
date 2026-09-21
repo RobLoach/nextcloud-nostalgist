@@ -11,6 +11,7 @@ use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\Files\SimpleFS\ISimpleFile;
 use OCP\Files\SimpleFS\ISimpleFolder;
 
 /**
@@ -45,6 +46,14 @@ class StateService {
 	private ?ISimpleFolder $statesRoot = null;
 	/** @var array<string, ISimpleFolder|false> */
 	private array $userStates = [];
+	/**
+	 * The games a user has saves for, by name. The library listing asks
+	 * three times over -- for the page, the recently played and the
+	 * favorites -- and the answer cannot change in between.
+	 *
+	 * @var array<string, array<string, Folder>>
+	 */
+	private array $gameFolders = [];
 
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
@@ -220,44 +229,71 @@ class StateService {
 	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool}>
 	 */
 	public function list(string $userId, string $romPath): array {
-		$states = [];
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null || $this->savesFolderPath($userId) !== '') {
-			foreach ($this->slots() as $slot) {
-				$name = $this->slotName($slot) . '.state';
-				if ($folder === null || !$folder->nodeExists($name)) {
-					continue;
-				}
-				$file = $folder->get($name);
-				$states[] = [
-					'slot' => $slot,
-					'size' => (int)$file->getSize(),
-					'mtime' => $file->getMTime(),
-					'hasThumbnail' => $folder->nodeExists($this->slotName($slot) . '.png'),
-				];
+			return $folder === null ? [] : $this->listFolder($folder);
+		}
+		return $this->listAppData($userId, $romPath);
+	}
+
+	/**
+	 * The slots of a game kept in the user's own saves folder. One listing
+	 * answers for every slot, rather than asking after each name in turn.
+	 *
+	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool}>
+	 */
+	private function listFolder(Folder $folder): array {
+		$files = [];
+		foreach ($folder->getDirectoryListing() as $node) {
+			if ($node instanceof File) {
+				$files[$node->getName()] = $node;
 			}
-			return $states;
 		}
 
-		$userFolder = $this->userStates($userId, false);
-		$legacy = $this->statesRoot();
-		$keys = [$this->key($userId, $romPath), $this->pathKey($romPath)];
+		$states = [];
 		foreach ($this->slots() as $slot) {
-			$key = null;
-			foreach ($keys as $candidate) {
-				if ($userFolder !== null && $userFolder->fileExists($this->fileName($candidate, $slot, 'state'))) {
-					$key = $candidate;
+			$file = $files[$this->slotName($slot) . '.state'] ?? null;
+			if ($file === null) {
+				continue;
+			}
+			$states[] = [
+				'slot' => $slot,
+				'size' => (int)$file->getSize(),
+				'mtime' => $file->getMTime(),
+				'hasThumbnail' => isset($files[$this->slotName($slot) . '.png']),
+			];
+		}
+		return $states;
+	}
+
+	/**
+	 * The same, for the states kept in the app data, where a game is filed
+	 * under the id of its file, under the hash of its path before that, and
+	 * flat in the shared folder before that again.
+	 *
+	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool}>
+	 */
+	private function listAppData(string $userId, string $romPath): array {
+		$mine = $this->namesOf($this->userStates($userId, false));
+		$legacy = $this->namesOf($this->statesRoot());
+		$keys = [$this->key($userId, $romPath), $this->pathKey($romPath)];
+
+		$states = [];
+		foreach ($this->slots() as $slot) {
+			$file = null;
+			$hasThumbnail = false;
+			foreach ($keys as $key) {
+				$file = $mine[$this->fileName($key, $slot, 'state')] ?? null;
+				if ($file !== null) {
+					$hasThumbnail = isset($mine[$this->fileName($key, $slot, 'png')]);
 					break;
 				}
 			}
-			$legacyName = $this->legacyFileName($userId, $romPath, $slot, 'state');
-			if ($userFolder !== null && $key !== null) {
-				$file = $userFolder->getFile($this->fileName($key, $slot, 'state'));
-				$hasThumbnail = $userFolder->fileExists($this->fileName($key, $slot, 'png'));
-			} elseif ($legacy->fileExists($legacyName)) {
-				$file = $legacy->getFile($legacyName);
-				$hasThumbnail = $legacy->fileExists($this->legacyFileName($userId, $romPath, $slot, 'png'));
-			} else {
+			if ($file === null) {
+				$file = $legacy[$this->legacyFileName($userId, $romPath, $slot, 'state')] ?? null;
+				$hasThumbnail = isset($legacy[$this->legacyFileName($userId, $romPath, $slot, 'png')]);
+			}
+			if ($file === null) {
 				continue;
 			}
 			$states[] = [
@@ -268,6 +304,19 @@ class StateService {
 			];
 		}
 		return $states;
+	}
+
+	/**
+	 * What a folder of the app data holds, by name.
+	 *
+	 * @return array<string, ISimpleFile>
+	 */
+	private function namesOf(?ISimpleFolder $folder): array {
+		$files = [];
+		foreach ($folder?->getDirectoryListing() ?? [] as $file) {
+			$files[$file->getName()] = $file;
+		}
+		return $files;
 	}
 
 	/**
@@ -322,6 +371,43 @@ class StateService {
 	}
 
 	/**
+	 * The folder of every game the saves folder holds, by the name of the
+	 * game.
+	 *
+	 * Saves are filed under the system of the game, so the folders of the
+	 * saves folder are systems, holding the games -- except for the ones
+	 * written before the system was part of the path, which are games
+	 * themselves. Both are taken, and the listing stops there: going deeper
+	 * would be walking somebody's files for nothing.
+	 *
+	 * @return array<string, Folder>
+	 */
+	private function gameFoldersIn(Folder $saves): array {
+		$systems = [];
+		foreach (CoreMap::SYSTEMS as $system) {
+			$systems[mb_strtolower($system['short'])] = true;
+		}
+
+		$games = [];
+		foreach ($saves->getDirectoryListing() as $node) {
+			if (!$node instanceof Folder) {
+				continue;
+			}
+			$name = mb_strtolower($node->getName());
+			if (!isset($systems[$name])) {
+				$games[$name] ??= $node;
+				continue;
+			}
+			foreach ($node->getDirectoryListing() as $child) {
+				if ($child instanceof Folder) {
+					$games[mb_strtolower($child->getName())] ??= $child;
+				}
+			}
+		}
+		return $games;
+	}
+
+	/**
 	 * @param list<string> $romPaths
 	 * @return array<string, array{slot: int, mtime: int}>
 	 */
@@ -335,14 +421,7 @@ class StateService {
 		if (!$saves instanceof Folder) {
 			return [];
 		}
-		// The saves folder holds one folder per game, so listing it once is
-		// enough to know which games have anything at all.
-		$gameFolders = [];
-		foreach ($saves->getDirectoryListing() as $node) {
-			if ($node instanceof Folder) {
-				$gameFolders[mb_strtolower($node->getName())] = $node;
-			}
-		}
+		$gameFolders = $this->gameFolders[$userId] ??= $this->gameFoldersIn($saves);
 
 		$found = [];
 		foreach ($romPaths as $path) {

@@ -174,13 +174,28 @@ class StateServiceTest extends TestCase {
 				return $this->userFile($path);
 			},
 		);
+		// Files and folders both, as a real listing gives them.
 		$folder->method('getDirectoryListing')->willReturnCallback(
 			function () use ($prefix): array {
+				$base = $prefix === '' ? '' : $prefix . '/';
 				$nodes = [];
-				foreach ($this->files as $path => $content) {
-					$name = basename($path);
-					if (dirname($path) === ($prefix === '' ? '.' : $prefix) && $name !== '.folder') {
-						$nodes[] = $this->userFile($path);
+				$folders = [];
+				foreach (array_keys($this->files) as $path) {
+					if ($base !== '' && !str_starts_with($path, $base)) {
+						continue;
+					}
+					$rest = substr($path, strlen($base));
+					$slash = strpos($rest, '/');
+					if ($slash === false) {
+						if ($rest !== '' && $rest !== '.folder') {
+							$nodes[] = $this->userFile($path);
+						}
+						continue;
+					}
+					$name = substr($rest, 0, $slash);
+					if (!isset($folders[$name])) {
+						$folders[$name] = true;
+						$nodes[] = $this->userFolder($base . $name);
 					}
 				}
 				return $nodes;
@@ -290,6 +305,29 @@ class StateServiceTest extends TestCase {
 
 		$this->assertSame('the nes save', $service->load(self::USER, '/Games/NES/Mario.nes', 1));
 		$this->assertSame('the snes save', $service->load(self::USER, '/Games/SNES/Mario.nes', 1));
+	}
+
+	public function testTheScreenshotOfASaveIsFoundUnderTheSystemOfTheGame(): void {
+		// Saves are filed under the system, so the folders of the saves
+		// folder are systems holding games, not games.
+		$this->files[ltrim(self::GAME, '/')] = 'the rom';
+		$this->ids[ltrim(self::GAME, '/')] = 101;
+		$service = $this->service('/Saves');
+		$service->save(self::USER, self::GAME, 1, 'a save');
+		$service->saveThumbnail(self::USER, self::GAME, 1, 'a picture');
+
+		$found = $service->thumbnailIndex(self::USER, [self::GAME]);
+		$this->assertSame(1, $found[self::GAME]['slot'] ?? null, 'the slot the picture belongs to');
+	}
+
+	public function testTheScreenshotOfAGameSavedBeforeSystemsAreFoundToo(): void {
+		$service = $this->service('/Saves');
+		// As an older version would have left it: straight in the folder.
+		$this->files['Saves/Mario/Slot 1.state'] = 'a save';
+		$this->files['Saves/Mario/Slot 1.png'] = 'a picture';
+
+		$found = $service->thumbnailIndex(self::USER, ['/Games/Mario.nes']);
+		$this->assertSame(1, $found['/Games/Mario.nes']['slot'] ?? null);
 	}
 
 	public function testThumbnailsAndBatterySavesLiveAlongsideTheStates(): void {

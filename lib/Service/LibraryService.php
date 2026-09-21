@@ -32,6 +32,13 @@ class LibraryService {
 	/** Bumped when the shape of a cached entry changes. */
 	private const CACHE_VERSION = 5;
 
+	/**
+	 * The screenshots of a user, by the game they were taken of.
+	 *
+	 * @var array<string, array<string, array{id: int, mtime: int}>>
+	 */
+	private array $screenshots = [];
+
 	public function __construct(
 		private ICacheFactory $cacheFactory,
 		private ThumbnailService $thumbnailService,
@@ -54,17 +61,10 @@ class LibraryService {
 			return;
 		}
 
-		$screenshots = [];
-		if ($settings['screenshots_folder'] !== '') {
-			try {
-				$folder = $userFolder->get($settings['screenshots_folder']);
-				if ($folder instanceof Folder) {
-					$screenshots = $this->thumbnailService->indexScreenshots($folder);
-				}
-			} catch (NotFoundException) {
-				// No screenshots folder, no screenshots.
-			}
-		}
+		// The listing asks three times over -- for the page, the recently
+		// played and the favorites -- and the folder cannot change in
+		// between, so it is walked once.
+		$screenshots = $this->screenshots[$userId] ??= $this->indexScreenshots($userFolder, $settings);
 		$states = $this->stateService->thumbnailIndex($userId, array_column($missing, 'path'));
 
 		foreach ($games as &$game) {
@@ -184,6 +184,23 @@ class LibraryService {
 			}
 			return $result * $direction;
 		});
+	}
+
+	/**
+	 * @param array<string, mixed> $settings
+	 * @return array<string, array{id: int, mtime: int}>
+	 */
+	private function indexScreenshots(Folder $userFolder, array $settings): array {
+		if ($settings['screenshots_folder'] === '') {
+			return [];
+		}
+		try {
+			$folder = $userFolder->get($settings['screenshots_folder']);
+		} catch (NotFoundException) {
+			// No screenshots folder, no screenshots.
+			return [];
+		}
+		return $folder instanceof Folder ? $this->thumbnailService->indexScreenshots($folder) : [];
 	}
 
 	/**
