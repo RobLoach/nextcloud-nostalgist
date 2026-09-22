@@ -6,6 +6,12 @@ All notable changes to NextCloud Arcade. The format follows
 
 ## [Unreleased]
 
+## [0.35.0] - 2026-09-22
+
+### Added
+- Screenshots of the player, the games library in both views, and the two
+  settings pages, in the app store listing and the readme.
+
 ## [0.34.0] - 2026-09-22
 
 ### Added
@@ -247,5 +253,6 @@ All notable changes to NextCloud Arcade. The format follows
 ### Added
 - The first version.
 
-[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.35.0...HEAD
+[0.35.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.35.0
 [0.34.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.34.0
