@@ -1,7 +1,7 @@
 {
   "name": "@robloach/nextcloud-arcade",
-  "version": "0.36.0",
-  "license": "GPL-3.0-or-later",
+  "version": "0.36.1",
+  "license": "AGPL-3.0-or-later",
   "engines": {
     "node": "^22.0.0",
     "npm": "^10.0.0"
