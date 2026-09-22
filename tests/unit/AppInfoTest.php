@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,12 +31,48 @@ class AppInfoTest extends TestCase {
 
 	public function testEveryClassTheInfoNamesExists(): void {
 		$named = $this->info()->xpath(
-			'//step | //command | //admin | //admin-section | //personal | //personal-section',
+			'//repair-steps//step | //commands/command | //settings/admin | //settings/admin-section'
+			. ' | //settings/personal | //settings/personal-section',
 		);
 		$this->assertNotEmpty($named, 'the info names no classes at all, which cannot be right');
 		foreach ($named as $class) {
 			$name = trim((string)$class);
 			$this->assertTrue(class_exists($name), "$name is named in info.xml but does not exist");
+		}
+	}
+
+	/**
+	 * A class Nextcloud only learns about from the info is no use until it
+	 * is named there, and nothing else would notice it was left out.
+	 *
+	 * @return array{0: string, 1: string, 2: string}[]
+	 */
+	public static function declared(): array {
+		return [
+			'commands' => ['Command', 'Symfony\\Component\\Console\\Command\\Command', '//commands/command'],
+			'repair steps' => ['Migration', 'OCP\\Migration\\IRepairStep', '//repair-steps//step'],
+			'settings forms' => ['Settings', 'OCP\\Settings\\ISettings', '//settings/admin | //settings/personal'],
+			'settings sections' => [
+				'Settings',
+				'OCP\\Settings\\IIconSection',
+				'//settings/admin-section | //settings/personal-section',
+			],
+		];
+	}
+
+	#[DataProvider('declared')]
+	public function testEveryClassOfItsKindIsNamedInTheInfo(string $folder, string $kind, string $xpath): void {
+		$named = [];
+		foreach ($this->info()->xpath($xpath) ?: [] as $class) {
+			$named[trim((string)$class)] = true;
+		}
+
+		foreach (glob(dirname(__DIR__, 2) . "/lib/$folder/*.php") ?: [] as $file) {
+			$class = 'OCA\\Arcade\\' . $folder . '\\' . basename($file, '.php');
+			if (!class_exists($class) || !is_subclass_of($class, $kind)) {
+				continue;
+			}
+			$this->assertArrayHasKey($class, $named, "$class is not named in info.xml");
 		}
 	}
 

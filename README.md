@@ -512,6 +512,10 @@ the step that runs then only drops the queued lookups and the caches.
 
 ## Credits
 
+Everything the app is built on, and what each part is for, is in
+[AUTHORS.md](AUTHORS.md). What changed in each version is in
+[CHANGELOG.md](CHANGELOG.md).
+
 - https://www.svgrepo.com/svg/255536/game-controller-gamepad
 - https://github.com/arianrhodsandlot/nostalgist
 - https://github.com/arianrhodsandlot/retroarch-emscripten-build
