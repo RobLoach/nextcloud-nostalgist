@@ -178,6 +178,36 @@ class CoreMap {
 	];
 
 	/**
+	 * Extensions that may hold a ROM but do not say whose.
+	 *
+	 * A .bin is a Mega Drive game, a 32X game, a ColecoVision game, an
+	 * Atari 2600 game, a track of a disc or a firmware blob, so it cannot
+	 * be given to a system the way .md or .sfc can. The folder it sits in
+	 * is asked first, and failing that the file itself: a cartridge says
+	 * which machine it is for in its first bytes.
+	 */
+	public const AMBIGUOUS = ['bin', 'rom'];
+
+	public static function isAmbiguous(string $extension): bool {
+		return in_array(strtolower($extension), self::AMBIGUOUS, true);
+	}
+
+	/**
+	 * Every extension worth listing in a library: the ones that name their
+	 * system, and the ones that need asking about.
+	 *
+	 * @return array<string, string> extension => system id, or '' when it
+	 *                               takes more than the name to know
+	 */
+	public static function libraryExtensions(): array {
+		$extensions = self::extensionSystemMap();
+		foreach ([...self::AMBIGUOUS, 'zip'] as $extension) {
+			$extensions[$extension] ??= '';
+		}
+		return $extensions;
+	}
+
+	/**
 	 * Words that say nothing about which system a folder holds.
 	 */
 	public const NOISE = [

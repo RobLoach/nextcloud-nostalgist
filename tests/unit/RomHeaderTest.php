@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\RomHeader;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -41,6 +42,35 @@ class RomHeaderTest extends TestCase {
 		$header .= str_repeat("\x00", 2);
 		$header .= pack('v', $checksum ^ 0xFFFF) . pack('v', $checksum);
 		return $this->rom([$offset => $header]);
+	}
+
+	public static function marks(): array {
+		return [
+			'a Mega Drive cartridge' => [[0x100 => 'SEGA MEGA DRIVE '], 'genesis'],
+			'a Genesis cartridge' => [[0x100 => 'SEGA GENESIS    '], 'genesis'],
+			'a 32X cartridge, which needs the other core' => [[0x100 => 'SEGA 32X        '], 'sega32x'],
+			'an iNES file' => [[0 => "NES\x1a"], 'nes'],
+			'a Lynx file' => [[0 => 'LYNX'], 'lynx'],
+			'a ColecoVision cartridge' => [[0 => "\xAA\x55"], 'coleco'],
+			'one that skips its title screen' => [[0 => "\x55\xAA"], 'coleco'],
+			'a Game Boy cartridge' => [[0x104 => "\xCE\xED\x66\x66"], 'gb'],
+			'a Game Boy Color cartridge' => [[0x104 => "\xCE\xED\x66\x66", 0x143 => "\xC0"], 'gbc'],
+			'a Game Boy Advance cartridge' => [[0x04 => "\x24\xFF\xAE\x51"], 'gba'],
+			'nothing in particular' => [[0x40 => 'just some bytes'], null],
+		];
+	}
+
+	#[DataProvider('marks')]
+	public function testWhatAFileSaysItIsFor(array $parts, ?string $expected): void {
+		$this->assertSame($expected, RomHeader::systemOf($this->rom($parts)));
+	}
+
+	public function testASuperNintendoFileIsKnownByItsSumWhenNothingElseMatches(): void {
+		$this->assertSame('snes', RomHeader::systemOf($this->superNintendo('A GAME')));
+	}
+
+	public function testAnEmptyFileIsForNothing(): void {
+		$this->assertNull(RomHeader::systemOf(''));
 	}
 
 	public function testAGameBoyCartridgeGivesItsTitle(): void {

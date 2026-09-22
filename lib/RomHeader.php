@@ -30,6 +30,44 @@ class RomHeader {
 	}
 
 	/**
+	 * Which machine a file is for, going by what is written in it.
+	 *
+	 * This is what a .bin is put to: the name says nothing, but a cartridge
+	 * dump carries a mark near its front saying whose it is. Nothing here
+	 * guesses -- a file that carries no mark gets no answer.
+	 *
+	 * @return string|null the system id, or null when the file does not say
+	 */
+	public static function systemOf(string $data): ?string {
+		if (str_starts_with($data, "NES\x1a")) {
+			return 'nes';
+		}
+		if (str_starts_with($data, 'LYNX')) {
+			return 'lynx';
+		}
+		// A ColecoVision cartridge starts with one of two marks, depending
+		// on whether it shows the title screen on the way in.
+		if (str_starts_with($data, "\xAA\x55") || str_starts_with($data, "\x55\xAA")) {
+			return 'coleco';
+		}
+		if (substr($data, 0x100, 4) === 'SEGA') {
+			// Both are Sega cartridges; the console they name is the
+			// difference, and a 32X game will not run without the 32X.
+			return str_contains(substr($data, 0x100, 16), '32X') ? 'sega32x' : 'genesis';
+		}
+		if (substr($data, 0x104, 4) === "\xCE\xED\x66\x66") {
+			// The colour flag of the cartridge, at the end of its title.
+			return in_array(ord(substr($data, 0x143, 1) ?: "\x00"), [0x80, 0xC0], true) ? 'gbc' : 'gb';
+		}
+		if (substr($data, 0x04, 4) === "\x24\xFF\xAE\x51") {
+			return 'gba';
+		}
+		// Last, being the only one of these that is a sum rather than a
+		// mark, and so the only one that could come out right by chance.
+		return self::superNintendo($data) === null ? null : 'snes';
+	}
+
+	/**
 	 * @return array{title: string, region: string} empty strings when the
 	 *                                              file does not say
 	 */

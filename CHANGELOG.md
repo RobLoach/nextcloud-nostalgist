@@ -6,6 +6,14 @@ All notable changes to NextCloud Arcade. The format follows
 
 ## [Unreleased]
 
+## [0.37.0] - 2026-09-22
+
+### Added
+- `.bin` and `.rom` files are listed and played. Neither name says which
+  machine it is for, so the folder is asked, and failing that the first
+  bytes of the file: a cartridge dump says whose it is, which also tells a
+  32X game from a Mega Drive one.
+
 ## [0.36.1] - 2026-09-22
 
 ### Changed
@@ -266,7 +274,8 @@ All notable changes to NextCloud Arcade. The format follows
 ### Added
 - The first version.
 
-[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.36.1...HEAD
+[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.37.0...HEAD
+[0.37.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.37.0
 [0.36.1]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.36.1
 [0.36.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.36.0
 [0.35.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.35.0

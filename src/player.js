@@ -5,7 +5,7 @@ import { defaultRemoteURL, defaultRootPath } from '@nextcloud/files/dav'
 import { translate as t } from '@nextcloud/l10n'
 import { generateFilePath, generateUrl } from '@nextcloud/router'
 import { inputConfig } from './keys.js'
-import { biosForSystem, coreForSystem, systemForFile } from './systems.js'
+import { biosForSystem, coreForSystem, systemForFile, systemFromBytes } from './systems.js'
 
 const SRAM_SYNC_INTERVAL = 60 * 1000
 
@@ -33,7 +33,13 @@ export function davUrl(path) {
  */
 async function resolveRom(blob, romName, systemHint) {
 	if (!romName.toLowerCase().endsWith('.zip')) {
-		return { rom: new File([blob], romName), system: systemForFile(romName) }
+		const bytes = new Uint8Array(await blob.arrayBuffer())
+		// The name first, then the folder it came from, then the cartridge
+		// itself -- which is all a file called "Sonic.bin" has to go on.
+		const system = systemForFile(romName)
+			?? systemHint
+			?? systemFromBytes(bytes)
+		return { rom: new File([bytes], romName), system }
 	}
 	const entries = Object.entries(unzipSync(new Uint8Array(await blob.arrayBuffer())))
 		.filter(([name]) => !name.endsWith('/'))
@@ -43,11 +49,14 @@ async function resolveRom(blob, romName, systemHint) {
 			return { rom: new File([data], name.split('/').pop()), system }
 		}
 	}
-	// No known extension inside; if the folder names the system, run the
-	// largest entry with it.
-	if (systemHint !== null && entries.length > 0) {
+	// Nothing inside says what it is by name, so the largest entry is the
+	// game: the folder names its system, or the bytes do.
+	if (entries.length > 0) {
 		const [name, data] = entries.reduce((a, b) => (a[1].length >= b[1].length ? a : b))
-		return { rom: new File([data], name.split('/').pop()), system: systemHint }
+		const system = systemHint ?? systemFromBytes(data)
+		if (system !== null) {
+			return { rom: new File([data], name.split('/').pop()), system }
+		}
 	}
 	throw new Error(t('arcade', 'No supported ROM found in the archive'))
 }

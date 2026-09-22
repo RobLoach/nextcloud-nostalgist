@@ -14,6 +14,16 @@ inside, and a ROM whose mimetype Nextcloud has not learned yet. It goes by
 the file extension and by the folder the game is stored in, the way the
 Arcade page does, and opens the game there.
 
+Some names say nothing about which machine they are for. A `.bin` is a Mega
+Drive game, a 32X game, a ColecoVision game, a track of a disc or firmware,
+so no system can claim the extension the way `.md` or `.sfc` do. Those files
+are placed in three steps: the folder they are in, and failing that the
+first bytes of the file itself, which on a cartridge dump carry a mark
+saying whose it is — `SEGA` for a Mega Drive game, `SEGA 32X` for a 32X one,
+`NES` for a Nintendo one, and so on. The reading happens in the background,
+so a `.bin` may be listed without a system for a moment and settle on one
+afterwards. The same goes for what is inside a zip.
+
 The system of a zipped game is detected from the file inside the archive, or
 from the folder it is stored in. Short names, spelled out names and No-Intro
 platform names all work, with or without the maker in front and with a word

@@ -159,14 +159,15 @@ class LibraryService {
 		}
 
 		$games = [];
-		$extensionMap = CoreMap::extensionSystemMap();
-		// Zipped ROMs are extracted in the browser when launched.
-		$extensionMap['zip'] = 'zip';
+		// Zipped ROMs are extracted in the browser when launched, and a
+		// .bin says nothing about whose game it is.
+		$extensionMap = CoreMap::libraryExtensions();
 		$limits = [
 			'games' => (int)($settings['max_games'] ?? self::MAX_GAMES),
 			'depth' => (int)($settings['max_depth'] ?? self::MAX_DEPTH),
 		];
 		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, [], $limits);
+		$this->addWhatWasRead($games);
 		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder'], $folderPath);
 
 		// Only what the list draws is worth keeping: a big library would
@@ -242,25 +243,41 @@ class LibraryService {
 			return;
 		}
 		$index = $this->thumbnailService->buildIndex($thumbnails);
-		$known = $this->knownOf($games);
 		foreach ($games as &$game) {
-			$title = $known[$game['id']]['title'] ?? '';
-			$region = $known[$game['id']]['region'] ?? '';
-			if ($title !== '') {
-				$game['title'] = $title;
-			}
-			if ($region !== '') {
-				$game['region'] = $region;
-			}
 			$found = $this->thumbnailService->forGameNamed(
 				$index,
 				$game['system'],
 				$this->thumbnailService->subfolderOf($game['path'], $libraryPath),
 				$game['basename'],
-				$title,
+				$game['title'] ?? '',
 			);
 			if ($found !== []) {
 				$game['thumbnails'] = $found;
+			}
+		}
+	}
+
+	/**
+	 * Attach what was read of each ROM: the name the cartridge gives
+	 * itself, the region it was sold in, and -- for a .bin, whose name says
+	 * nothing -- which machine it turned out to be for.
+	 *
+	 * @param list<array<string, mixed>> $games
+	 */
+	private function addWhatWasRead(array &$games): void {
+		$known = $this->knownOf($games);
+		foreach ($games as &$game) {
+			$read = $known[$game['id']] ?? null;
+			if ($read === null) {
+				continue;
+			}
+			foreach (['title', 'region'] as $key) {
+				if ($read[$key] !== '') {
+					$game[$key] = $read[$key];
+				}
+			}
+			if (($game['system'] ?? '') === '' && $read['system'] !== '') {
+				$game['system'] = $read['system'];
 			}
 		}
 	}
@@ -270,7 +287,7 @@ class LibraryService {
 	 * read. One query for the whole library.
 	 *
 	 * @param list<array<string, mixed>> $games
-	 * @return array<int, array{title: string, region: string}>
+	 * @return array<int, array{title: string, region: string, system: string}>
 	 */
 	private function knownOf(array $games): array {
 		$ids = array_values(array_filter(array_column($games, 'id')));
@@ -283,6 +300,7 @@ class LibraryService {
 				$known[(int)$id] = [
 					'title' => $metadata->getString(MetadataListener::TITLE),
 					'region' => $metadata->getString(MetadataListener::REGION),
+					'system' => $metadata->getString(MetadataListener::SYSTEM),
 				];
 			}
 		} catch (\Throwable) {
@@ -331,9 +349,9 @@ class LibraryService {
 				continue;
 			}
 			$system = $extensionMap[$extension];
-			if ($system === 'zip') {
-				// A zip does not reveal its system; the folder it is stored
-				// in often does, e.g. "Games/SNES/NHL 96.zip".
+			if ($system === '') {
+				// Neither a zip nor a .bin reveals its system; the folder it
+				// is stored in often does, e.g. "Games/SNES/NHL 96.zip".
 				foreach (array_reverse($parents) as $parent) {
 					$fromFolder = CoreMap::systemForFolderName($parent);
 					if ($fromFolder !== null) {
@@ -341,6 +359,11 @@ class LibraryService {
 						break;
 					}
 				}
+			}
+			// A zip that nothing names is still a zip; a .bin that nothing
+			// names waits for its first bytes to be read.
+			if ($system === '' && $extension === 'zip') {
+				$system = 'zip';
 			}
 			$games[] = [
 				'id' => $node->getId(),

@@ -70,14 +70,54 @@ export function shortNameForPath(path) {
 	return system?.short ?? ''
 }
 
+/** Extensions that may hold a ROM without saying whose. */
+const AMBIGUOUS = ['bin', 'rom', 'zip']
+
+/**
+ * @param {string} basename the file name
+ * @return {boolean} whether the name says nothing about the system
+ */
+export function isAmbiguous(basename) {
+	return AMBIGUOUS.includes((basename || '').split('.').pop().toLowerCase())
+}
+
 /**
  * @param {string} basename the file name
  * @param {string} [mime] the file mimetype, if known
  * @return {boolean} whether the player can (try to) run this file
  */
 export function isPlayable(basename, mime = '') {
-	return systemForFile(basename, mime) !== null
-		|| (basename || '').toLowerCase().endsWith('.zip')
+	return systemForFile(basename, mime) !== null || isAmbiguous(basename)
+}
+
+/**
+ * Which machine a file is for, going by what is written in it.
+ *
+ * A .bin names no system, but a cartridge dump carries a mark near its
+ * front saying whose it is. Mirrors RomHeader::systemOf on the server,
+ * which does the same for the library listing.
+ *
+ * @param {Uint8Array} bytes the front of the file
+ * @return {?object} the system definition, with its id, or null
+ */
+export function systemFromBytes(bytes) {
+	const at = (offset, text) => text.split('').every((c, i) => bytes[offset + i] === c.charCodeAt(0))
+	let id = null
+	if (at(0, 'NES') && bytes[3] === 0x1a) {
+		id = 'nes'
+	} else if (at(0, 'LYNX')) {
+		id = 'lynx'
+	} else if ((bytes[0] === 0xAA && bytes[1] === 0x55) || (bytes[0] === 0x55 && bytes[1] === 0xAA)) {
+		id = 'coleco'
+	} else if (at(0x100, 'SEGA')) {
+		const console_ = String.fromCharCode(...bytes.slice(0x100, 0x110))
+		id = console_.includes('32X') ? 'sega32x' : 'genesis'
+	} else if (bytes[0x104] === 0xCE && bytes[0x105] === 0xED && bytes[0x106] === 0x66 && bytes[0x107] === 0x66) {
+		id = [0x80, 0xC0].includes(bytes[0x143]) ? 'gbc' : 'gb'
+	} else if (bytes[0x04] === 0x24 && bytes[0x05] === 0xFF && bytes[0x06] === 0xAE && bytes[0x07] === 0x51) {
+		id = 'gba'
+	}
+	return id === null ? null : systemById(id)
 }
 
 /**

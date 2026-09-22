@@ -81,6 +81,24 @@ class CoreMapTest extends TestCase {
 		}
 	}
 
+	public function testAnAmbiguousExtensionIsClaimedByNobody(): void {
+		// A .bin is a Mega Drive game, a 32X game, a ColecoVision game or
+		// something else entirely, so no system may have it.
+		$claimed = CoreMap::extensionSystemMap();
+		foreach (CoreMap::AMBIGUOUS as $extension) {
+			$this->assertTrue(CoreMap::isAmbiguous($extension));
+			$this->assertArrayNotHasKey($extension, $claimed, "$extension cannot belong to one system");
+		}
+	}
+
+	public function testALibraryListsWhatItCannotPlaceYet(): void {
+		$extensions = CoreMap::libraryExtensions();
+		$this->assertSame('nes', $extensions['nes'] ?? null, 'a name that says which system');
+		foreach ([...CoreMap::AMBIGUOUS, 'zip'] as $extension) {
+			$this->assertSame('', $extensions[$extension] ?? null, "$extension is listed, unplaced");
+		}
+	}
+
 	public function testExtensionsAreUnique(): void {
 		$seen = [];
 		foreach (CoreMap::SYSTEMS as $id => $system) {

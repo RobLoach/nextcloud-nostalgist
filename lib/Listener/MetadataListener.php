@@ -52,15 +52,22 @@ class MetadataListener implements IEventListener {
 		if (!$node instanceof File) {
 			return;
 		}
-		$system = CoreMap::systemForPath($node->getPath());
-		if ($system === null) {
+		$path = $node->getPath();
+		$system = CoreMap::systemForPath($path);
+		// A .bin is a ROM of some sort, but of whose is a question for its
+		// first bytes rather than for its name.
+		$ambiguous = $system === null
+			&& CoreMap::isAmbiguous(pathinfo($path, PATHINFO_EXTENSION));
+		if ($system === null && !$ambiguous) {
 			return;
 		}
 
 		// Both are had without reading a byte of the file: the system from
 		// the name, the checksum from what the client sent with the upload.
 		$metadata = $event->getMetadata();
-		$metadata->setString(self::SYSTEM, $system, true);
+		if ($system !== null) {
+			$metadata->setString(self::SYSTEM, $system, true);
+		}
 		$given = $this->givenChecksum($node);
 		if ($given !== '') {
 			$metadata->setString(self::CHECKSUM, $given, true);
@@ -69,7 +76,7 @@ class MetadataListener implements IEventListener {
 		if ($event instanceof MetadataLiveEvent) {
 			// Opening the file is only worth a background job when there is
 			// something in it to read.
-			if (RomHeader::handles($system) || ($given === '' && $this->hashingWanted())) {
+			if ($ambiguous || RomHeader::handles($system) || ($given === '' && $this->hashingWanted())) {
 				$event->requestBackgroundJob();
 			}
 			return;
@@ -82,7 +89,7 @@ class MetadataListener implements IEventListener {
 	private function readTheRom(
 		MetadataBackgroundEvent $event,
 		File $node,
-		string $system,
+		?string $system,
 		string $given,
 	): void {
 		$metadata = $event->getMetadata();
@@ -95,8 +102,16 @@ class MetadataListener implements IEventListener {
 			// The file is read once: the front of it is the header, and the
 			// rest of the same stream is what is hashed. Systems whose
 			// cartridges carry no name the app reads skip the first part.
-			$front = RomHeader::handles($system) ? (string)fread($handle, RomHeader::BYTES) : '';
-			$header = RomHeader::read($front, $system);
+			$wanted = $system === null || RomHeader::handles($system);
+			$front = $wanted ? (string)fread($handle, RomHeader::BYTES) : '';
+			if ($system === null) {
+				// The name did not say, so the cartridge is asked.
+				$system = RomHeader::systemOf($front);
+				if ($system !== null) {
+					$metadata->setString(self::SYSTEM, $system, true);
+				}
+			}
+			$header = RomHeader::read($front, $system ?? '');
 			if ($header['title'] !== '') {
 				$metadata->setString(self::TITLE, $header['title'], true);
 			}
