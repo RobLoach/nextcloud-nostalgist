@@ -7,6 +7,13 @@ from your files and run in the browser.
 
 [![Screenshot of NextCloud Arcade](img/screenshot-thumbnail.jpg)](img/screenshot.png)
 
+| | |
+| --- | --- |
+| [![A game running](screenshots/game.png)](screenshots/game.png) | [![The games library](screenshots/games-library.png)](screenshots/games-library.png) |
+| A game running, with the touch controls and the player bar | The games library, with favorites and recently played |
+| [![The library as a list](screenshots/games-list.png)](screenshots/games-list.png) | [![The personal settings](screenshots/configuration.png)](screenshots/configuration.png) |
+| The same library as a list | The personal settings |
+
 ## Features
 
 - Plays ROMs straight from the Files app, in the file viewer, with box art
