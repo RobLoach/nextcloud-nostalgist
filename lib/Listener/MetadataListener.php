@@ -55,9 +55,10 @@ class MetadataListener implements IEventListener {
 		$path = $node->getPath();
 		$system = CoreMap::systemForPath($path);
 		// A .bin is a ROM of some sort, but of whose is a question for its
-		// first bytes rather than for its name.
-		$ambiguous = $system === null
-			&& CoreMap::isAmbiguous(pathinfo($path, PATHINFO_EXTENSION));
+		// first bytes rather than for its name. The folder it sits in is a
+		// guess; the mark inside the file is not, so the file has the last
+		// word even when the folder has already said something.
+		$ambiguous = CoreMap::isAmbiguous(pathinfo($path, PATHINFO_EXTENSION));
 		if ($system === null && !$ambiguous) {
 			return;
 		}
@@ -76,13 +77,14 @@ class MetadataListener implements IEventListener {
 		if ($event instanceof MetadataLiveEvent) {
 			// Opening the file is only worth a background job when there is
 			// something in it to read.
-			if ($ambiguous || RomHeader::handles($system) || ($given === '' && $this->hashingWanted())) {
+			$readable = $system !== null && RomHeader::handles($system);
+			if ($ambiguous || $readable || ($given === '' && $this->hashingWanted())) {
 				$event->requestBackgroundJob();
 			}
 			return;
 		}
 		if ($event instanceof MetadataBackgroundEvent) {
-			$this->readTheRom($event, $node, $system, $given);
+			$this->readTheRom($event, $node, $system, $given, $ambiguous);
 		}
 	}
 
@@ -91,6 +93,7 @@ class MetadataListener implements IEventListener {
 		File $node,
 		?string $system,
 		string $given,
+		bool $ambiguous,
 	): void {
 		$metadata = $event->getMetadata();
 		$handle = false;
@@ -102,12 +105,13 @@ class MetadataListener implements IEventListener {
 			// The file is read once: the front of it is the header, and the
 			// rest of the same stream is what is hashed. Systems whose
 			// cartridges carry no name the app reads skip the first part.
-			$wanted = $system === null || RomHeader::handles($system);
+			$wanted = $ambiguous || $system === null || RomHeader::handles($system);
 			$front = $wanted ? (string)fread($handle, RomHeader::BYTES) : '';
-			if ($system === null) {
-				// The name did not say, so the cartridge is asked.
-				$system = RomHeader::systemOf($front);
-				if ($system !== null) {
+			if ($ambiguous || $system === null) {
+				// What the cartridge says wins over the folder it sits in.
+				$marked = RomHeader::systemOf($front);
+				if ($marked !== null) {
+					$system = $marked;
 					$metadata->setString(self::SYSTEM, $system, true);
 				}
 			}

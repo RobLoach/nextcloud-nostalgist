@@ -99,6 +99,14 @@ class CoreMapTest extends TestCase {
 		}
 	}
 
+	public function testAZipTakesTheSystemOfItsFolder(): void {
+		// The library and the player both go by the folder for an archive:
+		// nothing outside it says what is in it.
+		$this->assertSame('genesis', CoreMap::systemForPath('/Games/MegaDrive/Sonic.zip'));
+		$this->assertSame('genesis', CoreMap::systemForPath('/Games/Sega - Mega Drive - Genesis/Sonic.zip'));
+		$this->assertSame('snes', CoreMap::systemForPath('/Games/SNES Roms/NHL 96.zip'));
+	}
+
 	public function testExtensionsAreUnique(): void {
 		$seen = [];
 		foreach (CoreMap::SYSTEMS as $id => $system) {

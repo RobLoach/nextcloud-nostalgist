@@ -10,9 +10,10 @@ All notable changes to NextCloud Arcade. The format follows
 
 ### Added
 - `.bin` and `.rom` files are listed and played. Neither name says which
-  machine it is for, so the folder is asked, and failing that the first
-  bytes of the file: a cartridge dump says whose it is, which also tells a
-  32X game from a Mega Drive one.
+  machine it is for, so the folder is asked, and then the first bytes of
+  the file: a cartridge dump says whose it is, which also tells a 32X game
+  from a Mega Drive one. Where the folder and the file disagree, the file
+  wins.
 
 ## [0.36.1] - 2026-09-22
 

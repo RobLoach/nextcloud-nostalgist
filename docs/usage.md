@@ -17,9 +17,10 @@ Arcade page does, and opens the game there.
 Some names say nothing about which machine they are for. A `.bin` is a Mega
 Drive game, a 32X game, a ColecoVision game, a track of a disc or firmware,
 so no system can claim the extension the way `.md` or `.sfc` do. Those files
-are placed in three steps: the folder they are in, and failing that the
-first bytes of the file itself, which on a cartridge dump carry a mark
-saying whose it is — `SEGA` for a Mega Drive game, `SEGA 32X` for a 32X one,
+are placed by the first of these that answers: the folder they are in, and
+then the file itself, whose first bytes on a cartridge dump carry a mark
+saying whose it is. Where the two disagree -- a Mega Drive dump sitting in
+an `SNES` folder -- the mark wins, since the folder was only ever a guess — `SEGA` for a Mega Drive game, `SEGA 32X` for a 32X one,
 `NES` for a Nintendo one, and so on. The reading happens in the background,
 so a `.bin` may be listed without a system for a moment and settle on one
 afterwards. The same goes for what is inside a zip.

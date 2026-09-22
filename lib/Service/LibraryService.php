@@ -276,7 +276,10 @@ class LibraryService {
 					$game[$key] = $read[$key];
 				}
 			}
-			if (($game['system'] ?? '') === '' && $read['system'] !== '') {
+			// A name that says nothing leaves the folder guessing, and what
+			// was read of the file itself settles it either way.
+			$ambiguous = CoreMap::isAmbiguous(pathinfo($game['basename'], PATHINFO_EXTENSION));
+			if ($read['system'] !== '' && (($game['system'] ?? '') === '' || $ambiguous)) {
 				$game['system'] = $read['system'];
 			}
 		}

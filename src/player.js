@@ -34,11 +34,12 @@ export function davUrl(path) {
 async function resolveRom(blob, romName, systemHint) {
 	if (!romName.toLowerCase().endsWith('.zip')) {
 		const bytes = new Uint8Array(await blob.arrayBuffer())
-		// The name first, then the folder it came from, then the cartridge
-		// itself -- which is all a file called "Sonic.bin" has to go on.
+		// The name first. Failing that the cartridge itself, whose mark is
+		// worth more than the folder it happens to sit in, and the folder
+		// last, for a dump that carries no mark at all.
 		const system = systemForFile(romName)
-			?? systemHint
 			?? systemFromBytes(bytes)
+			?? systemHint
 		return { rom: new File([bytes], romName), system }
 	}
 	const entries = Object.entries(unzipSync(new Uint8Array(await blob.arrayBuffer())))
@@ -53,7 +54,7 @@ async function resolveRom(blob, romName, systemHint) {
 	// game: the folder names its system, or the bytes do.
 	if (entries.length > 0) {
 		const [name, data] = entries.reduce((a, b) => (a[1].length >= b[1].length ? a : b))
-		const system = systemHint ?? systemFromBytes(data)
+		const system = systemFromBytes(data) ?? systemHint
 		if (system !== null) {
 			return { rom: new File([data], name.split('/').pop()), system }
 		}
