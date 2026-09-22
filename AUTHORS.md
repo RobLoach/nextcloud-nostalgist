@@ -1,7 +1,7 @@
 # Authors
 
 NextCloud Arcade is written by [Rob Loach](https://robloach.net), and is
-[AGPL-3.0-or-later](LICENSE).
+[GPL-3.0-or-later](LICENSE).
 
 Everybody who has contributed is listed on the
 [contributors page](https://github.com/robloach/nextcloud-arcade/graphs/contributors).

@@ -1,7 +1,7 @@
 {
     "name": "robloach/nextcloud-arcade",
     "description": "Run emulators directly from NextCloud.",
-    "license": "AGPL-3.0-or-later",
+    "license": "GPL-3.0-or-later",
     "authors": [
         {
             "name": "Rob Loach",

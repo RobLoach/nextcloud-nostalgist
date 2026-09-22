@@ -6,6 +6,13 @@ All notable changes to NextCloud Arcade. The format follows
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-09-22
+
+### Changed
+- Licensed GPL-3.0-or-later, where it was AGPL-3.0-or-later.
+- The readme is the short of it -- what the app is, how to install it and
+  how to use it. Everything else moved to `docs/`.
+
 ## [0.35.0] - 2026-09-22
 
 ### Added
@@ -253,6 +260,7 @@ All notable changes to NextCloud Arcade. The format follows
 ### Added
 - The first version.
 
-[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.36.0...HEAD
+[0.36.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.36.0
 [0.35.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.35.0
 [0.34.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.34.0
