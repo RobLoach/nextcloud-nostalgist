@@ -223,7 +223,9 @@ if (container !== null) {
 	document.getElementById('arcade-keys-reset')?.addEventListener('click', () => {
 		container.querySelectorAll('.arcade-key-binding').forEach((element) => {
 			element.dataset.code = element.dataset.default ?? element.dataset.code
+			showBinding(element)
 		})
+		showShadowedHotkeys()
 		save()
 	})
 	showFetchStatus()
