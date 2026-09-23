@@ -6,22 +6,76 @@ namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\Service\SettingsService;
 use OCP\Config\IUserConfig;
+use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 
 class SettingsServiceTest extends TestCase {
 	private const USER = 'alice';
 
-	private function service(string $stored = ''): SettingsService {
+	private function service(string $stored = '', ?IRootFolder $rootFolder = null): SettingsService {
 		$config = $this->createStub(IUserConfig::class);
 		$config->method('getValueString')->willReturn($stored);
-		return new SettingsService($config, $this->createStub(IAppConfig::class));
+		return new SettingsService(
+			$config,
+			$this->createStub(IAppConfig::class),
+			$rootFolder ?? $this->emptyRootFolder(),
+		);
+	}
+
+	/** A root folder whose user folder holds nothing at all. */
+	private function emptyRootFolder(): IRootFolder {
+		$userFolder = $this->createStub(Folder::class);
+		$userFolder->method('get')->willThrowException(new NotFoundException());
+		$userFolder->method('getFirstNodeById')->willReturn(null);
+		$root = $this->createStub(IRootFolder::class);
+		$root->method('getUserFolder')->willReturn($userFolder);
+		return $root;
+	}
+
+	/** A folder as it would sit in the user folder. */
+	private function folderNode(int $id, string $path): Folder {
+		$node = $this->createStub(Folder::class);
+		$node->method('getId')->willReturn($id);
+		$node->method('getPath')->willReturn('/' . self::USER . '/files' . $path);
+		return $node;
+	}
+
+	/**
+	 * A root folder whose user folder holds the given folders.
+	 *
+	 * @param array<int, Folder> $folders folder id => folder
+	 */
+	private function rootFolderWith(array $folders): IRootFolder {
+		$prefix = '/' . self::USER . '/files';
+		$userFolder = $this->createStub(Folder::class);
+		$userFolder->method('get')->willReturnCallback(
+			static function (string $path) use ($folders, $prefix): Folder {
+				foreach ($folders as $folder) {
+					if ($folder->getPath() === $prefix . '/' . trim($path, '/')) {
+						return $folder;
+					}
+				}
+				throw new NotFoundException();
+			},
+		);
+		$userFolder->method('getFirstNodeById')->willReturnCallback(
+			static fn (int $id): ?Folder => $folders[$id] ?? null,
+		);
+		$userFolder->method('getRelativePath')->willReturnCallback(
+			static fn (string $path): ?string => substr($path, strlen($prefix)),
+		);
+		$root = $this->createStub(IRootFolder::class);
+		$root->method('getUserFolder')->willReturn($userFolder);
+		return $root;
 	}
 
 	/**
 	 * @return array<string, mixed> the settings as they are stored
 	 */
-	private function save(array $settings): array {
+	private function save(array $settings, ?IRootFolder $rootFolder = null): array {
 		$config = $this->createMock(IUserConfig::class);
 		$saved = '';
 		$config->method('setValueString')->willReturnCallback(
@@ -31,7 +85,12 @@ class SettingsServiceTest extends TestCase {
 			},
 		);
 		$config->method('getValueString')->willReturnCallback(static fn (): string => $saved);
-		(new SettingsService($config, $this->createStub(IAppConfig::class)))->setUserSettings(self::USER, $settings);
+		$service = new SettingsService(
+			$config,
+			$this->createStub(IAppConfig::class),
+			$rootFolder ?? $this->emptyRootFolder(),
+		);
+		$service->setUserSettings(self::USER, $settings);
 		return json_decode($saved, true) ?? [];
 	}
 
@@ -52,7 +111,8 @@ class SettingsServiceTest extends TestCase {
 		$appConfig->method('getValueString')->willReturnCallback(
 			fn (string $app, string $key): string => $key === 'core_options' ? $saved : '',
 		);
-		(new SettingsService($this->createStub(IUserConfig::class), $appConfig))->setInstanceDefaults($settings);
+		(new SettingsService($this->createStub(IUserConfig::class), $appConfig, $this->emptyRootFolder()))
+			->setInstanceDefaults($settings);
 		return json_decode($saved, true) ?? [];
 	}
 
@@ -74,7 +134,7 @@ class SettingsServiceTest extends TestCase {
 				return $saved[$key] ?? '';
 			},
 		);
-		$service = new SettingsService($this->createStub(IUserConfig::class), $appConfig);
+		$service = new SettingsService($this->createStub(IUserConfig::class), $appConfig, $this->emptyRootFolder());
 		$service->setInstanceDefaults($settings);
 		return $service->getInstanceDefaults();
 	}
@@ -131,6 +191,67 @@ class SettingsServiceTest extends TestCase {
 	public function testTheLibraryFolderCannotBeEmptied(): void {
 		$saved = $this->save(['library_folder' => '']);
 		$this->assertArrayNotHasKey('library_folder', $saved);
+	}
+
+	public function testAFolderThatExistsIsRememberedByItsId(): void {
+		$root = $this->rootFolderWith([42 => $this->folderNode(42, '/Games')]);
+		$saved = $this->save(['library_folder' => '/Games'], $root);
+		$this->assertSame('/Games', $saved['library_folder']);
+		$this->assertSame(42, $saved['library_folder_id']);
+	}
+
+	public function testAFolderThatDoesNotExistYetIsStoredAsAPathOnly(): void {
+		$saved = $this->save(['library_folder' => '/Games']);
+		$this->assertSame('/Games', $saved['library_folder']);
+		$this->assertArrayNotHasKey('library_folder_id', $saved);
+	}
+
+	public function testTheSettingsFollowAFolderThatWasMoved(): void {
+		// The folder that was picked as /Games now lives at /Retro/Games.
+		$root = $this->rootFolderWith([42 => $this->folderNode(42, '/Retro/Games')]);
+		$stored = json_encode(['library_folder' => '/Games', 'library_folder_id' => 42]);
+		$settings = $this->service($stored, $root)->getUserSettings(self::USER);
+		$this->assertSame('/Retro/Games', $settings['library_folder']);
+	}
+
+	public function testAPathStoredBeforeIdsWereKeptIsMigratedOnRead(): void {
+		$config = $this->createMock(IUserConfig::class);
+		$stored = json_encode(['library_folder' => '/Games']);
+		$config->method('getValueString')->willReturn($stored);
+		$migrated = '';
+		$config->method('setValueString')->willReturnCallback(
+			function (string $user, string $app, string $key, string $value) use (&$migrated): bool {
+				$migrated = $value;
+				return true;
+			},
+		);
+		$root = $this->rootFolderWith([42 => $this->folderNode(42, '/Games')]);
+		$service = new SettingsService($config, $this->createStub(IAppConfig::class), $root);
+		$this->assertSame('/Games', $service->getUserSettings(self::USER)['library_folder']);
+		$this->assertSame(42, json_decode($migrated, true)['library_folder_id'] ?? null);
+	}
+
+	public function testAFolderThatIsGoneFallsBackToItsLastKnownPath(): void {
+		// Id 42 no longer resolves: the folder was deleted.
+		$stored = json_encode(['library_folder' => '/Games', 'library_folder_id' => 42]);
+		$settings = $this->service($stored, $this->emptyRootFolder())->getUserSettings(self::USER);
+		$this->assertSame('/Games', $settings['library_folder']);
+	}
+
+	public function testTheIdIsKeptOutOfTheEffectiveSettings(): void {
+		$root = $this->rootFolderWith([42 => $this->folderNode(42, '/Games')]);
+		$stored = json_encode(['library_folder' => '/Games', 'library_folder_id' => 42]);
+		$settings = $this->service($stored, $root)->getUserSettings(self::USER);
+		$this->assertArrayNotHasKey('library_folder_id', $settings);
+	}
+
+	public function testPickingADifferentFolderReplacesTheId(): void {
+		$root = $this->rootFolderWith([
+			42 => $this->folderNode(42, '/Games'),
+			7 => $this->folderNode(7, '/Roms'),
+		]);
+		$saved = $this->save(['library_folder' => '/Roms'], $root);
+		$this->assertSame(7, $saved['library_folder_id']);
 	}
 
 	public function testFastForwardRatioIsClamped(): void {

@@ -9,6 +9,10 @@ use OCA\Arcade\Controls;
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\CoreOptions;
 use OCP\Config\IUserConfig;
+use OCP\Files\Folder;
+use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
+use OCP\Files\NotPermittedException;
 use OCP\IAppConfig;
 
 class SettingsService {
@@ -42,14 +46,25 @@ class SettingsService {
 		'cache_ttl' => ['min' => 60, 'max' => 7 * 24 * 3600],
 	];
 
-	/** The folder settings an administrator can set for everyone. */
-	public const INSTANCE_DEFAULTS = [
+	/**
+	 * The settings that point at a folder. A user's choice is remembered
+	 * by the id of the folder, so that moving or renaming it does not
+	 * lose the configuration; the path is kept alongside as a fallback.
+	 */
+	public const FOLDER_SETTINGS = [
 		'library_folder',
 		'thumbnails_folder',
 		'screenshots_folder',
 		'saves_folder',
 		'system_folder',
 	];
+
+	/**
+	 * The folder settings an administrator can set for everyone. These
+	 * stay paths: a folder id belongs to one user's storage, while an
+	 * instance default has to hold for every user.
+	 */
+	public const INSTANCE_DEFAULTS = self::FOLDER_SETTINGS;
 
 	/**
 	 * Settings are read on nearly every request, sometimes several times.
@@ -62,6 +77,7 @@ class SettingsService {
 	public function __construct(
 		private IUserConfig $userConfig,
 		private IAppConfig $appConfig,
+		private IRootFolder $rootFolder,
 	) {
 	}
 
@@ -235,7 +251,87 @@ class SettingsService {
 		if (!is_array($settings)) {
 			return $defaults;
 		}
-		return array_merge($defaults, $this->sanitize($settings));
+		// The folders are looked up by their ids, so the settings follow
+		// them when they are moved or renamed. Anything learned -- a new
+		// path, or the id of a folder that was only stored as a path
+		// before ids were kept -- is written back right away.
+		$resolved = $this->resolveFolders($userId, $settings);
+		if ($resolved !== $settings) {
+			$this->userConfig->setValueString($userId, Application::APP_ID, 'settings', json_encode($resolved));
+		}
+		return array_merge($defaults, $this->sanitize($resolved));
+	}
+
+	/**
+	 * True up the folder settings against the file cache: a stored id
+	 * wins and hands back the current path of its folder, a path without
+	 * an id (as stored before ids were kept, or set by hand) is linked
+	 * to the id of whatever folder lives there, and an id whose folder
+	 * is gone is dropped, leaving the path as it was.
+	 *
+	 * @param array<string, mixed> $settings
+	 * @return array<string, mixed>
+	 */
+	private function resolveFolders(string $userId, array $settings): array {
+		$userFolder = $this->userFolder($userId);
+		if ($userFolder === null) {
+			return $settings;
+		}
+		foreach (self::FOLDER_SETTINGS as $key) {
+			$idKey = $key . '_id';
+			$id = isset($settings[$idKey]) && is_numeric($settings[$idKey]) ? (int)$settings[$idKey] : 0;
+			if ($id > 0) {
+				$path = $this->folderPath($userFolder, $id);
+				if ($path !== null) {
+					$settings[$key] = $path;
+					$settings[$idKey] = $id;
+					continue;
+				}
+				// The folder is gone. The path stays as a fallback: if a
+				// folder turns up there again -- restored from the trash,
+				// say -- it is linked to it below or on a later read.
+			}
+			unset($settings[$idKey]);
+			if (isset($settings[$key]) && is_string($settings[$key]) && $settings[$key] !== '') {
+				$folderId = $this->folderId($userFolder, $settings[$key]);
+				if ($folderId !== null) {
+					$settings[$idKey] = $folderId;
+				}
+			}
+		}
+		return $settings;
+	}
+
+	private function userFolder(string $userId): ?Folder {
+		try {
+			return $this->rootFolder->getUserFolder($userId);
+		} catch (\Exception) {
+			return null;
+		}
+	}
+
+	/** The current path of a folder, relative to the user folder. */
+	private function folderPath(Folder $userFolder, int $id): ?string {
+		$node = $userFolder->getFirstNodeById($id);
+		if (!$node instanceof Folder) {
+			return null;
+		}
+		$path = $userFolder->getRelativePath($node->getPath());
+		if ($path === null) {
+			return null;
+		}
+		$path = '/' . trim($path, '/');
+		return $path === '/' ? null : $path;
+	}
+
+	/** The id of the folder at a path relative to the user folder. */
+	private function folderId(Folder $userFolder, string $path): ?int {
+		try {
+			$node = $userFolder->get($path);
+		} catch (NotFoundException|NotPermittedException) {
+			return null;
+		}
+		return $node instanceof Folder ? $node->getId() : null;
 	}
 
 	/**
@@ -251,6 +347,9 @@ class SettingsService {
 		foreach (array_keys(self::INSTANCE_ONLY) as $key) {
 			unset($sanitized[$key]);
 		}
+		// A folder handed in as a path is remembered by its id as well,
+		// so the setting follows the folder if it moves.
+		$sanitized = $this->resolveFolders($userId, $sanitized);
 		$this->userConfig->setValueString($userId, Application::APP_ID, 'settings', json_encode($sanitized));
 		unset($this->settings[$userId]);
 		return $this->getUserSettings($userId);
@@ -305,7 +404,7 @@ class SettingsService {
 		}
 		// An empty folder means the feature is disabled; the library folder
 		// always has one.
-		foreach (['library_folder', 'thumbnails_folder', 'screenshots_folder', 'saves_folder', 'system_folder'] as $key) {
+		foreach (self::FOLDER_SETTINGS as $key) {
 			if (!array_key_exists($key, $settings) || !is_string($settings[$key])) {
 				continue;
 			}
