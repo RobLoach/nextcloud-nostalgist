@@ -9,11 +9,13 @@ use OCA\Arcade\BackgroundJob\RefreshMetadata;
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\Listener\CleanupListener;
 use OCA\Arcade\Listener\CSPListener;
+use OCA\Arcade\Listener\LoadSidebarListener;
 use OCA\Arcade\Listener\LoadViewerListener;
 use OCA\Arcade\Listener\MetadataListener;
 use OCA\Arcade\Preview\RomPreview;
 use OCA\Arcade\Settings\DeclarativeAdmin;
 use OCA\Arcade\SetupChecks\ArcadeSetupCheck;
+use OCA\Files\Event\LoadSidebar;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -50,6 +52,10 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(UserDeletedEvent::class, CleanupListener::class);
 		if (class_exists(LoadViewer::class)) {
 			$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
+		}
+		// What the app knows about a ROM, as a tab of the Files sidebar.
+		if (class_exists(LoadSidebar::class)) {
+			$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		}
 		// What is true of the ROM itself is filed with the file.
 		$context->registerEventListener(MetadataLiveEvent::class, MetadataListener::class);
