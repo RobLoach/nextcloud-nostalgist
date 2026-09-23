@@ -72,6 +72,31 @@ class PlayMapper extends QBMapper {
 	}
 
 	/**
+	 * What every user played, all their games added up, for the status
+	 * report.
+	 *
+	 * @return array<string, array{plays: int, seconds: int}> by user id
+	 */
+	public function totalsByUser(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('user_id')
+			->selectAlias($qb->func()->sum('plays'), 'plays')
+			->selectAlias($qb->func()->sum('seconds'), 'seconds')
+			->from($this->getTableName())
+			->groupBy('user_id');
+		$result = $qb->executeQuery();
+		$totals = [];
+		while (($row = $result->fetch()) !== false) {
+			$totals[(string)$row['user_id']] = [
+				'plays' => (int)$row['plays'],
+				'seconds' => (int)$row['seconds'],
+			];
+		}
+		$result->closeCursor();
+		return $totals;
+	}
+
+	/**
 	 * A game was started: one more play, and it moves to the front.
 	 */
 	public function recordPlay(string $userId, int $fileId, int $time): void {

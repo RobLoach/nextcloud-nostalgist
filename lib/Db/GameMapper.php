@@ -65,6 +65,26 @@ class GameMapper extends QBMapper {
 	}
 
 	/**
+	 * How many games each user has saves for, for the status report.
+	 *
+	 * @return array<string, int> user id => games
+	 */
+	public function countsByUser(): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('user_id')
+			->selectAlias($qb->func()->count('game_key'), 'games')
+			->from($this->getTableName())
+			->groupBy('user_id');
+		$result = $qb->executeQuery();
+		$counts = [];
+		while (($row = $result->fetch()) !== false) {
+			$counts[(string)$row['user_id']] = (int)$row['games'];
+		}
+		$result->closeCursor();
+		return $counts;
+	}
+
+	/**
 	 * Note where a game is now and what it hashes to, replacing what was
 	 * noted before.
 	 */
