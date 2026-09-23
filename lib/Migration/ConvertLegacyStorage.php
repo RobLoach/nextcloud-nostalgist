@@ -302,10 +302,12 @@ class ConvertLegacyStorage implements IRepairStep {
 		$userIds = array_unique([...array_keys($stats), ...array_keys($recent)]);
 		foreach ($userIds as $userId) {
 			$userId = (string)$userId;
+			$userStats = $stats[$userId] ?? null;
+			$userRecent = $recent[$userId] ?? null;
 			$this->importPlays(
 				$userId,
-				is_string($stats[$userId] ?? null) ? $stats[$userId] : '',
-				is_string($recent[$userId] ?? null) ? $recent[$userId] : '',
+				is_string($userStats) ? $userStats : '',
+				is_string($userRecent) ? $userRecent : '',
 			);
 			$this->userConfig->deleteUserConfig($userId, Application::APP_ID, 'stats');
 			$this->userConfig->deleteUserConfig($userId, Application::APP_ID, 'recent');

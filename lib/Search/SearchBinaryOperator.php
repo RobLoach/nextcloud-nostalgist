@@ -55,11 +55,19 @@ class SearchBinaryOperator implements ISearchBinaryOperator {
 	/**
 	 * The server's query optimizer tells clauses apart by their string
 	 * form, casting without asking, so the form matches the server's own.
+	 * An operator of somebody else's class without a string form is named
+	 * rather than crashed on.
 	 */
 	public function __toString(): string {
+		$parts = array_map(
+			static fn (ISearchOperator $argument): string => $argument instanceof \Stringable
+				? (string)$argument
+				: get_class($argument),
+			$this->arguments,
+		);
 		if ($this->type === ISearchBinaryOperator::OPERATOR_NOT) {
-			return '(not ' . $this->arguments[0] . ')';
+			return '(not ' . ($parts[0] ?? '') . ')';
 		}
-		return '(' . implode(' ' . $this->type . ' ', $this->arguments) . ')';
+		return '(' . implode(' ' . $this->type . ' ', $parts) . ')';
 	}
 }
