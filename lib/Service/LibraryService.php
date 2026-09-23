@@ -7,8 +7,14 @@ namespace OCA\Arcade\Service;
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\CoreMap;
 use OCA\Arcade\Listener\MetadataListener;
+use OCA\Arcade\Search\SearchBinaryOperator;
+use OCA\Arcade\Search\SearchComparison;
+use OCA\Arcade\Search\SearchQuery;
 use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
+use OCP\Files\Search\ISearchBinaryOperator;
+use OCP\Files\Search\ISearchComparison;
+use OCP\Files\Search\ISearchQuery;
 use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
 use OCP\SystemTag\ISystemTagManager;
@@ -18,9 +24,10 @@ use OCP\SystemTag\ISystemTagObjectMapper;
  * Finds the games of a library folder, and puts them in the order and on
  * the page that was asked for.
  *
- * Scanning walks the whole folder, so the result is cached against the etag
- * of the folder: Nextcloud moves that along whenever anything inside
- * changes, which makes the cache correct without a lifetime to guess at.
+ * Scanning is one query against the file cache, and the result is cached
+ * against the etag of the folder: Nextcloud moves that along whenever
+ * anything inside changes, which makes the cache correct without a
+ * lifetime to guess at.
  */
 class LibraryService {
 	/**
@@ -32,7 +39,7 @@ class LibraryService {
 	public const MAX_DEPTH = 6;
 	public const CACHE_TTL = 24 * 3600;
 	/** Bumped when the shape of a cached entry changes. */
-	private const CACHE_VERSION = 5;
+	private const CACHE_VERSION = 6;
 	/**
 	 * Ids asked after in one query. Oracle refuses a list of more than
 	 * a thousand, so a big library is asked about in chunks.
@@ -222,8 +229,8 @@ class LibraryService {
 			(string)($settings['max_depth'] ?? self::MAX_DEPTH),
 		]);
 		if (!$refresh) {
-			$cached = $cache->get($key);
-			if (is_array($cached)) {
+			$cached = $this->inflate($cache->get($key));
+			if ($cached !== null) {
 				return $cached;
 			}
 		}
@@ -236,14 +243,67 @@ class LibraryService {
 			'games' => (int)($settings['max_games'] ?? self::MAX_GAMES),
 			'depth' => (int)($settings['max_depth'] ?? self::MAX_DEPTH),
 		];
-		$this->findRoms($folder, $userFolder, $extensionMap, $games, 0, [], $limits);
+		$this->findRoms($folder, $userFolder, $extensionMap, $games, $limits);
 		$this->addWhatWasRead($games);
 		$this->addThumbnails($games, $userFolder, $settings['thumbnails_folder'], $folderPath);
 
-		// Only what the list draws is worth keeping: a big library would
-		// otherwise weigh on the memory cache of small instances.
-		$cache->set($key, $games, (int)($settings['cache_ttl'] ?? self::CACHE_TTL));
+		// Only what the list draws is worth keeping, and it is kept small:
+		// memcached drops anything over a megabyte without a word, and a
+		// library that large would rescan on every request without noticing.
+		$cache->set($key, $this->deflate($games), (int)($settings['cache_ttl'] ?? self::CACHE_TTL));
 		return $games;
+	}
+
+	/**
+	 * The games as they are cached: without what a line of PHP can put
+	 * back, and gzipped, so five thousand of them stay well under the
+	 * megabyte a memcached entry is allowed.
+	 *
+	 * @param list<array<string, mixed>> $games
+	 */
+	private function deflate(array $games): mixed {
+		$lean = array_map(static function (array $game): array {
+			// The basename is the last segment of the path.
+			unset($game['basename']);
+			return $game;
+		}, $games);
+		$encoded = json_encode($lean);
+		$compressed = $encoded === false ? false : gzcompress($encoded, 6);
+		// A library that cannot be compressed is cached as it always was.
+		return $compressed === false ? $games : $compressed;
+	}
+
+	/**
+	 * A cached entry back into games, whichever way it was stored: gzipped
+	 * JSON from deflate(), or a plain array from before it existed or from
+	 * a deflate() that could not compress.
+	 *
+	 * @return list<array<string, mixed>>|null null when there is no usable entry
+	 */
+	private function inflate(mixed $cached): ?array {
+		if (is_string($cached)) {
+			$encoded = @gzuncompress($cached);
+			$cached = json_decode($encoded === false ? $cached : $encoded, true);
+		}
+		if (!is_array($cached)) {
+			return null;
+		}
+		foreach ($cached as &$game) {
+			if (!is_array($game) || !isset($game['path'])) {
+				return null;
+			}
+			if (!isset($game['basename'])) {
+				$slash = strrpos($game['path'], '/');
+				// Slotted back where the scan put it, so a cache hit is the
+				// same response byte for byte.
+				$game = array_merge(
+					['id' => $game['id'] ?? 0, 'path' => $game['path']],
+					['basename' => $slash === false ? $game['path'] : substr($game['path'], $slash + 1)],
+					$game,
+				);
+			}
+		}
+		return array_values($cached);
 	}
 
 	private function folderEtag(Folder $userFolder, string $path): string {
@@ -386,9 +446,12 @@ class LibraryService {
 	}
 
 	/**
+	 * One query against the file cache finds every ROM under the library,
+	 * however deep it goes and whatever storage a folder of it is mounted
+	 * from -- where walking the folders cost a query for each one of them.
+	 *
 	 * @param array<string, string> $extensionMap extension => system id
 	 * @param list<array{path: string, basename: string, system: string}> $games
-	 * @param list<string> $parents folder names between the library root and here
 	 * @param array{games: int, depth: int} $limits how far this scan goes
 	 */
 	private function findRoms(
@@ -396,27 +459,32 @@ class LibraryService {
 		Folder $userFolder,
 		array $extensionMap,
 		array &$games,
-		int $depth,
-		array $parents,
 		array $limits,
 	): void {
-		if ($depth > $limits['depth'] || count($games) >= $limits['games']) {
-			return;
-		}
-		foreach ($folder->getDirectoryListing() as $node) {
+		$nodes = $folder->search($this->romQuery($extensionMap));
+		// The database answers in whatever order suits it; the walk this
+		// replaces went folder by folder. Sorting by path keeps the scan
+		// deterministic, so a library over max_games always keeps the same
+		// games rather than a different slice each time.
+		usort($nodes, static fn ($a, $b): int => strcmp($a->getPath(), $b->getPath()));
+
+		foreach ($nodes as $node) {
 			if (count($games) >= $limits['games']) {
 				return;
 			}
+			// A folder named like a ROM matches on its name, but is no game.
 			if ($node instanceof Folder) {
-				$this->findRoms(
-					$node,
-					$userFolder,
-					$extensionMap,
-					$games,
-					$depth + 1,
-					[...$parents, $node->getName()],
-					$limits,
-				);
+				continue;
+			}
+			$relative = $folder->getRelativePath($node->getPath());
+			if ($relative === null) {
+				continue;
+			}
+			// The folder names between the library root and the file, for
+			// how deep it sits and for what shelf it sits on.
+			$parents = explode('/', trim($relative, '/'));
+			array_pop($parents);
+			if (count($parents) > $limits['depth']) {
 				continue;
 			}
 			$extension = strtolower(pathinfo($node->getName(), PATHINFO_EXTENSION));
@@ -449,5 +517,33 @@ class LibraryService {
 				'mtime' => $node->getMTime(),
 			];
 		}
+	}
+
+	/**
+	 * What a ROM looks like to the file cache: one of the mimetypes the app
+	 * registers, or -- for files uploaded before the app was installed and
+	 * never run through occ maintenance:mimetype:update-db -- a name ending
+	 * in one of the extensions those mimetypes are registered for. Either
+	 * way it is the extension that decides above, so nothing shows up or
+	 * goes missing over what the mimetype column happens to say.
+	 *
+	 * The system a game belongs to is not asked of the database: the
+	 * arcade-system metadata is indexed and the search interfaces do take
+	 * metadata comparisons, but it is only written once a file has been
+	 * through the metadata events, so games uploaded before the app -- the
+	 * very ones the extension clauses are here for -- would vanish from a
+	 * filtered page. The scan is cached whole and filtered in PHP instead.
+	 *
+	 * @param array<string, string> $extensionMap extension => system id
+	 */
+	private function romQuery(array $extensionMap): ISearchQuery {
+		$clauses = [];
+		foreach (array_unique(array_values(CoreMap::extensionMimeMap())) as $mime) {
+			$clauses[] = new SearchComparison(ISearchComparison::COMPARE_EQUAL, 'mimetype', $mime);
+		}
+		foreach (array_keys($extensionMap) as $extension) {
+			$clauses[] = new SearchComparison(ISearchComparison::COMPARE_LIKE, 'name', '%.' . $extension);
+		}
+		return new SearchQuery(new SearchBinaryOperator(ISearchBinaryOperator::OPERATOR_OR, $clauses));
 	}
 }
