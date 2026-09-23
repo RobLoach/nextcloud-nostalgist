@@ -12,6 +12,7 @@ use OCA\Arcade\Listener\CSPListener;
 use OCA\Arcade\Listener\LoadViewerListener;
 use OCA\Arcade\Listener\MetadataListener;
 use OCA\Arcade\Preview\RomPreview;
+use OCA\Arcade\Settings\DeclarativeAdmin;
 use OCA\Arcade\SetupChecks\ArcadeSetupCheck;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
@@ -59,6 +60,9 @@ class Application extends App implements IBootstrap {
 		// Games are only recognized by background jobs, so a server that
 		// never runs them is told so where an administrator will look.
 		$context->registerSetupCheck(ArcadeSetupCheck::class);
+		// The instance-only scalars are a form the server itself renders
+		// and saves; the app only says what they are.
+		$context->registerDeclarativeSettings(DeclarativeAdmin::class);
 	}
 
 	public function boot(IBootContext $context): void {
