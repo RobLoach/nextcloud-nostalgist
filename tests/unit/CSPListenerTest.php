@@ -8,6 +8,7 @@ use OCA\Arcade\Listener\CSPListener;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\EmptyContentSecurityPolicy;
 use OCP\EventDispatcher\Event;
+use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use OCP\Security\CSP\AddContentSecurityPolicyEvent;
@@ -21,12 +22,15 @@ use PHPUnit\Framework\TestCase;
 class CSPListenerTest extends TestCase {
 	private IUserSession&MockObject $userSession;
 	private IAppManager&MockObject $appManager;
+	private IRequest&MockObject $request;
 	private CSPListener $listener;
 
 	protected function setUp(): void {
 		$this->userSession = $this->createMock(IUserSession::class);
 		$this->appManager = $this->createMock(IAppManager::class);
-		$this->listener = new CSPListener($this->userSession, $this->appManager);
+		$this->request = $this->createMock(IRequest::class);
+		$this->request->method('getPathInfo')->willReturn('/apps/files');
+		$this->listener = new CSPListener($this->userSession, $this->appManager, $this->request);
 	}
 
 	/** The event's constructor wants OC internals, so it is mocked whole. */
@@ -56,8 +60,8 @@ class CSPListenerTest extends TestCase {
 	}
 
 	public function testNobodyLoggedInGetsNoPolicy(): void {
-		// The login page and public share pages: the app has no player on
-		// unauthenticated pages today, so they keep the default policy.
+		// The login page and every other page without a user keep the
+		// default policy.
 		$this->userSession->method('getUser')->willReturn(null);
 		$this->appManager->expects($this->never())->method('isEnabledForUser');
 
@@ -65,6 +69,22 @@ class CSPListenerTest extends TestCase {
 		$event->expects($this->never())->method('addPolicy');
 
 		$this->listener->handle($event);
+	}
+
+	public function testASharePagePlaysForAnonymousVisitors(): void {
+		// A game shared by link opens in the Viewer without a login, so the
+		// share page keeps the allowances the emulator needs.
+		$this->userSession->method('getUser')->willReturn(null);
+		$request = $this->createMock(IRequest::class);
+		$request->method('getPathInfo')->willReturn('/s/AbCdEfGh');
+		$listener = new CSPListener($this->userSession, $this->appManager, $request);
+
+		$event = $this->event();
+		$event->expects($this->once())
+			->method('addPolicy')
+			->with($this->isInstanceOf(EmptyContentSecurityPolicy::class));
+
+		$listener->handle($event);
 	}
 
 	public function testAUserWithoutTheAppGetsNoPolicy(): void {

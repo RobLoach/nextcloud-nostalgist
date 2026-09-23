@@ -9,6 +9,7 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Http\EmptyContentSecurityPolicy;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\IRequest;
 use OCP\IUserSession;
 use OCP\Security\CSP\AddContentSecurityPolicyEvent;
 
@@ -29,6 +30,7 @@ class CSPListener implements IEventListener {
 	public function __construct(
 		private IUserSession $userSession,
 		private IAppManager $appManager,
+		private IRequest $request,
 	) {
 	}
 
@@ -36,17 +38,18 @@ class CSPListener implements IEventListener {
 		if (!$event instanceof AddContentSecurityPolicyEvent) {
 			return;
 		}
-		// The app offers no player on unauthenticated pages, so the login
-		// page and public share pages keep the default policy. A future
-		// public-share player (the Viewer does fire on share links, and the
-		// viewer component already takes a `source` URL for them) would have
-		// to revisit this guard, or those games will not start.
 		$user = $this->userSession->getUser();
 		if ($user === null) {
-			return;
-		}
-		// "Enable app for specific groups" is a promise the policy keeps too.
-		if (!$this->appManager->isEnabledForUser(Application::APP_ID, $user)) {
+			// A game shared by link plays for anonymous visitors too -- the
+			// Viewer fires on share pages and the player takes the share's
+			// own URL as its source -- so those pages keep the allowances.
+			// Everything else without a user, the login page above all,
+			// keeps the default policy.
+			if (!$this->isPublicSharePage()) {
+				return;
+			}
+		} elseif (!$this->appManager->isEnabledForUser(Application::APP_ID, $user)) {
+			// "Enable app for specific groups" is a promise the policy keeps too.
 			return;
 		}
 		$csp = new EmptyContentSecurityPolicy();
@@ -65,5 +68,14 @@ class CSPListener implements IEventListener {
 		$csp->addAllowedMediaDomain('blob:');
 		$csp->addAllowedMediaDomain('data:');
 		$event->addPolicy($csp);
+	}
+
+	/**
+	 * Whether this request renders a public share link, where the Viewer
+	 * -- and with it the player -- can open without anybody logged in.
+	 */
+	private function isPublicSharePage(): bool {
+		$path = $this->request->getPathInfo();
+		return is_string($path) && str_starts_with($path, '/s/');
 	}
 }
