@@ -86,6 +86,7 @@ class PageController extends Controller {
 		string $order = 'asc',
 		string $search = '',
 		string $system = '',
+		string $tag = '',
 		bool $refresh = false,
 	): JSONResponse {
 		if ($this->userId === null) {
@@ -108,6 +109,7 @@ class PageController extends Controller {
 				'offset' => 0,
 				'limit' => $limit,
 				'systems' => [],
+				'tags' => [],
 				'recent' => [],
 				'favorites' => [],
 				'games' => [],
@@ -115,6 +117,9 @@ class PageController extends Controller {
 		}
 
 		$games = $this->libraryService->getGames($this->userId, $folder, $userFolder, $folderPath, $settings, $refresh);
+		// The tags of the Files app change without touching the folder, so
+		// they are put on outside the cached scan.
+		$this->libraryService->addTags($games);
 		$libraryTotal = count($games);
 		if ($refresh) {
 			// Rescanning is the moment to ask what the games that were
@@ -128,8 +133,18 @@ class PageController extends Controller {
 		// them while a filter is active.
 		$systems = array_values(array_unique(array_column($games, 'system')));
 		sort($systems);
+		// Likewise the tags, but only the ones a game here actually carries:
+		// the rest of the instance's tags are no filter of this library.
+		$tags = [];
+		foreach ($games as $game) {
+			foreach ($game['tags'] ?? [] as $name) {
+				$tags[$name] = true;
+			}
+		}
+		$tags = array_map('strval', array_keys($tags));
+		sort($tags, SORT_NATURAL | SORT_FLAG_CASE);
 
-		$games = $this->libraryService->filterGames($games, $search, $system);
+		$games = $this->libraryService->filterGames($games, $search, $system, $tag);
 		$this->libraryService->sortGames($games, $sort, $order);
 
 		$limit = max(1, min(self::MAX_PAGE_SIZE, $limit));
@@ -149,6 +164,7 @@ class PageController extends Controller {
 			'limit' => $limit,
 			'truncated' => $libraryTotal >= (int)($settings['max_games'] ?? LibraryService::MAX_GAMES),
 			'systems' => $systems,
+			'tags' => $tags,
 			'recent' => $recent,
 			'favorites' => $favorites,
 			'games' => $page,
