@@ -34,10 +34,10 @@ class LibraryService {
 	/** Bumped when the shape of a cached entry changes. */
 	private const CACHE_VERSION = 5;
 	/**
-	 * File ids asked after in one query. Oracle refuses a list of more
-	 * than a thousand, so a big library is asked about in chunks.
+	 * Ids asked after in one query. Oracle refuses a list of more than
+	 * a thousand, so a big library is asked about in chunks.
 	 */
-	private const METADATA_CHUNK = 500;
+	private const ID_CHUNK = 500;
 
 	/**
 	 * The screenshots of a user, by the game they were taken of.
@@ -57,8 +57,8 @@ class LibraryService {
 	}
 
 	/**
-	 * Attach the system tags of each ROM, as the Files app has them. Two
-	 * queries for the whole library, however many games carry tags.
+	 * Attach the system tags of each ROM, as the Files app has them. A
+	 * chunk of the library per query, small enough for Oracle.
 	 *
 	 * Tags come and go without the folder changing, so they are looked up
 	 * on every request rather than kept in the cached scan.
@@ -74,7 +74,10 @@ class LibraryService {
 			return;
 		}
 		try {
-			$tagIdsByFile = $this->tagObjectMapper->getTagIdsForObjects($fileIds, 'files');
+			$tagIdsByFile = [];
+			foreach (array_chunk($fileIds, self::ID_CHUNK) as $chunk) {
+				$tagIdsByFile += $this->tagObjectMapper->getTagIdsForObjects($chunk, 'files');
+			}
 			$tagIds = [];
 			foreach ($tagIdsByFile as $ids) {
 				foreach ($ids as $tagId) {
@@ -82,8 +85,8 @@ class LibraryService {
 				}
 			}
 			$names = [];
-			if ($tagIds !== []) {
-				foreach ($this->tagManager->getTagsByIds(array_map('strval', array_keys($tagIds))) as $tag) {
+			foreach (array_chunk(array_map('strval', array_keys($tagIds)), self::ID_CHUNK) as $chunk) {
+				foreach ($this->tagManager->getTagsByIds($chunk) as $tag) {
 					// Tags an administrator keeps out of sight in the Files
 					// app stay out of sight here too.
 					if ($tag->isUserVisible()) {
@@ -366,7 +369,7 @@ class LibraryService {
 		}
 		$known = [];
 		try {
-			foreach (array_chunk($ids, self::METADATA_CHUNK) as $chunk) {
+			foreach (array_chunk($ids, self::ID_CHUNK) as $chunk) {
 				foreach ($this->metadataManager->getMetadataForFiles($chunk) as $id => $metadata) {
 					$known[(int)$id] = [
 						'title' => $metadata->getString(MetadataListener::TITLE),
