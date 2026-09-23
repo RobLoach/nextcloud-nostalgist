@@ -59,6 +59,7 @@ Arcade runs the RetroArch libretro cores in the browser, so nothing is uploaded 
 		<command>OCA\Arcade\Command\Cleanup</command>
 		<command>OCA\Arcade\Command\Uninstall</command>
 		<command>OCA\Arcade\Command\Bios</command>
+		<command>OCA\Arcade\Command\Status</command>
 	</commands>
 	<settings>
 		<admin>OCA\Arcade\Settings\Admin</admin>
