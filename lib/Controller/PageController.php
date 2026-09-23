@@ -101,7 +101,7 @@ class PageController extends Controller {
 			$folder = null;
 		}
 		if (!$folder instanceof Folder) {
-			return new JSONResponse([
+			return $this->respond([
 				'folder' => $folderPath,
 				'exists' => false,
 				'total' => 0,
@@ -155,7 +155,7 @@ class PageController extends Controller {
 		$page = array_slice($games, $offset, $limit);
 		$this->libraryService->addFallbackImages($this->userId, $userFolder, $settings, $page, $recent, $favorites);
 
-		return new JSONResponse([
+		return $this->respond([
 			'folder' => $folderPath,
 			'exists' => true,
 			'total' => count($games),
@@ -169,6 +169,66 @@ class PageController extends Controller {
 			'favorites' => $favorites,
 			'games' => $page,
 		]);
+	}
+
+	/**
+	 * The listing, with an ETag so a browser that already holds it is told
+	 * so in a 304 instead of being sent it again.
+	 *
+	 * The ETag is a hash of what is about to be sent, which by construction
+	 * covers everything the response depends on: the library and thumbnails
+	 * folders (through the cached scan), the query parameters, and the
+	 * parts that move without the folder changing -- tags, favorites, the
+	 * recently played and their stats, and the fallback images. A 304 is
+	 * therefore only given when the full payload would be identical.
+	 *
+	 * @param array<string, mixed> $payload
+	 */
+	private function respond(array $payload): JSONResponse {
+		$encoded = json_encode($payload);
+		if ($encoded === false) {
+			// Nothing to hash; send the payload the way it always went.
+			return new JSONResponse($payload);
+		}
+		$etag = md5($encoded);
+		if ($this->clientHasCurrent($etag)) {
+			$response = new JSONResponse([], Http::STATUS_NOT_MODIFIED);
+		} else {
+			$response = new JSONResponse($payload);
+		}
+		$response->setETag($etag);
+		// The default Cache-Control says no-store, under which a browser
+		// never asks "has it changed?". no-cache lets it keep a copy as
+		// long as it revalidates with If-None-Match before showing it.
+		$response->addHeader('Cache-Control', 'no-cache, must-revalidate');
+		return $response;
+	}
+
+	/**
+	 * Whether the If-None-Match of the request already names this ETag.
+	 *
+	 * The AppFramework compares them too when writing the status line, but
+	 * that lives outside the public API, so it is not left to chance here.
+	 */
+	private function clientHasCurrent(string $etag): bool {
+		$header = trim($this->request->getHeader('If-None-Match'));
+		if ($header === '') {
+			return false;
+		}
+		if ($header === '*') {
+			return true;
+		}
+		foreach (explode(',', $header) as $candidate) {
+			$candidate = trim($candidate);
+			// A weak comparison is enough for a GET: same bytes, same page.
+			if (str_starts_with($candidate, 'W/')) {
+				$candidate = substr($candidate, 2);
+			}
+			if (trim($candidate, '"') === $etag) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
