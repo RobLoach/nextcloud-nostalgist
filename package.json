@@ -3,22 +3,29 @@
   "version": "0.38.0",
   "license": "AGPL-3.0-or-later",
   "engines": {
-    "node": "^22.0.0",
-    "npm": "^10.0.0"
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
-    "build": "NODE_ENV=production webpack --config webpack.js --progress",
+    "build": "vite build",
     "cores": "mkdir -p img/cores && for core in fceumm snes9x gambatte mgba genesis_plus_gx picodrive mednafen_pce_fast handy mednafen_ngp mednafen_wswan mednafen_vb vecx gearcoleco; do unzip -o -q \"3rdparty/retroarch-emscripten-build/retroarch/${core}_libretro.zip\" -d img/cores; done",
-    "dev": "NODE_ENV=development webpack --config webpack.js --progress",
-    "l10n": "node build/extract-l10n.mjs",
+    "dev": "vite build --mode development",
+    "l10n:extract": "php build/translationtool.phar create-pot-files",
     "postcores": "cp 3rdparty/retroarch-emscripten-build/license img/cores/license",
     "precores": "git submodule update --init --recursive",
     "test": "npm run build",
-    "watch": "NODE_ENV=development webpack --config webpack.js --progress --watch"
+    "watch": "vite build --mode development --watch"
   },
   "browserslist": [
     "extends @nextcloud/browserslist-config"
   ],
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true,
+    "vue-demi@0.14.10": true,
+    "@parcel/watcher@2.6.0": true,
+    "core-js@3.50.0": true
+  },
   "devDependencies": {
     "@nextcloud/auth": "^2.5.2",
     "@nextcloud/browserslist-config": "^3.1.2",
@@ -26,14 +33,10 @@
     "@nextcloud/initial-state": "^2.2.0",
     "@nextcloud/l10n": "^3.4.0",
     "@nextcloud/router": "^3.0.1",
-    "@nextcloud/webpack-vue-config": "^7.0.4",
-    "nostalgist": "0.22.0"
-  },
-  "allowScripts": {
-    "@nextcloud/webpack-vue-config@7.0.4": true,
-    "@parcel/watcher@2.6.0": true,
-    "vue-demi@0.14.10": true,
-    "core-js@3.50.0": true
+    "@nextcloud/vite-config": "^2.4.0",
+    "nostalgist": "0.22.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.1"
   },
   "dependencies": {
     "@nextcloud/dialogs": "^5.3.8",

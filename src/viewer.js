@@ -82,7 +82,7 @@ const ArcadeViewer = {
 				if (!isPlayable(this.basename, this.mime)) {
 					throw new Error(t('arcade', 'Unsupported ROM type: {file}', { file: this.basename }))
 				}
-				const { startSession } = await import(/* webpackChunkName: 'player' */ './session.js')
+				const { startSession } = await import('./session.js')
 				this.stopSession = await startSession({
 					canvas: this.$refs.canvas,
 					container: this.$el,

@@ -12,8 +12,8 @@ async function pickFolder(input) {
 	// The file picker weighs more than the rest of this page put together,
 	// so it is fetched when somebody actually goes looking for a folder.
 	const [{ FilePickerType, getFilePickerBuilder }] = await Promise.all([
-		import(/* webpackChunkName: 'picker' */ '@nextcloud/dialogs'),
-		import(/* webpackChunkName: 'picker' */ '@nextcloud/dialogs/style.css'),
+		import('@nextcloud/dialogs'),
+		import('@nextcloud/dialogs/style.css'),
 	])
 	const picker = getFilePickerBuilder(t('arcade', 'Choose a folder'))
 		.setMultiSelect(false)

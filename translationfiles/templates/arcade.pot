@@ -1,574 +1,694 @@
-# Translations of the Arcade app.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Nextcloud package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
 msgid ""
 msgstr ""
+"Project-Id-Version: Nextcloud 3.14159\n"
+"Report-Msgid-Bugs-To: translations\\@example.com\n"
+"POT-Creation-Date: 2026-09-23 01:43-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/library.js
-msgid "{count} per page"
-msgstr ""
-
-#: src/library.js
-msgid "{first}–{last} of {total}"
-msgstr ""
-
-#: src/library.js
-msgid "{hours}h {minutes}m played"
-msgstr ""
-
-#: src/settings.js
-msgid "{message}, still going"
-msgstr ""
-
-#: src/library.js
-msgid "{minutes}m played"
-msgstr ""
-
-#: templates/settings.php
-msgid "10 minutes"
-msgstr ""
-
-#: templates/settings.php
-msgid "2 minutes"
-msgstr ""
-
-#: templates/settings.php
-msgid "30 seconds"
-msgstr ""
-
-#: templates/settings.php
-msgid "5 minutes"
-msgstr ""
-
-#: src/library.js
-msgid "Add to favorites"
-msgstr ""
-
-#: src/library.js
-msgid "All systems"
-msgstr ""
-
-#: lib/Settings/AdminSection.php
-#: lib/Settings/PersonalSection.php
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/Settings/AdminSection.php:24
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/Settings/PersonalSection.php:24
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/specialAppInfoFakeDummyForL10nScript.php:2
 msgid "Arcade"
 msgstr ""
 
-#: templates/settings.php
-msgid "Audio latency, raise it if the sound crackles"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:47
+msgid "Arcade background jobs"
 msgstr ""
 
-#: src/panels/states.js
-msgid "Auto — {date}"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:54
+msgid ""
+"Background jobs are set to AJAX, which only runs while someone has the web "
+"interface open. Arcade reads what a game says about itself - system, title, "
+"checksum - in background jobs, so games may stay unrecognized. Switch to "
+"cron."
 msgstr ""
 
-#: templates/settings.php
-msgid "BIOS files are read from this folder, by the name the core expects, such as colecovision.rom. Leave empty if no game needs one."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:63
+msgid ""
+"Background jobs have never run. Arcade reads what a game says about itself - "
+"system, title, checksum - in background jobs, so games stay unrecognized "
+"until they run."
 msgstr ""
 
-#: templates/admin.php
-msgid "Box art"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:70
+msgid ""
+"The last background job ran more than an hour ago. Arcade reads what a game "
+"says about itself in background jobs, so games stay unrecognized until they "
+"run again."
 msgstr ""
 
-#: templates/admin.php
-#: templates/settings.php
-msgid "Browse …"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:78
+msgid ""
+"Background jobs are running, and Arcade has work queued that will be handled "
+"by the next runs."
 msgstr ""
 
-#: templates/settings.php
-msgid "Capture gamepad and keyboard input for the whole page while playing"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:82
+msgid "Background jobs are running, and Arcade has no work waiting."
 msgstr ""
 
-#: templates/admin.php
-msgid "Checksums that arrive with an upload are always kept. Working one out means reading the whole file, in the background, once per game — on object storage that is a download of each ROM."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/lib/SetupChecks/ArcadeSetupCheck.php:94
+msgid "Arcade has jobs waiting in the queue right now."
 msgstr ""
 
-#: src/settings.js
-msgid "Choose a folder"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/specialAppInfoFakeDummyForL10nScript.php:3
+msgid "Play retro games from your files"
 msgstr ""
 
-#: templates/settings.php
-msgid "Click a key to set it, then press the one to use. A key that works a button of the controller is left to the game."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/specialAppInfoFakeDummyForL10nScript.php:4
+msgid ""
+"Play retro console games straight from your NextCloud files.\n"
+"\n"
+"Arcade runs the RetroArch libretro cores in the browser, so nothing is "
+"uploaded anywhere else. It comes with a games library with box art, save "
+"states, screenshots, SRAM and BIOS handling, touch controls, and "
+"configurable keys — all kept in folders of your own choosing."
 msgstr ""
 
-#: src/toolbar.js
-msgid "Close"
-msgstr ""
-
-#: templates/settings.php
-msgid "Configure how the Arcade retro game player behaves. Changes are saved as they are made."
-msgstr ""
-
-#: src/panels/resume.js
-msgid "Continue"
-msgstr ""
-
-#: src/panels/resume.js
-msgid "Continue from slot {slot} ({date})?"
-msgstr ""
-
-#: templates/settings.php
-msgid "Continue from the latest save when a game starts, without asking"
-msgstr ""
-
-#: templates/settings.php
-msgid "Controller"
-msgstr ""
-
-#: templates/settings.php
-msgid "Controls"
-msgstr ""
-
-#: templates/admin.php
-msgid "Core default"
-msgstr ""
-
-#: templates/admin.php
-msgid "Core options"
-msgstr ""
-
-#: src/panels/gallery.js
-msgid "Could not delete the screenshot"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Could not delete the state"
-msgstr ""
-
-#: src/library.js
-msgid "Could not load the games library."
-msgstr ""
-
-#: src/panels/states.js
-msgid "Could not load the state"
-msgstr ""
-
-#: src/settings.js
-msgid "Could not save the settings"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Could not save the state"
-msgstr ""
-
-#: src/settings.js
-msgid "Could not start looking. A thumbnails folder has to be set first."
-msgstr ""
-
-#: src/main.js
-#: src/viewer.js
-msgid "Could not start the emulator: {error}"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Could not take a screenshot"
-msgstr ""
-
-#: src/panels/gallery.js
-#: src/panels/states.js
-msgid "Delete"
-msgstr ""
-
-#: src/panels/resume.js
-msgid "Dismiss"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Fast-forward"
-msgstr ""
-
-#: templates/settings.php
-msgid "Fast-forward speed"
-msgstr ""
-
-#: src/library.js
-msgid "Favorites"
-msgstr ""
-
-#: src/library.js
-msgid "Filter by system"
-msgstr ""
-
-#: templates/admin.php
-#: templates/settings.php
-msgid "Folders"
-msgstr ""
-
-#: templates/admin.php
-msgid "Folders deep at most"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Fullscreen"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Game restored"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Game saved"
-msgstr ""
-
-#: templates/settings.php
-msgid "Games in this folder are listed on the Arcade page."
-msgstr ""
-
-#: src/library.js
-msgid "Games library"
-msgstr ""
-
-#: templates/admin.php
-#: templates/settings.php
-msgid "Games library folder"
-msgstr ""
-
-#: templates/admin.php
-msgid "Games listed at most"
-msgstr ""
-
-#: src/library.js
-msgid "Games per page"
-msgstr ""
-
-#: src/library.js
-msgid "Grid view"
-msgstr ""
-
-#: templates/admin.php
-msgid "How far a games library folder is walked, and how long the result is kept."
-msgstr ""
-
-#: templates/settings.php
-msgid "Images in this folder are used as game thumbnails, matched by file name: Mario.png is the thumbnail of Mario.nes. Leave empty to disable."
-msgstr ""
-
-#: templates/admin.php
-msgid "Let users look up box art on the libretro thumbnail server"
-msgstr ""
-
-#: templates/admin.php
-msgid "Library scanning"
-msgstr ""
-
-#: src/library.js
-msgid "List view"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Load"
-msgstr ""
-
-#: templates/settings.php
-msgid "Look for missing box art"
-msgstr ""
-
-#: src/settings.js
-msgid "Looking for box art in the background. It carries on without this page."
-msgstr ""
-
-#: src/panels/states.js
-msgid "made from another copy of this game"
-msgstr ""
-
-#: templates/settings.php
-msgid "Minute"
-msgstr ""
-
-#: src/library.js
-msgid "Modified"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Mute"
-msgstr ""
-
-#: src/library.js
-msgid "Name"
-msgstr ""
-
-#: templates/settings.php
-msgid "Never"
-msgstr ""
-
-#: src/library.js
-msgid "Next"
-msgstr ""
-
-#: src/library.js
-msgid "No games found in {folder}. Upload some ROMs there, or pick another folder in the Arcade personal settings."
-msgstr ""
-
-#: src/library.js
-msgid "No games match the filters."
-msgstr ""
-
-#: src/panels/gallery.js
-msgid "No screenshots of this game yet."
-msgstr ""
-
-#: src/player.js
-msgid "No supported ROM found in the archive"
-msgstr ""
-
-#: src/library.js
-msgid "Only the first {count} games of the folder are listed."
-msgstr ""
-
-#: templates/admin.php
-msgid "Options of the emulator cores themselves. Left on \"Core default\", the core decides."
-msgstr ""
-
-#: src/toolbar.js
-msgid "Pause"
-msgstr ""
-
-#: templates/settings.php
-msgid "Pause the game while the tab is in the background"
-msgstr ""
-
-#: templates/admin.php
-msgid "Picture %s starts out shown with"
-msgstr ""
-
-#: templates/settings.php
-msgid "Picture shown for each system"
-msgstr ""
-
-#: templates/settings.php
-msgid "Pixel-perfect scaling (whole pixels, with borders)"
-msgstr ""
-
-#: src/fileaction.js
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/fileaction.js:61
 msgid "Play with Arcade"
 msgstr ""
 
-#: templates/settings.php
-msgid "Player"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:134
+msgid "ZIP archive"
 msgstr ""
 
-#: src/settings.js
-msgid "Press a key …"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:150
+msgid "{hours}h {minutes}m played"
 msgstr ""
 
-#: src/library.js
-msgid "Previous"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:151
+msgid "{minutes}m played"
 msgstr ""
 
-#: templates/settings.php
-msgid "Put the keys back as they were"
-msgstr ""
-
-#: src/library.js
-msgid "Recently played"
-msgstr ""
-
-#: src/library.js
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:247
 msgid "Remove from favorites"
 msgstr ""
 
-#: src/library.js
-msgid "Rescan the library folder"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:248
+msgid "Add to favorites"
 msgstr ""
 
-#: templates/admin.php
-msgid "Reset this core to defaults"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:345
+msgid "Name"
 msgstr ""
 
-#: src/toolbar.js
-msgid "Restart"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Restarted"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Resume"
-msgstr ""
-
-#: src/toolbar.js
-msgid "RetroArch menu"
-msgstr ""
-
-#: templates/admin.php
-msgid "ROM checksums"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Save"
-msgstr ""
-
-#: src/panels/states.js
-#: src/toolbar.js
-msgid "Save states"
-msgstr ""
-
-#: templates/settings.php
-msgid "Save states and battery saves are stored here, under the system and the game. Without a folder, a game cannot be saved at all and the player says so."
-msgstr ""
-
-#: templates/settings.php
-msgid "Save the game automatically when closing the player"
-msgstr ""
-
-#: templates/settings.php
-msgid "Save the game to the Auto slot every"
-msgstr ""
-
-#: src/settings.js
-msgid "Saved"
-msgstr ""
-
-#: templates/admin.php
-#: templates/settings.php
-msgid "Saves folder"
-msgstr ""
-
-#: src/settings.js
-msgid "Saving …"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Saving the game …"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Screenshot"
-msgstr ""
-
-#: src/toolbar.js
-msgid "Screenshot saved to {folder}"
-msgstr ""
-
-#: src/panels/gallery.js
-#: src/toolbar.js
-msgid "Screenshots"
-msgstr ""
-
-#: templates/admin.php
-#: templates/settings.php
-msgid "Screenshots folder"
-msgstr ""
-
-#: templates/settings.php
-msgid "Screenshots taken in the player are saved here, under the system. Leave empty to download them instead."
-msgstr ""
-
-#: src/library.js
-msgid "Search games"
-msgstr ""
-
-#: src/library.js
-msgid "Search games …"
-msgstr ""
-
-#: templates/admin.php
-msgid "Seconds a scan is kept"
-msgstr ""
-
-#: src/panels/gallery.js
-msgid "Set a screenshots folder in the Arcade settings to keep your screenshots."
-msgstr ""
-
-#: src/library.js
-msgid "Size"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Slot {slot} — {date}"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Slot {slot} — {date}, from an older version"
-msgstr ""
-
-#: src/panels/states.js
-msgid "Slot {slot} — empty"
-msgstr ""
-
-#: templates/settings.php
-msgid "Smooth video filtering (bilinear)"
-msgstr ""
-
-#: src/settings.js
-msgid "Starting …"
-msgstr ""
-
-#: src/panels/states.js
-msgid "State loaded from slot {slot}"
-msgstr ""
-
-#: src/panels/states.js
-msgid "State saved to slot {slot}"
-msgstr ""
-
-#: src/library.js
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:346
 msgid "System"
 msgstr ""
 
-#: templates/settings.php
-msgid "System folder"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:347
+msgid "Size"
 msgstr ""
 
-#: templates/admin.php
-msgid "System folder, for BIOS files"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:348
+msgid "Modified"
 msgstr ""
 
-#: src/library.js
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:426
+msgid "Previous"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:433
+msgid "{first}–{last} of {total}"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:441
+msgid "Next"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:448
+msgid "Games per page"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:452
+msgid "{count} per page"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:480
+msgid "Search games …"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:481
+msgid "Search games"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:496
+msgid "Filter by system"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:499
+msgid "All systems"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:523
+msgid "Filter by tag"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:526
+msgid "All tags"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:556
+msgid "Games library"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:563
+msgid "Grid view"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:564
+msgid "List view"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:565
 msgid "Table view"
 msgstr ""
 
-#: src/settings.js
-msgid "The emulator has no name for that key, try another one"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:580
+msgid "Rescan the library folder"
 msgstr ""
 
-#: templates/admin.php
-msgid "The folders users start with. Everybody can pick their own afterwards. Changes are saved as they are made."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:643
+msgid "Could not load the games library."
 msgstr ""
 
-#: src/library.js
-msgid "The games library folder {folder} does not exist. Create it, or pick another folder in the Arcade personal settings."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:689
+msgid ""
+"No games found in {folder}. Upload some ROMs there, or pick another folder "
+"in the Arcade personal settings."
 msgstr ""
 
-#: src/panels/states.js
-msgid "The ROM has changed since this state was saved, so loading it may go wrong."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:694
+msgid ""
+"The games library folder {folder} does not exist. Create it, or pick another "
+"folder in the Arcade personal settings."
 msgstr ""
 
-#: templates/admin.php
-msgid "This is the only thing the app has the server itself fetch from the internet. Turned off, the button is gone and games are shown with the pictures in your own files."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:705
+msgid "Favorites"
 msgstr ""
 
-#: src/settings.js
-msgid "This key works a button of the controller, so the game gets it instead"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:713
+msgid "Recently played"
 msgstr ""
 
-#: templates/admin.php
-#: templates/settings.php
-msgid "Thumbnails folder"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:731
+msgid "No games match the filters."
 msgstr ""
 
-#: src/toolbar.js
-msgid "Touch controls"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/library.js:749
+msgid "Only the first {count} games of the folder are listed."
 msgstr ""
 
-#: src/main.js
-#: src/player.js
-#: src/viewer.js
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/main.js:39
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/player.js:94
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/viewer.js:83
 msgid "Unsupported ROM type: {file}"
 msgstr ""
 
-#: templates/settings.php
-msgid "Volume, in decibels, 0 is as recorded"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/main.js:54
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/viewer.js:95
+msgid "Could not start the emulator: {error}"
 msgstr ""
 
-#: templates/settings.php
-msgid "Which of the pictures in your thumbnails folder a system is shown with, when it has more than one."
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:20
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:23
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:198
+msgid "Screenshots"
 msgstr ""
 
-#: templates/admin.php
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:42
+msgid "Could not delete the screenshot"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:61
+msgid ""
+"Set a screenshots folder in the Arcade settings to keep your screenshots."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:63
+msgid "No screenshots of this game yet."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:94
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/gallery.js:95
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:167
+msgid "Delete"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/resume.js:34
+msgid "Continue from slot {slot} ({date})?"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/resume.js:49
+msgid "Continue"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/resume.js:58
+msgid "Dismiss"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:20
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:23
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:113
+msgid "Save states"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:62
+msgid "Game saved"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:63
+msgid "State saved to slot {slot}"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:67
+msgid "Could not save the state"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:76
+msgid "Game restored"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:77
+msgid "State loaded from slot {slot}"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:81
+msgid "Could not load the state"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:91
+msgid "Could not delete the state"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:138
+msgid "Auto — {date}"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:140
+msgid "Slot {slot} — {date}, from an older version"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:146
+msgid "Slot {slot} — empty"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:147
+msgid "Slot {slot} — {date}"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:155
+msgid "made from another copy of this game"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:156
+msgid ""
+"The ROM has changed since this state was saved, so loading it may go wrong."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:163
+msgid "Save"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/panels/states.js:165
+msgid "Load"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/player.js:62
+msgid "No supported ROM found in the archive"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:18
+msgid "Choose a folder"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:72
+msgid "Saving …"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:82
+msgid "Saved"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:85
+msgid "Could not save the settings"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:125
+msgid "Press a key …"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:151
+msgid "The emulator has no name for that key, try another one"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:180
+msgid "This key works a button of the controller, so the game gets it instead"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:193
+msgid "Starting …"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:198
+msgid "Looking for box art in the background. It carries on without this page."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:201
+msgid "Could not start looking. A thumbnails folder has to be set first."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/settings.js:218
+msgid "{message}, still going"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:57
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:65
+msgid "Pause"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:65
+msgid "Resume"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:86
+msgid "Restart"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:88
+msgid "Restarted"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:146
+msgid "Touch controls"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:152
+msgid "Mute"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:157
+msgid "Fast-forward"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:163
+msgid "RetroArch menu"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:168
+msgid "Screenshot"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:177
+msgid "Screenshot saved to {folder}"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:189
+msgid "Could not take a screenshot"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:214
+msgid "Fullscreen"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:224
+msgid "Close"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/src/toolbar.js:228
+msgid "Saving the game …"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:16
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:107
+msgid "Folders"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:18
+msgid ""
+"The folders users start with. Everybody can pick their own afterwards. "
+"Changes are saved as they are made."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:21
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:110
+msgid "Games library folder"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:22
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:119
+msgid "Thumbnails folder"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:23
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:132
+msgid "Saves folder"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:24
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:150
+msgid "Screenshots folder"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:25
+msgid "System folder, for BIOS files"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:32
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:116
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:125
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:138
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:147
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:156
+msgid "Browse …"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:38
+msgid "Box art"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:44
+msgid "Let users look up box art on the libretro thumbnail server"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:48
+msgid ""
+"This is the only thing the app has the server itself fetch from the "
+"internet. Turned off, the button is gone and games are shown with the "
+"pictures in your own files."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:53
+msgid "ROM checksums"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:59
 msgid "Work out the checksum of a ROM the server was not given one for"
 msgstr ""
 
-#: src/library.js
-msgid "ZIP archive"
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:63
+msgid ""
+"Checksums that arrive with an upload are always kept. Working one out means "
+"reading the whole file, in the background, once per game — on object storage "
+"that is a download of each ROM."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:68
+msgid "Library scanning"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:70
+msgid ""
+"How far a games library folder is walked, and how long the result is kept."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:72
+msgid "Games listed at most"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:73
+msgid "Folders deep at most"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:74
+msgid "Seconds a scan is kept"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:88
+msgid "Core options"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:90
+msgid ""
+"Options of the emulator cores themselves. Left on \"Core default\", the core "
+"decides."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:105
+msgid "Core default"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:119
+#, php-format
+msgid "Picture %s starts out shown with"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/admin.php:134
+msgid "Reset this core to defaults"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:13
+msgid "Player"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:15
+msgid ""
+"Configure how the Arcade retro game player behaves. Changes are saved as "
+"they are made."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:17
+msgid "Smooth video filtering (bilinear)"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:18
+msgid "Capture gamepad and keyboard input for the whole page while playing"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:19
+msgid "Pixel-perfect scaling (whole pixels, with borders)"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:20
+msgid "Pause the game while the tab is in the background"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:21
+msgid "Save the game automatically when closing the player"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:22
+msgid "Continue from the latest save when a game starts, without asking"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:31
+msgid "Save the game to the Auto slot every"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:34
+msgid "Never"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:35
+msgid "30 seconds"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:36
+msgid "Minute"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:37
+msgid "2 minutes"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:38
+msgid "5 minutes"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:39
+msgid "10 minutes"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:49
+msgid "Fast-forward speed"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:56
+msgid "Volume, in decibels, 0 is as recorded"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:63
+msgid "Audio latency, raise it if the sound crackles"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:72
+msgid "Controls"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:74
+msgid ""
+"Click a key to set it, then press the one to use. A key that works a button "
+"of the controller is left to the game."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:76
+msgid "Keys"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:89
+msgid "Hot Keys"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:102
+msgid "Put the keys back as they were"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:111
+msgid "Games in this folder are listed on the Arcade page."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:120
+msgid ""
+"Images in this folder are used as game thumbnails, matched by file name: "
+"Mario.png is the thumbnail of Mario.nes. Leave empty to disable."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:127
+msgid "Look for missing box art"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:133
+msgid ""
+"Save states and battery saves are stored here, under the system and the "
+"game. Without a folder, a game cannot be saved at all and the player says so."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:141
+msgid "System folder"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:142
+msgid ""
+"BIOS files are read from this folder, by the name the core expects, such as "
+"colecovision.rom. Leave empty if no game needs one."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:151
+msgid ""
+"Screenshots taken in the player are saved here, under the system. Leave "
+"empty to download them instead."
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:161
+msgid "Picture shown for each system"
+msgstr ""
+
+#: /home/rob/workspace/project/98514b4129e140b08b99d79217952f67/.claude/worktrees/agent-adedc7237aae30ac5/templates/settings.php:164
+msgid ""
+"Which of the pictures in your thumbnails folder a system is shown with, when "
+"it has more than one."
 msgstr ""
