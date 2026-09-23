@@ -5,19 +5,19 @@
 #arcade-settings .arcade-core-options {
 	border: 1px solid var(--color-border);
 	border-radius: var(--border-radius-large);
-	margin-bottom: 8px;
+	margin-bottom: calc(var(--default-grid-baseline, 4px) * 2);
 	max-width: 500px;
 }
 
 #arcade-settings .arcade-core-options summary {
-	padding: 10px 12px;
+	padding: calc(var(--default-grid-baseline, 4px) * 2) calc(var(--default-grid-baseline, 4px) * 3);
 	cursor: pointer;
 	font-weight: bold;
 }
 
 #arcade-settings .arcade-core-options summary em {
 	font-weight: normal;
-	margin-inline-start: 6px;
+	margin-inline-start: calc(var(--default-grid-baseline, 4px) * 1.5);
 }
 
 #arcade-settings .arcade-core-options[open] summary {
@@ -25,26 +25,26 @@
 }
 
 #arcade-settings .arcade-core-options p {
-	padding: 0 12px;
+	padding: 0 calc(var(--default-grid-baseline, 4px) * 3);
 }
 
 #arcade-settings .arcade-core-options p:last-child {
-	padding-bottom: 12px;
+	padding-bottom: calc(var(--default-grid-baseline, 4px) * 3);
 }
 
 #arcade-settings .arcade-keys {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-	gap: 4px 16px;
+	gap: var(--default-grid-baseline, 4px) calc(var(--default-grid-baseline, 4px) * 4);
 	max-width: 700px;
-	margin-bottom: 12px;
+	margin-bottom: calc(var(--default-grid-baseline, 4px) * 3);
 }
 
 #arcade-settings .arcade-key {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
 }
 
 #arcade-settings .arcade-key-binding {
@@ -66,6 +66,6 @@
 #arcade-settings details.arcade-section > summary {
 	font-size: 1.1em;
 	font-weight: bold;
-	padding: 10px 0;
+	padding: calc(var(--default-grid-baseline, 4px) * 2) 0;
 	cursor: pointer;
 }
