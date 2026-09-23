@@ -32,8 +32,6 @@ class StateService {
 	public const SLOTS = 3;
 	/** The slot written when a game is closed, kept apart from the numbered ones. */
 	public const AUTO_SLOT = 0;
-	/** Where older versions listed the games a user has states for. */
-	private const GAMES_FILE = 'games.json';
 	/**
 	 * Earlier versions offered more slots. They are still listed, so what
 	 * they hold can be loaded and removed, but nothing is written to them.
@@ -57,8 +55,6 @@ class StateService {
 	 * @var array<string, array<string, Folder>>
 	 */
 	private array $gameFolders = [];
-	/** The users whose old games.json has been brought into the table. */
-	private array $importedGames = [];
 
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
@@ -93,12 +89,7 @@ class StateService {
 		if ($folder !== null) {
 			return $this->readNode($folder, $this->slotName($slot) . '.state');
 		}
-		return $this->readAppData(
-			$userId,
-			$this->fileName($this->key($userId, $romPath), $slot, 'state'),
-			$this->fileName($this->pathKey($romPath), $slot, 'state'),
-			$this->legacyFileName($userId, $romPath, $slot, 'state'),
-		);
+		return $this->readAppData($userId, $this->fileName($this->key($userId, $romPath), $slot, 'state'));
 	}
 
 	public function loadThumbnail(string $userId, string $romPath, int $slot): ?string {
@@ -106,12 +97,7 @@ class StateService {
 		if ($folder !== null) {
 			return $this->readNode($folder, $this->slotName($slot) . '.png');
 		}
-		return $this->readAppData(
-			$userId,
-			$this->fileName($this->key($userId, $romPath), $slot, 'png'),
-			$this->fileName($this->pathKey($romPath), $slot, 'png'),
-			$this->legacyFileName($userId, $romPath, $slot, 'png'),
-		);
+		return $this->readAppData($userId, $this->fileName($this->key($userId, $romPath), $slot, 'png'));
 	}
 
 	/**
@@ -140,12 +126,7 @@ class StateService {
 		if ($this->savesFolderPath($userId) !== '') {
 			return null;
 		}
-		return $this->readAppData(
-			$userId,
-			$this->sramFileName($this->key($userId, $romPath)),
-			$this->sramFileName($this->pathKey($romPath)),
-			$this->legacyKey($userId, $romPath) . '.srm',
-		);
+		return $this->readAppData($userId, $this->sramFileName($this->key($userId, $romPath)));
 	}
 
 	public function delete(string $userId, string $romPath, int $slot): bool {
@@ -155,48 +136,30 @@ class StateService {
 			return $this->deleteNode($folder, $this->slotName($slot) . '.state');
 		}
 		$key = $this->key($userId, $romPath);
-		$this->deleteAppData(
-			$userId,
-			$this->fileName($key, $slot, 'png'),
-			$this->fileName($this->pathKey($romPath), $slot, 'png'),
-			$this->legacyFileName($userId, $romPath, $slot, 'png'),
-		);
-		return $this->deleteAppData(
-			$userId,
-			$this->fileName($key, $slot, 'state'),
-			$this->fileName($this->pathKey($romPath), $slot, 'state'),
-			$this->legacyFileName($userId, $romPath, $slot, 'state'),
-		);
+		$this->deleteAppData($userId, $this->fileName($key, $slot, 'png'));
+		return $this->deleteAppData($userId, $this->fileName($key, $slot, 'state'));
 	}
 
 	/**
 	 * Drop everything kept for one game of one user, wherever it lives, for
-	 * when the game itself is deleted.
+	 * when the game itself is deleted. The registry says what the game is
+	 * filed under, so even a game whose file is already gone is found.
 	 */
 	public function deleteAllForGame(string $userId, string $romPath): void {
-		$key = $this->key($userId, $romPath);
-		$pathKey = $this->pathKey($romPath);
-		foreach ($this->slots() as $slot) {
-			$this->deleteAppData(
-				$userId,
-				$this->fileName($key, $slot, 'state'),
-				$this->fileName($pathKey, $slot, 'state'),
-				$this->legacyFileName($userId, $romPath, $slot, 'state'),
-			);
-			$this->deleteAppData(
-				$userId,
-				$this->fileName($key, $slot, 'png'),
-				$this->fileName($pathKey, $slot, 'png'),
-				$this->legacyFileName($userId, $romPath, $slot, 'png'),
-			);
+		$keys = [$this->key($userId, $romPath) => true];
+		foreach ($this->gameMapper->entriesOf($userId) as $key => $entry) {
+			if ($entry['path'] === $romPath) {
+				$keys[(string)$key] = true;
+			}
 		}
-		$this->deleteAppData(
-			$userId,
-			$this->sramFileName($key),
-			$this->sramFileName($pathKey),
-			$this->legacyKey($userId, $romPath) . '.srm',
-		);
-		$this->forgetGame($userId, $romPath);
+		foreach (array_keys($keys) as $key) {
+			foreach ($this->slots() as $slot) {
+				$this->deleteAppData($userId, $this->fileName($key, $slot, 'state'));
+				$this->deleteAppData($userId, $this->fileName($key, $slot, 'png'));
+			}
+			$this->deleteAppData($userId, $this->sramFileName($key));
+		}
+		$this->forgetKeys($userId, ...array_keys($keys));
 		// And the folder of the game in the user's own saves folder.
 		$this->getGameFolder($userId, $romPath, false)?->delete();
 	}
@@ -285,31 +248,17 @@ class StateService {
 
 	/**
 	 * The same, for the states kept in the app data, where a game is filed
-	 * under the id of its file, under the hash of its path before that, and
-	 * flat in the shared folder before that again.
+	 * under the id of its file.
 	 *
 	 * @return list<array{slot: int, size: int, mtime: int, hasThumbnail: bool}>
 	 */
 	private function listAppData(string $userId, string $romPath): array {
 		$mine = $this->namesOf($this->userStates($userId, false));
-		$legacy = $this->namesOf($this->statesRoot());
-		$keys = [$this->key($userId, $romPath), $this->pathKey($romPath)];
+		$key = $this->key($userId, $romPath);
 
 		$states = [];
 		foreach ($this->slots() as $slot) {
-			$file = null;
-			$hasThumbnail = false;
-			foreach ($keys as $key) {
-				$file = $mine[$this->fileName($key, $slot, 'state')] ?? null;
-				if ($file !== null) {
-					$hasThumbnail = isset($mine[$this->fileName($key, $slot, 'png')]);
-					break;
-				}
-			}
-			if ($file === null) {
-				$file = $legacy[$this->legacyFileName($userId, $romPath, $slot, 'state')] ?? null;
-				$hasThumbnail = isset($legacy[$this->legacyFileName($userId, $romPath, $slot, 'png')]);
-			}
+			$file = $mine[$this->fileName($key, $slot, 'state')] ?? null;
 			if ($file === null) {
 				continue;
 			}
@@ -317,7 +266,7 @@ class StateService {
 				'slot' => $slot,
 				'size' => $file->getSize(),
 				'mtime' => $file->getMTime(),
-				'hasThumbnail' => $hasThumbnail,
+				'hasThumbnail' => isset($mine[$this->fileName($key, $slot, 'png')]),
 			];
 		}
 		return $states;
@@ -357,28 +306,18 @@ class StateService {
 	 * @return array<string, array{slot: int, mtime: int}>
 	 */
 	private function appDataThumbnailIndex(string $userId, array $romPaths): array {
-		$keys = [];
-		foreach ($romPaths as $path) {
-			$keys[$path] = [$this->key($userId, $path), $this->pathKey($path)];
-		}
-		// Two listings, so looking a game up afterwards costs nothing.
+		// One listing, so looking a game up afterwards costs nothing.
 		$mtimes = [];
 		$userFolder = $this->userStates($userId, false);
 		foreach ($userFolder?->getDirectoryListing() ?? [] as $file) {
 			$mtimes[$file->getName()] = $file->getMTime();
 		}
-		$legacyMtimes = [];
-		foreach ($this->statesRoot()->getDirectoryListing() as $file) {
-			$legacyMtimes[$file->getName()] = $file->getMTime();
-		}
 
 		$found = [];
 		foreach ($romPaths as $path) {
+			$key = $this->key($userId, $path);
 			foreach ($this->slots() as $slot) {
-				$mtime = $mtimes[$this->fileName($keys[$path][0], $slot, 'png')]
-					?? $mtimes[$this->fileName($keys[$path][1], $slot, 'png')]
-					?? $legacyMtimes[$this->legacyFileName($userId, $path, $slot, 'png')]
-					?? null;
+				$mtime = $mtimes[$this->fileName($key, $slot, 'png')] ?? null;
 				if ($mtime !== null && ($found[$path]['mtime'] ?? -1) < $mtime) {
 					$found[$path] = ['slot' => $slot, 'mtime' => $mtime];
 				}
@@ -477,11 +416,6 @@ class StateService {
 		return $system === '' ? "$folder/$stem" : "$folder/$system/$stem";
 	}
 
-	/** Where they lived before the system was part of the path. */
-	private function legacyGameFolderPath(string $savesPath, string $romPath): string {
-		return trim($savesPath, '/') . '/' . pathinfo(basename($romPath), PATHINFO_FILENAME);
-	}
-
 	private function savesFolderPath(string $userId): string {
 		return $this->settingsService->getUserSettings($userId)['saves_folder'];
 	}
@@ -499,15 +433,13 @@ class StateService {
 		$userFolder = $this->rootFolder->getUserFolder($userId);
 		$path = $this->gameFolderPath($savesPath, $romPath);
 
-		foreach ([$path, $this->legacyGameFolderPath($savesPath, $romPath)] as $candidate) {
-			try {
-				$node = $userFolder->get($candidate);
-				if ($node instanceof Folder) {
-					return $node;
-				}
-			} catch (NotFoundException) {
-				// Looked for where it would be now, then where it used to be.
+		try {
+			$node = $userFolder->get($path);
+			if ($node instanceof Folder) {
+				return $node;
 			}
+		} catch (NotFoundException) {
+			// Not there yet; perhaps under the name the game had before.
 		}
 		$followed = $this->followGame($userId, $userFolder, $savesPath, $romPath, $path);
 		if ($followed !== null) {
@@ -533,25 +465,22 @@ class StateService {
 		if ($was === null || $was === $romPath) {
 			return null;
 		}
-		foreach ([$this->gameFolderPath($savesPath, $was), $this->legacyGameFolderPath($savesPath, $was)] as $old) {
-			try {
-				$node = $userFolder->get($old);
-			} catch (NotFoundException) {
-				continue;
-			}
-			if (!$node instanceof Folder) {
-				continue;
-			}
-			try {
-				if (!$userFolder->nodeExists($path) && $this->makeFolder($userFolder, dirname($path)) !== null) {
-					$node->move($userFolder->getPath() . '/' . $path);
-				}
-			} catch (\Throwable) {
-				// Keeping the folder where it is beats losing the saves.
-			}
-			return $node;
+		try {
+			$node = $userFolder->get($this->gameFolderPath($savesPath, $was));
+		} catch (NotFoundException) {
+			return null;
 		}
-		return null;
+		if (!$node instanceof Folder) {
+			return null;
+		}
+		try {
+			if (!$userFolder->nodeExists($path) && $this->makeFolder($userFolder, dirname($path)) !== null) {
+				$node->move($userFolder->getPath() . '/' . $path);
+			}
+		} catch (\Throwable) {
+			// Keeping the folder where it is beats losing the saves.
+		}
+		return $node;
 	}
 
 	/** Creates the folders of a path one level at a time. */
@@ -602,17 +531,9 @@ class StateService {
 	 * another one goes wrong in ways that look like a broken save.
 	 */
 	private function romChanged(string $userId, string $romPath): bool {
-		$was = $this->gameEntry($userId, $this->key($userId, $romPath))['md5'] ?? '';
+		$was = $this->gameMapper->entryOf($userId, $this->key($userId, $romPath))['md5'] ?? '';
 		$now = $this->checksumOf($userId, $romPath);
 		return $was !== '' && $now !== '' && $was !== $now;
-	}
-
-	/**
-	 * @return array<string, string>
-	 */
-	private function gameEntry(string $userId, string $key): array {
-		$this->importLegacyGames($userId);
-		return $this->gameMapper->entryOf($userId, $key) ?? [];
 	}
 
 	private function readAnySram(Folder $folder): ?string {
@@ -674,19 +595,13 @@ class StateService {
 	 * state whose game is gone from one whose game is merely not being played.
 	 */
 	private function rememberGame(string $userId, string $romPath, string $key, string $checksum): void {
-		$this->importLegacyGames($userId);
 		$this->gameMapper->set($userId, $key, $this->fileIdOfKey($key), $romPath, $checksum);
-	}
-
-	private function forgetGame(string $userId, string $romPath): void {
-		$this->forgetKeys($userId, $this->key($userId, $romPath), $this->pathKey($romPath));
 	}
 
 	/**
 	 * Drop what is remembered of a game, by the names it is filed under.
 	 */
 	private function forgetKeys(string $userId, string ...$keys): void {
-		$this->importLegacyGames($userId);
 		$this->gameMapper->remove($userId, ...$keys);
 	}
 
@@ -696,7 +611,6 @@ class StateService {
 	 * @return array<string, string>
 	 */
 	public function gamesOf(string $userId): array {
-		$this->importLegacyGames($userId);
 		$games = [];
 		foreach ($this->gameMapper->entriesOf($userId) as $key => $entry) {
 			if ($entry['path'] !== '') {
@@ -707,60 +621,12 @@ class StateService {
 	}
 
 	/**
-	 * The registry used to be a games.json next to the states. The first
-	 * touch of a user's registry brings it into the table, and the file
-	 * goes. An entry the table already has was written since, and stays.
-	 */
-	private function importLegacyGames(string $userId): void {
-		if (isset($this->importedGames[$userId])) {
-			return;
-		}
-		$this->importedGames[$userId] = true;
-		$folder = $this->userStates($userId, false);
-		if ($folder === null) {
-			return;
-		}
-		foreach ($this->readGames($folder) as $key => $entry) {
-			$key = (string)$key;
-			// Written as a bare path before the checksum was kept with it.
-			$path = is_array($entry) ? ($entry['path'] ?? '') : $entry;
-			$checksum = is_array($entry) ? ($entry['md5'] ?? '') : '';
-			if (!is_string($path) || $path === '' || !is_string($checksum)) {
-				continue;
-			}
-			$this->gameMapper->importEntry($userId, $key, $this->fileIdOfKey($key), $path, $checksum);
-		}
-		try {
-			if ($folder->fileExists(self::GAMES_FILE)) {
-				$folder->getFile(self::GAMES_FILE)->delete();
-			}
-		} catch (NotFoundException) {
-			// Already gone.
-		}
-	}
-
-	/**
 	 * The id of the file a key stands for: the keys are the file id as a
 	 * string, or the hash of a path for the games that never had one, and a
 	 * hash is nothing to count with.
 	 */
 	private function fileIdOfKey(string $key): int {
 		return ctype_digit($key) ? (int)$key : 0;
-	}
-
-	/**
-	 * @return array<string, mixed>
-	 */
-	private function readGames(ISimpleFolder $folder): array {
-		try {
-			if (!$folder->fileExists(self::GAMES_FILE)) {
-				return [];
-			}
-			$games = json_decode($folder->getFile(self::GAMES_FILE)->getContent(), true);
-		} catch (NotFoundException) {
-			return [];
-		}
-		return is_array($games) ? $games : [];
 	}
 
 	/**
@@ -784,7 +650,8 @@ class StateService {
 
 	/**
 	 * How many files written before the states were kept per user are left.
-	 * They cannot be told apart, so they are only ever counted.
+	 * The upgrade moved every one it could match to a user and a game; the
+	 * rest hold no record of whose they are, so they are only ever counted.
 	 */
 	public function countLegacyFiles(): int {
 		$count = 0;
@@ -796,50 +663,29 @@ class StateService {
 		return $count;
 	}
 
-	/**
-	 * The name it has now, then the names it had in older versions: first
-	 * under the hash of its path, then, before states were kept per user,
-	 * flat in the states folder.
-	 */
-	private function readAppData(string $userId, string $name, string ...$older): ?string {
+	private function readAppData(string $userId, string $name): ?string {
+		$folder = $this->userStates($userId, false);
 		try {
-			$folder = $this->userStates($userId, false);
-			foreach ([$name, ...$older] as $candidate) {
-				if ($folder !== null && $folder->fileExists($candidate)) {
-					return $folder->getFile($candidate)->getContent();
-				}
-			}
-			$legacy = $this->statesRoot();
-			$flat = $older === [] ? $name : array_pop($older);
-			if ($legacy->fileExists($flat)) {
-				return $legacy->getFile($flat)->getContent();
+			if ($folder !== null && $folder->fileExists($name)) {
+				return $folder->getFile($name)->getContent();
 			}
 		} catch (NotFoundException) {
-			return null;
+			// Gone between the look and the read.
 		}
 		return null;
 	}
 
-	private function deleteAppData(string $userId, string $name, string ...$older): bool {
-		$deleted = false;
+	private function deleteAppData(string $userId, string $name): bool {
+		$folder = $this->userStates($userId, false);
 		try {
-			$folder = $this->userStates($userId, false);
-			foreach ([$name, ...$older] as $candidate) {
-				if ($folder !== null && $folder->fileExists($candidate)) {
-					$folder->getFile($candidate)->delete();
-					$deleted = true;
-				}
-			}
-			$legacy = $this->statesRoot();
-			$flat = $older === [] ? $name : array_pop($older);
-			if ($legacy->fileExists($flat)) {
-				$legacy->getFile($flat)->delete();
-				$deleted = true;
+			if ($folder !== null && $folder->fileExists($name)) {
+				$folder->getFile($name)->delete();
+				return true;
 			}
 		} catch (NotFoundException) {
-			return $deleted;
+			// Gone between the look and the delete.
 		}
-		return $deleted;
+		return false;
 	}
 
 	private function statesRoot(): ISimpleFolder {
@@ -911,7 +757,7 @@ class StateService {
 		return $id === null ? $this->pathKey($romPath) : (string)$id;
 	}
 
-	/** What a game was filed under before the file id was used. */
+	/** What a game is filed under when its file (and so its id) is gone. */
 	private function pathKey(string $romPath): string {
 		return hash('sha256', $romPath);
 	}
@@ -922,15 +768,6 @@ class StateService {
 		} catch (\Throwable) {
 			return null;
 		}
-	}
-
-	private function legacyFileName(string $userId, string $romPath, int $slot, string $extension): string {
-		return $this->legacyKey($userId, $romPath) . '-' . $slot . '.' . $extension;
-	}
-
-	/** The names used before the states were kept in a folder per user. */
-	private function legacyKey(string $userId, string $romPath): string {
-		return hash('sha256', $userId . '|' . $romPath);
 	}
 
 	private function userKey(string $userId): string {

@@ -73,7 +73,7 @@ class Cleanup extends Command {
 		if ($legacy > 0) {
 			$output->writeln(
 				"<comment>$legacy files written before the states were kept per user are left. "
-				. 'They hold no record of whose they are, and are removed with their game as it is played.</comment>',
+				. 'They hold no record of whose they are, so they are only counted, never touched.</comment>',
 			);
 		}
 		return 0;

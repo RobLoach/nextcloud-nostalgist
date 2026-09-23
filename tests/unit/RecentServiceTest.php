@@ -6,7 +6,6 @@ namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\Db\PlayMapper;
 use OCA\Arcade\Service\RecentService;
-use OCP\Config\IUserConfig;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
@@ -18,8 +17,6 @@ use PHPUnit\Framework\TestCase;
 class RecentServiceTest extends TestCase {
 	private const USER = 'alice';
 
-	/** What is kept under the app in the user config, by key. */
-	private array $stored = [];
 	/** The rows of the plays table, by file id, as the mapper keeps them. */
 	private array $plays = [];
 	/** Stands in for the autoincrementing id, which breaks ties. */
@@ -41,22 +38,6 @@ class RecentServiceTest extends TestCase {
 		for ($i = 1; $i <= 20; $i++) {
 			$this->files["/Games/Game $i.nes"] ??= 200 + $i;
 		}
-
-		$config = $this->createStub(IUserConfig::class);
-		$config->method('setValueString')->willReturnCallback(
-			function (string $user, string $app, string $key, string $value): bool {
-				$this->stored[$key] = $value;
-				return true;
-			},
-		);
-		$config->method('getValueString')->willReturnCallback(
-			fn (string $user, string $app, string $key): string => $this->stored[$key] ?? '',
-		);
-		$config->method('deleteUserConfig')->willReturnCallback(
-			function (string $user, string $app, string $key): void {
-				unset($this->stored[$key]);
-			},
-		);
 
 		$tags = $this->createStub(ITags::class);
 		$tags->method('getFavorites')->willReturnCallback(fn (): array => array_keys($this->starred));
@@ -89,7 +70,7 @@ class RecentServiceTest extends TestCase {
 		$rootFolder = $this->createStub(IRootFolder::class);
 		$rootFolder->method('getUserFolder')->willReturn($folder);
 
-		return new RecentService($config, $tagManager, $rootFolder, $this->playMapper());
+		return new RecentService($tagManager, $rootFolder, $this->playMapper());
 	}
 
 	/**
@@ -158,11 +139,6 @@ class RecentServiceTest extends TestCase {
 	}
 
 	public function testNothingIsRememberedToStartWith(): void {
-		$this->assertSame([], $this->service()->get(self::USER));
-	}
-
-	public function testBrokenStorageIsIgnored(): void {
-		$this->stored['recent'] = 'not json';
 		$this->assertSame([], $this->service()->get(self::USER));
 	}
 
@@ -292,51 +268,4 @@ class RecentServiceTest extends TestCase {
 		$this->assertSame([], $this->starred);
 	}
 
-	public function testTheFavoritesOfOlderVersionsAreHandedToFiles(): void {
-		$this->stored['favorites'] = json_encode([
-			['path' => '/Games/Mario.nes', 'seconds' => 90, 'plays' => 3, 'time' => 1000],
-			['path' => '/Games/Gone.nes', 'seconds' => 10, 'plays' => 1, 'time' => 900],
-		]);
-
-		$service = $this->service();
-		$this->assertSame([101 => true], $service->favoriteIds(self::USER), 'the game that is still there');
-		$this->assertSame(90, $service->stats(self::USER)[101]['seconds'] ?? null);
-		$this->assertArrayNotHasKey('favorites', $this->stored, 'and the old list is gone');
-	}
-
-	// What older versions kept as JSON blobs is brought into the table.
-
-	public function testTheOldCountsAreBroughtIntoTheTableOnce(): void {
-		$this->stored['stats'] = json_encode([
-			101 => ['seconds' => 300, 'plays' => 2, 'time' => 6000],
-			102 => ['seconds' => 90, 'plays' => 1, 'time' => 5000],
-		]);
-		$this->stored['recent'] = json_encode([['id' => 101], ['id' => 102]]);
-
-		$service = $this->service();
-		$this->assertSame([101, 102], $service->get(self::USER), 'newest first, as the old list had them');
-		$this->assertSame(
-			['seconds' => 300, 'plays' => 2, 'time' => 6000],
-			$service->stats(self::USER)[101],
-		);
-		$this->assertArrayNotHasKey('stats', $this->stored, 'the old blobs are gone');
-		$this->assertArrayNotHasKey('recent', $this->stored);
-	}
-
-	public function testARecentListWithoutCountsKeepsItsOrder(): void {
-		// As a version from before the counts would have left it.
-		$this->stored['recent'] = json_encode([['id' => 103], ['id' => 104]]);
-
-		$this->assertSame([103, 104], $this->service()->get(self::USER));
-	}
-
-	public function testWhatWasCountedSinceIsNotOverwrittenByTheImport(): void {
-		$service = $this->service();
-		$service->record(self::USER, '/Games/Mario.nes');
-		// A blob that turns up late, from before the table.
-		$this->stored['stats'] = json_encode([101 => ['seconds' => 999, 'plays' => 9, 'time' => 1]]);
-
-		$service->record(self::USER, '/Games/Mario.nes');
-		$this->assertSame(2, $service->stats(self::USER)[101]['plays'], 'the table already knew better');
-	}
 }
