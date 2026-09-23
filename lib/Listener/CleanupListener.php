@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Arcade\Listener;
 
 use OCA\Arcade\CoreMap;
+use OCA\Arcade\Service\RecentService;
 use OCA\Arcade\Service\StateService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -23,6 +24,7 @@ use Psr\Log\LoggerInterface;
 class CleanupListener implements IEventListener {
 	public function __construct(
 		private StateService $stateService,
+		private RecentService $recentService,
 		private IAppManager $appManager,
 		private LoggerInterface $logger,
 	) {
@@ -32,6 +34,9 @@ class CleanupListener implements IEventListener {
 		try {
 			if ($event instanceof UserDeletedEvent) {
 				$this->stateService->deleteAllForUser($event->getUser()->getUID());
+				// The play records live in a table of ours now, which no
+				// longer goes with the user config of the user.
+				$this->recentService->deleteAllForUser($event->getUser()->getUID());
 			} elseif ($event instanceof NodeDeletedEvent) {
 				$this->handleDeletedNode($event);
 			}
