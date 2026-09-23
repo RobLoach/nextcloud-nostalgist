@@ -31,6 +31,11 @@ class LibraryService {
 	public const CACHE_TTL = 24 * 3600;
 	/** Bumped when the shape of a cached entry changes. */
 	private const CACHE_VERSION = 5;
+	/**
+	 * File ids asked after in one query. Oracle refuses a list of more
+	 * than a thousand, so a big library is asked about in chunks.
+	 */
+	private const METADATA_CHUNK = 500;
 
 	/**
 	 * The screenshots of a user, by the game they were taken of.
@@ -287,7 +292,7 @@ class LibraryService {
 
 	/**
 	 * What each cartridge says about itself, for the games that have been
-	 * read. One query for the whole library.
+	 * read. A chunk of the library per query, small enough for Oracle.
 	 *
 	 * @param list<array<string, mixed>> $games
 	 * @return array<int, array{title: string, region: string, system: string}>
@@ -299,12 +304,14 @@ class LibraryService {
 		}
 		$known = [];
 		try {
-			foreach ($this->metadataManager->getMetadataForFiles($ids) as $id => $metadata) {
-				$known[(int)$id] = [
-					'title' => $metadata->getString(MetadataListener::TITLE),
-					'region' => $metadata->getString(MetadataListener::REGION),
-					'system' => $metadata->getString(MetadataListener::SYSTEM),
-				];
+			foreach (array_chunk($ids, self::METADATA_CHUNK) as $chunk) {
+				foreach ($this->metadataManager->getMetadataForFiles($chunk) as $id => $metadata) {
+					$known[(int)$id] = [
+						'title' => $metadata->getString(MetadataListener::TITLE),
+						'region' => $metadata->getString(MetadataListener::REGION),
+						'system' => $metadata->getString(MetadataListener::SYSTEM),
+					];
+				}
 			}
 		} catch (\Throwable) {
 			// Nothing has been read of the ROMs yet, which is no reason to
