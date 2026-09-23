@@ -83,27 +83,20 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        # Without install scripts: the one of @nextcloud/webpack-vue-config
-        # fails the install over the vue-loader version needed for single
-        # file components, which this app has none of.
-        run: npm install --no-audit --no-fund --ignore-scripts
-
-      - name: Build vue-demi
-        # It picks its Vue 2 or Vue 3 build in an install script, and the
-        # bundles do not compile without it.
-        run: npm rebuild vue-demi
+        run: npm ci --no-audit --no-fund
 
       - name: Build
         run: npm run build
 
       - name: Check the committed bundles are up to date
-        # Dependencies float without a lock file, so a difference here is a
-        # hint to rebuild rather than a reason to fail the build.
-        continue-on-error: true
+        # The chunk hashes depend on the dependency versions, which the
+        # lock file pins, so a difference means the bundles need a rebuild.
         run: |
           if ! git diff --quiet -- js/; then
-            echo "::warning::js/ differs from a fresh build, run 'npm run build' and commit the result"
+            echo "::error::js/ differs from a fresh build, run 'npm run build' and commit the result"
+            git status --short -- js/
             git diff --stat -- js/
+            exit 1
           fi
 
   appinfo:

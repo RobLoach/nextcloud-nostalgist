@@ -1,7 +1,7 @@
 <?php
 style('arcade', 'css');
 style('arcade', 'player');
-script('arcade', 'main');
+script('arcade', 'arcade-main');
 ?>
 
 <div id="app-content">

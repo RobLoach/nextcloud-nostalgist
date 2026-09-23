@@ -7,7 +7,7 @@ npm install
 npm run build     # production bundles into js/
 npm run watch     # rebuild on change
 npm run cores     # extract the cores from the submodule
-npm run l10n      # collect the strings to translate
+npm run l10n:extract  # collect the strings to translate
 
 composer install
 composer test     # the unit test suite
@@ -37,7 +37,7 @@ lib/Command/                The occ cleanup and uninstall commands
 lib/BackgroundJob/          Looking for box art and reading ROMs, away from the browser
 lib/Controls.php            What the keyboard does, and what it does by default
 lib/RomHeader.php           The name a cartridge gives itself
-build/extract-l10n.mjs      Collects the strings to translate
+build/translationtool.phar  Collects the strings to translate
 l10n/                       Translations, as Nextcloud reads them
 lib/Service/                Settings, library, save states, thumbnails, history
 lib/Settings/               Personal settings section
