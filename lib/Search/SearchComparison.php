@@ -48,4 +48,12 @@ class SearchComparison implements ISearchComparison {
 	public function setQueryHint(string $name, $value): void {
 		$this->hints[$name] = $value;
 	}
+
+	/**
+	 * The server's query optimizer tells clauses apart by their string
+	 * form, casting without asking, so the form matches the server's own.
+	 */
+	public function __toString(): string {
+		return $this->field . ' ' . $this->type . ' ' . json_encode($this->value);
+	}
 }

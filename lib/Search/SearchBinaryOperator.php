@@ -41,4 +41,25 @@ class SearchBinaryOperator implements ISearchBinaryOperator {
 	public function setQueryHint(string $name, $value): void {
 		$this->hints[$name] = $value;
 	}
+
+	/**
+	 * The optimizer also rewrites the arguments of an operator in place,
+	 * so the setter of the server's own class is offered too.
+	 *
+	 * @param list<ISearchOperator> $arguments
+	 */
+	public function setArguments(array $arguments): void {
+		$this->arguments = $arguments;
+	}
+
+	/**
+	 * The server's query optimizer tells clauses apart by their string
+	 * form, casting without asking, so the form matches the server's own.
+	 */
+	public function __toString(): string {
+		if ($this->type === ISearchBinaryOperator::OPERATOR_NOT) {
+			return '(not ' . $this->arguments[0] . ')';
+		}
+		return '(' . implode(' ' . $this->type . ' ', $this->arguments) . ')';
+	}
 }
