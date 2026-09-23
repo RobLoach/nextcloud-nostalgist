@@ -122,6 +122,66 @@ class LibraryServiceTest extends TestCase {
 		$this->assertSame(['a.nes', 'b.nes'], $this->names($games));
 	}
 
+	/**
+	 * @return list<array<string, mixed>>
+	 */
+	private function playedGames(): array {
+		return [
+			['id' => 1, 'path' => '/Games/Zelda.sfc', 'basename' => 'Zelda.sfc', 'system' => 'snes', 'size' => 300, 'mtime' => 30],
+			['id' => 2, 'path' => '/Games/mario.nes', 'basename' => 'mario.nes', 'system' => 'nes', 'size' => 100, 'mtime' => 10],
+			['id' => 3, 'path' => '/Games/Sonic.md', 'basename' => 'Sonic.md', 'system' => 'genesis', 'size' => 200, 'mtime' => 20],
+		];
+	}
+
+	public function testGamesAreSortedByPlaysAndByPlaytime(): void {
+		$stats = [
+			1 => ['seconds' => 600, 'plays' => 3, 'time' => 50],
+			3 => ['seconds' => 7200, 'plays' => 1, 'time' => 40],
+		];
+
+		$games = $this->playedGames();
+		$this->service->sortGames($games, 'plays', 'desc', $stats);
+		$this->assertSame(['Zelda.sfc', 'Sonic.md', 'mario.nes'], $this->names($games), 'plays is how often');
+
+		$this->service->sortGames($games, 'playtime', 'desc', $stats);
+		$this->assertSame(['Sonic.md', 'Zelda.sfc', 'mario.nes'], $this->names($games), 'playtime is how long');
+	}
+
+	public function testGamesNeverPlayedSortAfterGamesPlayedEitherWay(): void {
+		$stats = [
+			1 => ['seconds' => 600, 'plays' => 3, 'time' => 50],
+			3 => ['seconds' => 7200, 'plays' => 1, 'time' => 40],
+		];
+
+		$games = $this->playedGames();
+		$this->service->sortGames($games, 'playtime', 'asc', $stats);
+		$this->assertSame(
+			['Zelda.sfc', 'Sonic.md', 'mario.nes'],
+			$this->names($games),
+			'ascending turns the played games around, but the never played stay last',
+		);
+	}
+
+	public function testPlaySortTiesFallBackToTheName(): void {
+		$stats = [
+			1 => ['seconds' => 600, 'plays' => 1, 'time' => 50],
+			3 => ['seconds' => 600, 'plays' => 1, 'time' => 40],
+		];
+
+		$games = $this->playedGames();
+		$this->service->sortGames($games, 'playtime', 'desc', $stats);
+		$this->assertSame(['Sonic.md', 'Zelda.sfc', 'mario.nes'], $this->names($games));
+
+		$this->service->sortGames($games, 'plays', 'asc', $stats);
+		$this->assertSame(['Sonic.md', 'Zelda.sfc', 'mario.nes'], $this->names($games));
+	}
+
+	public function testAPlaySortWithoutStatsKeepsTheNameOrder(): void {
+		$games = $this->playedGames();
+		$this->service->sortGames($games, 'plays', 'desc');
+		$this->assertSame(['mario.nes', 'Sonic.md', 'Zelda.sfc'], $this->names($games));
+	}
+
 	public function testAnUnknownSortFallsBackToTheName(): void {
 		$games = $this->games();
 		$this->service->sortGames($games, 'whatever', 'asc');

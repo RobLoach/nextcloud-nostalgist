@@ -1,6 +1,6 @@
 import { getRequestToken } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
-import { translate as t } from '@nextcloud/l10n'
+import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { systemLabel } from './systems.js'
 
@@ -134,6 +134,21 @@ function gameSystem(game) {
 		return t('arcade', 'ZIP archive')
 	}
 	return systemLabel(game.system)
+}
+
+/**
+ * @param {number} seconds a length of time
+ * @return {string} that length in words, empty under a minute
+ */
+function formatDuration(seconds) {
+	if (!seconds || seconds < 60) {
+		return ''
+	}
+	const hours = Math.floor(seconds / 3600)
+	const minutes = Math.round((seconds % 3600) / 60)
+	return hours > 0
+		? t('arcade', '{hours} h {minutes} min', { hours, minutes })
+		: t('arcade', '{minutes} min', { minutes })
 }
 
 /**
@@ -322,7 +337,8 @@ function renderList(games) {
 
 		const system = document.createElement('span')
 		system.className = 'arcade-library-row-system'
-		system.textContent = gameSystem(game)
+		const played = formatPlayTime(game.seconds)
+		system.textContent = played === '' ? gameSystem(game) : `${gameSystem(game)} · ${played}`
 		row.appendChild(system)
 
 		list.appendChild(row)
@@ -346,6 +362,7 @@ function renderTable(games, reload) {
 		{ key: 'system', label: t('arcade', 'System') },
 		{ key: 'size', label: t('arcade', 'Size') },
 		{ key: 'mtime', label: t('arcade', 'Modified') },
+		{ key: 'playtime', label: t('arcade', 'Played') },
 	]
 	for (const column of columns) {
 		const cell = document.createElement('th')
@@ -391,6 +408,13 @@ function renderTable(games, reload) {
 			? new Date(game.mtime * 1000).toLocaleDateString()
 			: ''
 		row.appendChild(modifiedCell)
+
+		const playedCell = document.createElement('td')
+		playedCell.textContent = formatDuration(game.seconds ?? 0)
+		if (game.plays > 0) {
+			playedCell.title = n('arcade', 'Played %n time', 'Played %n times', game.plays)
+		}
+		row.appendChild(playedCell)
 
 		body.appendChild(row)
 	}
@@ -661,10 +685,17 @@ export async function renderLibrary(container, onError) {
 
 	const render = (data, force = false) => {
 		// The favorites are known for the whole library, so the flag is put
-		// on whatever is being shown.
+		// on whatever is being shown. Likewise the play stats: the recently
+		// played and the favorites carry theirs already, the page looks
+		// them up here.
 		const favorites = new Set((data.favorites ?? []).map((game) => game.path))
+		const stats = data.stats ?? {}
 		for (const game of [...(data.games ?? []), ...(data.recent ?? []), ...(data.favorites ?? [])]) {
 			game.favorite = favorites.has(game.path)
+			if (game.seconds === undefined && stats[game.id] !== undefined) {
+				game.seconds = stats[game.id].seconds
+				game.plays = stats[game.id].plays
+			}
 		}
 
 		// Revalidating usually returns what is already on screen; redrawing

@@ -76,6 +76,10 @@ class PageController extends Controller {
 	 * List the ROMs found in the user's games library folder, one page at a
 	 * time. The full scan is cached, so paging through a large library only
 	 * walks the folders once.
+	 *
+	 * The response carries the user's play stats under 'stats', by file id
+	 * and only for games of this library, and sorts by them for the 'plays'
+	 * (how often) and 'playtime' (how long) sort keys.
 	 */
 	#[NoAdminRequired]
 	#[FrontpageRoute(verb: 'GET', url: '/library')]
@@ -112,6 +116,7 @@ class PageController extends Controller {
 				'tags' => [],
 				'recent' => [],
 				'favorites' => [],
+				'stats' => [],
 				'games' => [],
 			]);
 		}
@@ -127,8 +132,14 @@ class PageController extends Controller {
 			// when a file is written, so nothing else ever asks.
 			$this->queueMetadata();
 		}
-		$recent = $this->getRecent($games);
-		$favorites = $this->getFavorites($games);
+		// What each game of this library was played for. The stats of games
+		// that are gone would only weigh the payload down.
+		$stats = array_intersect_key(
+			$this->recentService->stats($this->userId),
+			array_column($games, 'id', 'id'),
+		);
+		$recent = $this->getRecent($games, $stats);
+		$favorites = $this->getFavorites($games, $stats);
 		// The systems of the whole library, so the filter keeps offering
 		// them while a filter is active.
 		$systems = array_values(array_unique(array_column($games, 'system')));
@@ -145,7 +156,7 @@ class PageController extends Controller {
 		sort($tags, SORT_NATURAL | SORT_FLAG_CASE);
 
 		$games = $this->libraryService->filterGames($games, $search, $system, $tag);
-		$this->libraryService->sortGames($games, $sort, $order);
+		$this->libraryService->sortGames($games, $sort, $order, $stats);
 
 		$limit = max(1, min(self::MAX_PAGE_SIZE, $limit));
 		$offset = max(0, min($offset, max(0, count($games) - 1)));
@@ -167,6 +178,7 @@ class PageController extends Controller {
 			'tags' => $tags,
 			'recent' => $recent,
 			'favorites' => $favorites,
+			'stats' => $stats,
 			'games' => $page,
 		]);
 	}
@@ -248,14 +260,14 @@ class PageController extends Controller {
 	 * gone, or that lives outside the library folder, is left out.
 	 *
 	 * @param list<array<string, mixed>> $games
+	 * @param array<int, array<string, int>> $stats what they were played for
 	 * @return list<array<string, mixed>>
 	 */
-	private function getRecent(array $games): array {
+	private function getRecent(array $games, array $stats): array {
 		$byId = [];
 		foreach ($games as $game) {
 			$byId[$game['id'] ?? 0] = $game;
 		}
-		$stats = $this->recentService->stats((string)$this->userId);
 
 		$recent = [];
 		foreach ($this->recentService->get((string)$this->userId) as $id) {
@@ -272,14 +284,14 @@ class PageController extends Controller {
 	 * when renamed or moved, and no lookup of its own is needed.
 	 *
 	 * @param list<array<string, mixed>> $games
+	 * @param array<int, array<string, int>> $stats what they were played for
 	 * @return list<array<string, mixed>>
 	 */
-	private function getFavorites(array $games): array {
+	private function getFavorites(array $games, array $stats): array {
 		$ids = $this->recentService->favoriteIds((string)$this->userId);
 		if ($ids === []) {
 			return [];
 		}
-		$stats = $this->recentService->stats((string)$this->userId);
 		$favorites = [];
 		foreach ($games as $game) {
 			if (isset($ids[$game['id'] ?? 0])) {
