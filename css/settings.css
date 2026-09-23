@@ -63,9 +63,59 @@
 	text-decoration: line-through;
 }
 
-#arcade-settings details.arcade-section > summary {
-	font-size: 1.1em;
-	font-weight: bold;
-	padding: 10px 0;
+#arcade-settings .msg {
+	margin-inline-start: 12px;
+	color: var(--color-text-maxcontrast);
+}
+
+/* The switch the NcCheckboxRadioSwitch component draws, without needing
+   Vue for a plain template. */
+#arcade-settings .checkbox-radio-switch {
+	display: flex;
+	align-items: center;
+}
+
+#arcade-settings .checkbox-radio-switch__input {
+	position: absolute;
+	z-index: -1;
+	width: 40px;
+	height: 24px;
+	margin: 0;
+	opacity: 0 !important;
+}
+
+#arcade-settings .checkbox-radio-switch label {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 32px;
 	cursor: pointer;
+}
+
+#arcade-settings .checkbox-radio-switch label::before {
+	content: '';
+	box-sizing: border-box;
+	flex-shrink: 0;
+	width: 40px;
+	height: 24px;
+	margin: 0;
+	border: 2px solid var(--color-primary-element);
+	border-radius: 12px;
+	background-color: var(--color-main-background);
+	background-image: radial-gradient(circle closest-side, var(--color-primary-element) 96%, transparent);
+	background-size: 14px 14px;
+	background-repeat: no-repeat;
+	background-position: left 3px center;
+	transition: background-position ease 250ms, background-color ease 250ms;
+}
+
+#arcade-settings .checkbox-radio-switch__input:checked + label::before {
+	background-color: var(--color-primary-element);
+	background-image: radial-gradient(circle closest-side, var(--color-main-background) 96%, transparent);
+	background-position: right 3px center;
+}
+
+#arcade-settings .checkbox-radio-switch__input:focus-visible + label::before {
+	outline: 2px solid var(--color-main-text);
+	outline-offset: 2px;
 }
