@@ -135,6 +135,20 @@ class ThumbnailFetchTest extends TestCase {
 		);
 	}
 
+	public function testTheFilesWrittenThisRunAreHandedBack(): void {
+		$this->server['Mario (USA)'] = 'the picture';
+
+		$result = $this->service()->fetch(
+			self::USER,
+			[$this->game('Mario.nes'), $this->game('Nothing Doing.nes')],
+			$this->folder(),
+			10,
+		);
+
+		$this->assertCount(1, $result['written'], 'one file for the one game that was found');
+		$this->assertContainsOnlyInstancesOf(File::class, $result['written']);
+	}
+
 	public function testAnInstanceThatSaysNoIsNotAskedAgain(): void {
 		$settings = $this->createStub(SettingsService::class);
 		$settings->method('getDefaults')->willReturn(['fetch_enabled' => false]);

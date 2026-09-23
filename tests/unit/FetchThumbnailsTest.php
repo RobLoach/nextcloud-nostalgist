@@ -10,10 +10,12 @@ use OCA\Arcade\Service\SettingsService;
 use OCA\Arcade\Service\ThumbnailFetchService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJobList;
+use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\Config\IUserConfig;
+use OCP\IPreview;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -27,6 +29,7 @@ class FetchThumbnailsTest extends TestCase {
 
 	private ThumbnailFetchService&MockObject $fetchService;
 	private IJobList&MockObject $jobList;
+	private IPreview&MockObject $preview;
 	private string $status = '';
 	/** @var array<string, mixed> */
 	private array $settings = [];
@@ -46,6 +49,7 @@ class FetchThumbnailsTest extends TestCase {
 		// The instance lets the server go looking, unless a test says not.
 		$this->fetchService->method('isAllowed')->willReturn(true);
 		$this->jobList = $this->createMock(IJobList::class);
+		$this->preview = $this->createMock(IPreview::class);
 	}
 
 	private function job(): FetchThumbnails {
@@ -85,6 +89,7 @@ class FetchThumbnailsTest extends TestCase {
 			$rootFolder,
 			$this->jobList,
 			$config,
+			$this->preview,
 			$this->createStub(LoggerInterface::class),
 		);
 	}
@@ -185,6 +190,52 @@ class FetchThumbnailsTest extends TestCase {
 
 		$this->runJob();
 		$this->assertStringContainsString('library folder does not exist', $this->status);
+	}
+
+	public function testNewBoxArtIsWarmedAtTheSizesTheLibraryAsksFor(): void {
+		$this->games = $this->gamesWithout(1);
+		$file = $this->createStub(File::class);
+		$this->fetchService->method('fetch')
+			->willReturn(['fetched' => 1, 'missing' => 0, 'tried' => 1, 'written' => [$file]]);
+
+		$warmed = [];
+		$this->preview->expects($this->exactly(count(FetchThumbnails::PREVIEW_SIZES)))
+			->method('getPreview')
+			->willReturnCallback(
+				function (File $for, int $x, int $y, bool $crop) use ($file, &$warmed) {
+					$this->assertSame($file, $for, 'only the file written this run is warmed');
+					$this->assertSame($x, $y, 'the library asks for a square');
+					$this->assertFalse($crop, 'the library passes a=1, which means no crop');
+					$warmed[] = $x;
+					return $this->createStub(\OCP\Files\SimpleFS\ISimpleFile::class);
+				},
+			);
+
+		$this->runJob();
+		$this->assertSame([256, 64], $warmed, 'the grid size and the list size');
+	}
+
+	public function testAWarmUpThatFailsDoesNotBreakTheJob(): void {
+		$this->games = $this->gamesWithout(2);
+		$one = $this->createStub(File::class);
+		$two = $this->createStub(File::class);
+		$this->fetchService->method('fetch')
+			->willReturn(['fetched' => 2, 'missing' => 0, 'tried' => 2, 'written' => [$one, $two]]);
+
+		$warmed = [];
+		$this->preview->method('getPreview')->willReturnCallback(
+			function (File $for) use ($one, &$warmed) {
+				$warmed[] = $for;
+				if ($for === $one) {
+					throw new \RuntimeException('no preview for you');
+				}
+				return $this->createStub(\OCP\Files\SimpleFS\ISimpleFile::class);
+			},
+		);
+
+		$this->runJob();
+		$this->assertContains($two, $warmed, 'the next file is still warmed');
+		$this->assertStringContainsString('Found box art for 2 games', $this->status);
 	}
 
 	public function testTroubleIsReportedRatherThanThrown(): void {
