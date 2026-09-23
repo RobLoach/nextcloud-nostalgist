@@ -37,8 +37,10 @@ class Controls {
 		'pause' => ['label' => 'Pause and resume', 'default' => 'Space'],
 		'fastForward' => ['label' => 'Fast-forward', 'default' => 'KeyT'],
 		'fullscreen' => ['label' => 'Fullscreen', 'default' => 'KeyF'],
-		'saveStates' => ['label' => 'Save states', 'default' => 'KeyO'],
+		'saveState' => ['label' => 'Save State', 'default' => 'F2'],
+		'loadState' => ['label' => 'Load State', 'default' => 'F4'],
 		'screenshot' => ['label' => 'Screenshot', 'default' => 'KeyP'],
+		'closeGame' => ['label' => 'Close Game', 'default' => 'Escape'],
 	];
 
 	/**

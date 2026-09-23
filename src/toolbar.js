@@ -219,8 +219,9 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		}
 	})
 
+	let closeButton = null
 	if (closeUrl !== '') {
-		button(ICONS.close, t('arcade', 'Close'), async (element) => {
+		closeButton = button(ICONS.close, t('arcade', 'Close'), async (element) => {
 			element.disabled = true
 			// Leave the game where it was, so it can be picked up again.
 			if (settings.autosave_on_close !== false && statesPanel !== null) {
@@ -245,8 +246,10 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 		pause: () => pauseButton.click(),
 		fastForward: () => fastForwardButton.click(),
 		fullscreen: () => fullscreenButton.click(),
-		saveStates: () => statesButton?.click(),
+		saveState: () => statesPanel?.save(1),
+		loadState: () => statesPanel?.load(1),
 		screenshot: () => screenshotButton.click(),
+		closeGame: () => closeButton?.click(),
 	}
 	const bound = {}
 	for (const [action, code] of Object.entries(hotkeys)) {
@@ -254,11 +257,19 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			bound[code] = actions[action]
 		}
 	}
-	// Closing whatever is open is the one key that is not up for debate.
+	// Closing whatever is open still comes first: while a panel shows,
+	// Escape puts it away, and only then does what it was bound to.
+	const escapeAction = bound.Escape
 	bound.Escape = () => {
-		hideStates()
-		galleryPanel?.element.classList.add('hidden')
-		galleryButton?.classList.remove('active')
+		const panelOpen = (statesPanel !== null && !statesPanel.element.classList.contains('hidden'))
+			|| (galleryPanel !== null && !galleryPanel.element.classList.contains('hidden'))
+		if (panelOpen) {
+			hideStates()
+			galleryPanel?.element.classList.add('hidden')
+			galleryButton?.classList.remove('active')
+			return
+		}
+		escapeAction?.()
 	}
 
 	const onKeyDown = (event) => {
