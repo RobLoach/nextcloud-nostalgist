@@ -520,46 +520,6 @@ class StateServiceTest extends TestCase {
 		$this->assertSame(['/Games/Zelda.sfc'], array_values($service->gamesOf(self::USER)));
 	}
 
-	public function testAGamesJsonOfOlderVersionsIsBroughtIntoTheTable(): void {
-		// As an earlier version would have left it: next to the states, with
-		// an entry that still carried its checksum, one written as a bare
-		// path before the checksum was kept, and one keyed by the hash of
-		// its path from before the file id was used.
-		$userFolder = 'states/' . hash('sha256', self::USER);
-		$pathHash = hash('sha256', '/Games/Kirby.gb');
-		$this->appData['states'] = [];
-		$this->appData[$userFolder] = [
-			'games.json' => json_encode([
-				'101' => ['path' => self::GAME, 'md5' => 'the dump'],
-				'202' => '/Games/Zelda.sfc',
-				$pathHash => ['path' => '/Games/Kirby.gb', 'md5' => ''],
-			]),
-		];
-
-		$games = $this->service()->gamesOf(self::USER);
-		$this->assertSame(
-			[self::GAME, '/Games/Zelda.sfc', '/Games/Kirby.gb'],
-			[$games['101'], $games['202'], $games[$pathHash]],
-		);
-		$this->assertSame('the dump', $this->games[self::USER]['101']['md5']);
-		$this->assertSame(101, $this->games[self::USER]['101']['file_id']);
-		$this->assertSame(0, $this->games[self::USER][$pathHash]['file_id'], 'a hash is no file id');
-		$this->assertArrayNotHasKey('games.json', $this->appData[$userFolder], 'and the file is gone');
-	}
-
-	public function testStatesWrittenBeforeTheyWereKeptPerUserAreStillRead(): void {
-		// As an earlier version would have left it behind.
-		$legacy = hash('sha256', self::USER . '|' . self::GAME);
-		$this->appData['states'] = ["$legacy-1.state" => 'an old state'];
-
-		$service = $this->service();
-		$this->assertSame('an old state', $service->load(self::USER, self::GAME, 1));
-		$this->assertSame([1], array_column($service->list(self::USER, self::GAME), 'slot'));
-
-		$service->deleteAllForGame(self::USER, self::GAME);
-		$this->assertNull($service->load(self::USER, self::GAME, 1), 'and cleaned up with the game');
-	}
-
 	// With a saves folder, the states are files of the user.
 
 	public function testASavesFolderKeepsTheStatesInTheFilesOfTheUser(): void {
@@ -596,15 +556,6 @@ class StateServiceTest extends TestCase {
 		$this->assertSame('the Genesis one', $service->load(self::USER, '/Games/Genesis/Mario.md', 1));
 		$this->assertSame('the Nintendo one', $this->files['Saves/Nintendo/Mario/Slot 1.state'] ?? null);
 		$this->assertSame('the Genesis one', $this->files['Saves/Genesis/Mario/Slot 1.state'] ?? null);
-	}
-
-	public function testSavesWrittenBeforeTheSystemWasPartOfThePathAreStillFound(): void {
-		// As an earlier version would have filed them.
-		$this->files['Saves/Mario/Slot 1.state'] = 'an old save';
-
-		$service = $this->service('/Saves');
-		$this->assertSame('an old save', $service->load(self::USER, self::GAME, 1));
-		$this->assertSame([1], array_column($service->list(self::USER, self::GAME), 'slot'));
 	}
 
 	public function testAGameThatDoesNotSayItsSystemKeepsSavingWhereItAlwaysDid(): void {

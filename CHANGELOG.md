@@ -6,6 +6,20 @@ All notable changes to NextCloud Arcade. The format follows
 
 ## [Unreleased]
 
+## [0.39.0] - 2026-09-23
+
+### Changed
+- Everything older versions left behind is converted once, at upgrade,
+  instead of being looked for on every request: the `games.json` registries
+  go into the `arcade_games` table, save states filed under the hash of
+  their path are renamed to the id of their file, states from before they
+  were kept per user move in with their user, saves folders from before the
+  system was part of the path move under the system, and the play records
+  and favorites of the user config go into the `arcade_plays` table and the
+  Files app. Whatever cannot be matched is never deleted or overwritten --
+  it stays exactly where it is, and `occ arcade:cleanup` counts what is
+  left. The perpetual fallbacks that read the old places are gone.
+
 ## [0.38.0] - 2026-09-22
 
 ### Changed
@@ -290,7 +304,8 @@ All notable changes to NextCloud Arcade. The format follows
 ### Added
 - The first version.
 
-[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.38.0...HEAD
+[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.39.0...HEAD
+[0.39.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.39.0
 [0.38.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.38.0
 [0.37.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.37.0
 [0.36.1]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.36.1

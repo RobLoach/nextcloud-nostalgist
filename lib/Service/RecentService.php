@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Service;
 
-use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\Db\PlayMapper;
-use OCP\Config\IUserConfig;
 use OCP\Files\IRootFolder;
 use OCP\ITagManager;
 use OCP\ITags;
@@ -26,13 +24,7 @@ class RecentService {
 	/** A session longer than this was most likely a forgotten tab. */
 	private const MAX_SESSION = 4 * 3600;
 
-	/** The users whose old list of favorites has been looked at already. */
-	private array $migrated = [];
-	/** The users whose old JSON blobs have been brought into the table. */
-	private array $imported = [];
-
 	public function __construct(
-		private IUserConfig $userConfig,
 		private ITagManager $tagManager,
 		private IRootFolder $rootFolder,
 		private PlayMapper $playMapper,
@@ -47,7 +39,6 @@ class RecentService {
 	 * @return list<int>
 	 */
 	public function get(string $userId): array {
-		$this->importLegacyPlays($userId);
 		return $this->playMapper->recentFileIds($userId, self::MAX_ENTRIES);
 	}
 
@@ -60,7 +51,6 @@ class RecentService {
 	 * @return array<int, true>
 	 */
 	public function favoriteIds(string $userId): array {
-		$this->migrateLegacyFavorites($userId);
 		$favorites = $this->tags($userId)?->getFavorites();
 		if (!is_array($favorites)) {
 			return [];
@@ -78,7 +68,6 @@ class RecentService {
 	 * @return array<int, array<string, int>>
 	 */
 	public function stats(string $userId): array {
-		$this->importLegacyPlays($userId);
 		return $this->playMapper->statsOf($userId);
 	}
 
@@ -87,7 +76,6 @@ class RecentService {
 		if ($id === null) {
 			return;
 		}
-		$this->importLegacyPlays($userId);
 		$this->playMapper->recordPlay($userId, $id, time());
 	}
 
@@ -102,7 +90,6 @@ class RecentService {
 		if ($id === null) {
 			return;
 		}
-		$this->importLegacyPlays($userId);
 		$this->playMapper->addSeconds($userId, $id, min($seconds, self::MAX_SESSION), time());
 	}
 
@@ -144,107 +131,5 @@ class RecentService {
 		} catch (\Throwable) {
 			return null;
 		}
-	}
-
-	/**
-	 * The plays used to be two JSON blobs of the user config: the counts
-	 * under 'stats', the order under 'recent'. The first touch of a user's
-	 * records brings them into the table, and the blobs go.
-	 */
-	private function importLegacyPlays(string $userId): void {
-		if (isset($this->imported[$userId])) {
-			return;
-		}
-		$this->imported[$userId] = true;
-
-		$storedStats = $this->userConfig->getValueString($userId, Application::APP_ID, 'stats', '');
-		$storedRecent = $this->userConfig->getValueString($userId, Application::APP_ID, 'recent', '');
-		if ($storedStats === '' && $storedRecent === '') {
-			return;
-		}
-
-		$stats = json_decode($storedStats, true);
-		$stats = is_array($stats) ? $stats : [];
-		foreach ($stats as $id => $counted) {
-			$id = (int)$id;
-			if ($id === 0 || !is_array($counted)) {
-				continue;
-			}
-			$this->playMapper->importPlay(
-				$userId,
-				$id,
-				(int)($counted['plays'] ?? 0),
-				(int)($counted['seconds'] ?? 0),
-				(int)($counted['time'] ?? 0),
-			);
-		}
-
-		// A game on the recent list was played even if its counts were
-		// trimmed away; its place in the order is kept by spacing the
-		// moments just below now.
-		$recent = json_decode($storedRecent, true);
-		$now = time();
-		foreach (is_array($recent) ? array_values($recent) : [] as $index => $entry) {
-			$id = (int)(is_array($entry) ? ($entry['id'] ?? 0) : 0);
-			if ($id === 0 || isset($stats[$id]) || isset($stats[(string)$id])) {
-				continue;
-			}
-			$this->playMapper->importPlay($userId, $id, 1, 0, $now - $index);
-		}
-
-		$this->userConfig->deleteUserConfig($userId, Application::APP_ID, 'stats');
-		$this->userConfig->deleteUserConfig($userId, Application::APP_ID, 'recent');
-	}
-
-	/**
-	 * Favorites used to be a list of ours, kept by path. They are the stars
-	 * of the Files app now, so the ones that were set are handed over, and
-	 * what those games were played for is kept.
-	 */
-	private function migrateLegacyFavorites(string $userId): void {
-		if (isset($this->migrated[$userId])) {
-			return;
-		}
-		$this->migrated[$userId] = true;
-		$legacy = $this->read($userId, 'favorites');
-		if ($legacy === []) {
-			return;
-		}
-		$tags = $this->tags($userId);
-		if ($tags === null) {
-			return;
-		}
-		$this->importLegacyPlays($userId);
-		foreach ($legacy as $entry) {
-			$path = (string)($entry['path'] ?? '');
-			if ($path === '') {
-				continue;
-			}
-			$id = $this->fileId($userId, $path);
-			if ($id === null) {
-				continue;
-			}
-			$tags->addToFavorites($id);
-			$this->playMapper->importPlay(
-				$userId,
-				$id,
-				(int)($entry['plays'] ?? 0),
-				(int)($entry['seconds'] ?? 0),
-				(int)($entry['time'] ?? 0),
-			);
-		}
-		$this->userConfig->deleteUserConfig($userId, Application::APP_ID, 'favorites');
-	}
-
-	/**
-	 * @return list<array<string, mixed>>
-	 */
-	private function read(string $userId, string $key): array {
-		$stored = $this->userConfig->getValueString($userId, Application::APP_ID, $key, '');
-		if ($stored === '') {
-			return [];
-		}
-		$entries = json_decode($stored, true);
-		return is_array($entries) ? array_values($entries) : [];
 	}
 }
