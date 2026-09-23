@@ -331,10 +331,33 @@ class LibraryService {
 	}
 
 	/**
+	 * Sorting by 'plays' or 'playtime' needs the play stats, which are the
+	 * user's rather than the library's, so they are handed in: how often a
+	 * game was started for 'plays', how long it was played for 'playtime'.
+	 * A game never played sorts after every game played, whichever way the
+	 * played ones are ordered.
+	 *
 	 * @param list<array<string, mixed>> $games
+	 * @param array<int, array<string, int>> $stats plays and seconds by file id
 	 */
-	public function sortGames(array &$games, string $sort, string $order): void {
+	public function sortGames(array &$games, string $sort, string $order, array $stats = []): void {
 		$direction = $order === 'desc' ? -1 : 1;
+		if ($sort === 'plays' || $sort === 'playtime') {
+			$key = $sort === 'plays' ? 'plays' : 'seconds';
+			usort($games, static function (array $a, array $b) use ($direction, $stats, $key): int {
+				$statA = (int)($stats[$a['id'] ?? 0][$key] ?? 0);
+				$statB = (int)($stats[$b['id'] ?? 0][$key] ?? 0);
+				// The games never played stay behind the games played,
+				// whichever way the played ones are turned.
+				if (($statA > 0) !== ($statB > 0)) {
+					return $statA > 0 ? -1 : 1;
+				}
+				$result = ($statA <=> $statB) * $direction;
+				// Fall back to the name, so the order is always stable.
+				return $result === 0 ? strcasecmp($a['basename'], $b['basename']) : $result;
+			});
+			return;
+		}
 		usort($games, static function (array $a, array $b) use ($sort, $direction): int {
 			$result = match ($sort) {
 				'system' => strcasecmp($a['system'], $b['system']),

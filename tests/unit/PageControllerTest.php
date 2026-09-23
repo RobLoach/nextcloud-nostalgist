@@ -42,12 +42,14 @@ class PageControllerTest extends TestCase {
 	 * @param list<array<string, mixed>> $games what the scan finds
 	 * @param array<int, bool> $favoriteIds file id => true
 	 * @param list<int> $recentIds file ids in play order
+	 * @param array<int, array<string, int>> $stats play stats by file id
 	 * @param string $ifNoneMatch the If-None-Match header of the request
 	 */
 	private function controller(
 		array $games = self::GAMES,
 		array $favoriteIds = [],
 		array $recentIds = [],
+		array $stats = [],
 		string $ifNoneMatch = '',
 	): PageController {
 		$request = $this->createStub(IRequest::class);
@@ -74,7 +76,7 @@ class PageControllerTest extends TestCase {
 		$recentService = $this->createStub(RecentService::class);
 		$recentService->method('get')->willReturn($recentIds);
 		$recentService->method('favoriteIds')->willReturn($favoriteIds);
-		$recentService->method('stats')->willReturn([]);
+		$recentService->method('stats')->willReturn($stats);
 
 		return new PageController(
 			'arcade',
@@ -127,6 +129,26 @@ class PageControllerTest extends TestCase {
 		$another = $this->controller()->library(limit: 120);
 
 		$this->assertNotSame($onePage->getETag(), $another->getETag());
+	}
+
+	public function testStatsOfTheLibraryAreInTheResponse(): void {
+		$response = $this->controller(stats: [
+			1 => ['seconds' => 600, 'plays' => 2, 'time' => 50],
+			999 => ['seconds' => 60, 'plays' => 1, 'time' => 40],
+		])->library();
+
+		$this->assertSame(
+			[1 => ['seconds' => 600, 'plays' => 2, 'time' => 50]],
+			$response->getData()['stats'],
+			'the stats of a game that is not in the library are left out',
+		);
+	}
+
+	public function testEtagChangesWhenStatsChange(): void {
+		$plain = $this->controller()->library();
+		$played = $this->controller(stats: [1 => ['seconds' => 600, 'plays' => 1, 'time' => 50]])->library();
+
+		$this->assertNotSame($plain->getETag(), $played->getETag());
 	}
 
 	public function testMatchingIfNoneMatchGetsNotModified(): void {
