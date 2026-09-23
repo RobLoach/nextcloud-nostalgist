@@ -26,14 +26,21 @@ async function pickFolder(input) {
 		const path = await picker.pick()
 		if (typeof path === 'string') {
 			input.value = path === '' ? '/' : path
+			save(input)
 		}
 	} catch (error) {
 		// The picker was cancelled.
 	}
 }
 
-async function save() {
-	const status = document.getElementById('arcade-save-status')
+/**
+ * Save all the settings, saying so next to the section that changed.
+ *
+ * @param {Element} [source] the control the change came from
+ */
+async function save(source) {
+	const status = (source instanceof Element && source.closest('.section')?.querySelector('.msg'))
+		|| container.querySelector('.msg')
 	const settings = {}
 	container.querySelectorAll('.arcade-setting').forEach((element) => {
 		settings[element.dataset.setting] = element.type === 'checkbox'
@@ -85,14 +92,14 @@ async function save() {
 /**
  * Put every option of a core back to "Core default".
  *
- * @param {string} core the core to reset
+ * @param {HTMLElement} button the reset button of the core
  */
-function resetCore(core) {
-	container.querySelectorAll(`.arcade-core-option[data-core="${CSS.escape(core)}"]`)
+function resetCore(button) {
+	container.querySelectorAll(`.arcade-core-option[data-core="${CSS.escape(button.dataset.core)}"]`)
 		.forEach((element) => {
 			element.value = ''
 		})
-	save()
+	save(button)
 }
 
 /**
@@ -124,6 +131,10 @@ function captureKey(element) {
 			element.dataset.code = code
 		}
 		showBinding(element)
+		showShadowedHotkeys()
+		if (element.dataset.code !== previous) {
+			save(element)
+		}
 	}
 
 	const onKey = (event) => {
@@ -182,7 +193,7 @@ async function fetchThumbnails() {
 	status.textContent = t('arcade', 'Starting …')
 	try {
 		// Saving first, so a folder just typed in is the one used.
-		await save()
+		await save(button)
 		await api(generateUrl('/apps/arcade/thumbnails/fetch'), { method: 'POST' })
 		status.textContent = t('arcade', 'Looking for box art in the background. It carries on without this page.')
 	} catch (error) {
@@ -213,27 +224,32 @@ async function showFetchStatus() {
 }
 
 if (container !== null) {
-	document.getElementById('arcade-save').addEventListener('click', save)
+	// No save button: any change is saved right away.
+	container.addEventListener('change', (event) => {
+		if (event.target.matches('.arcade-setting, .arcade-thumbnail-type, .arcade-core-option')) {
+			save(event.target)
+		}
+	})
 	document.getElementById('arcade-fetch-thumbnails')?.addEventListener('click', fetchThumbnails)
 	container.querySelectorAll('.arcade-key-binding').forEach((element) => {
 		showBinding(element)
 		element.addEventListener('click', () => captureKey(element))
 	})
 	showShadowedHotkeys()
-	document.getElementById('arcade-keys-reset')?.addEventListener('click', () => {
+	document.getElementById('arcade-keys-reset')?.addEventListener('click', (event) => {
 		container.querySelectorAll('.arcade-key-binding').forEach((element) => {
 			element.dataset.code = element.dataset.default ?? element.dataset.code
 			showBinding(element)
 		})
 		showShadowedHotkeys()
-		save()
+		save(event.target)
 	})
 	showFetchStatus()
 	container.querySelectorAll('.arcade-range').forEach((range) => {
 		range.addEventListener('input', () => showRangeValue(range))
 	})
 	container.querySelectorAll('.arcade-core-reset').forEach((button) => {
-		button.addEventListener('click', () => resetCore(button.dataset.core))
+		button.addEventListener('click', () => resetCore(button))
 	})
 	container.querySelectorAll('.arcade-folder-picker').forEach((button) => {
 		button.addEventListener('click', () => {

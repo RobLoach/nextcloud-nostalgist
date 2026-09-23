@@ -48,8 +48,8 @@ msgstr ""
 msgid "All systems"
 msgstr ""
 
-#: templates/admin.php
-#: templates/settings.php
+#: lib/Settings/AdminSection.php
+#: lib/Settings/PersonalSection.php
 msgid "Arcade"
 msgstr ""
 
@@ -95,7 +95,7 @@ msgid "Close"
 msgstr ""
 
 #: templates/settings.php
-msgid "Configure how the Arcade retro game player behaves."
+msgid "Configure how the Arcade retro game player behaves. Changes are saved as they are made."
 msgstr ""
 
 #: src/panels/resume.js
@@ -188,6 +188,7 @@ msgstr ""
 msgid "Filter by system"
 msgstr ""
 
+#: templates/admin.php
 #: templates/settings.php
 msgid "Folders"
 msgstr ""
@@ -394,8 +395,6 @@ msgid "ROM checksums"
 msgstr ""
 
 #: src/panels/states.js
-#: templates/admin.php
-#: templates/settings.php
 msgid "Save"
 msgstr ""
 
@@ -524,7 +523,7 @@ msgid "The emulator has no name for that key, try another one"
 msgstr ""
 
 #: templates/admin.php
-msgid "The folders users start with. Everybody can pick their own afterwards."
+msgid "The folders users start with. Everybody can pick their own afterwards. Changes are saved as they are made."
 msgstr ""
 
 #: src/library.js

@@ -14,8 +14,8 @@ const ROOTS = ['lib', 'src', 'templates']
 const PATTERNS = [
 	// t('arcade', 'Some text') in JavaScript
 	/\bt\(\s*'arcade'\s*,\s*'((?:[^'\\]|\\.)*)'/g,
-	// $l->t('Some text') in PHP
-	/\$l->t\(\s*'((?:[^'\\]|\\.)*)'/g,
+	// $l->t('Some text') and $this->l->t('Some text') in PHP
+	/\$(?:this->)?l->t\(\s*'((?:[^'\\]|\\.)*)'/g,
 ]
 
 function walk(path) {
