@@ -11,6 +11,8 @@ use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
+use OCP\SystemTag\ISystemTagManager;
+use OCP\SystemTag\ISystemTagObjectMapper;
 
 /**
  * Finds the games of a library folder, and puts them in the order and on
@@ -49,7 +51,61 @@ class LibraryService {
 		private ThumbnailService $thumbnailService,
 		private StateService $stateService,
 		private IFilesMetadataManager $metadataManager,
+		private ISystemTagManager $tagManager,
+		private ISystemTagObjectMapper $tagObjectMapper,
 	) {
+	}
+
+	/**
+	 * Attach the system tags of each ROM, as the Files app has them. Two
+	 * queries for the whole library, however many games carry tags.
+	 *
+	 * Tags come and go without the folder changing, so they are looked up
+	 * on every request rather than kept in the cached scan.
+	 *
+	 * @param list<array<string, mixed>> $games
+	 */
+	public function addTags(array &$games): void {
+		$fileIds = array_map(
+			static fn (int $id): string => (string)$id,
+			array_values(array_filter(array_column($games, 'id'))),
+		);
+		if ($fileIds === []) {
+			return;
+		}
+		try {
+			$tagIdsByFile = $this->tagObjectMapper->getTagIdsForObjects($fileIds, 'files');
+			$tagIds = [];
+			foreach ($tagIdsByFile as $ids) {
+				foreach ($ids as $tagId) {
+					$tagIds[(string)$tagId] = true;
+				}
+			}
+			$names = [];
+			if ($tagIds !== []) {
+				foreach ($this->tagManager->getTagsByIds(array_map('strval', array_keys($tagIds))) as $tag) {
+					// Tags an administrator keeps out of sight in the Files
+					// app stay out of sight here too.
+					if ($tag->isUserVisible()) {
+						$names[$tag->getId()] = $tag->getName();
+					}
+				}
+			}
+		} catch (\Throwable) {
+			// Tags are a filter, not the library: the games still list
+			// without them.
+			return;
+		}
+		foreach ($games as &$game) {
+			$tags = [];
+			foreach ($tagIdsByFile[(string)($game['id'] ?? '')] ?? [] as $tagId) {
+				if (isset($names[$tagId])) {
+					$tags[] = $names[$tagId];
+				}
+			}
+			sort($tags, SORT_NATURAL | SORT_FLAG_CASE);
+			$game['tags'] = $tags;
+		}
 	}
 
 	/**
@@ -118,7 +174,7 @@ class LibraryService {
 	 * @param list<array<string, mixed>> $games
 	 * @return list<array<string, mixed>>
 	 */
-	public function filterGames(array $games, string $search, string $system): array {
+	public function filterGames(array $games, string $search, string $system, string $tag = ''): array {
 		$search = trim($search);
 		if ($search !== '') {
 			$games = array_filter(
@@ -130,6 +186,12 @@ class LibraryService {
 			$games = array_filter(
 				$games,
 				static fn (array $game): bool => $game['system'] === $system,
+			);
+		}
+		if ($tag !== '') {
+			$games = array_filter(
+				$games,
+				static fn (array $game): bool => in_array($tag, $game['tags'] ?? [], true),
 			);
 		}
 		return array_values($games);

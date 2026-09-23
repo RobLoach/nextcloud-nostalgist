@@ -10,20 +10,37 @@ use OCA\Arcade\Service\ThumbnailService;
 use OCP\Files\Folder;
 use OCP\FilesMetadata\IFilesMetadataManager;
 use OCP\ICacheFactory;
+use OCP\SystemTag\ISystemTag;
+use OCP\SystemTag\ISystemTagManager;
+use OCP\SystemTag\ISystemTagObjectMapper;
 use PHPUnit\Framework\TestCase;
 
 class LibraryServiceTest extends TestCase {
 	private LibraryService $service;
 	private StateService $stateService;
+	private ISystemTagManager $tagManager;
+	private ISystemTagObjectMapper $tagObjectMapper;
 
 	protected function setUp(): void {
 		$this->stateService = $this->createStub(StateService::class);
+		$this->tagManager = $this->createStub(ISystemTagManager::class);
+		$this->tagObjectMapper = $this->createStub(ISystemTagObjectMapper::class);
 		$this->service = new LibraryService(
 			$this->createStub(ICacheFactory::class),
 			new ThumbnailService(),
 			$this->stateService,
 			$this->createStub(IFilesMetadataManager::class),
+			$this->tagManager,
+			$this->tagObjectMapper,
 		);
+	}
+
+	private function tag(string $id, string $name, bool $visible = true): ISystemTag {
+		$tag = $this->createStub(ISystemTag::class);
+		$tag->method('getId')->willReturn($id);
+		$tag->method('getName')->willReturn($name);
+		$tag->method('isUserVisible')->willReturn($visible);
+		return $tag;
 	}
 
 	public function testEveryListOnThePageIsGivenItsFallbacks(): void {
@@ -127,6 +144,41 @@ class LibraryServiceTest extends TestCase {
 			['mario.nes'],
 			$this->names($this->service->filterGames($this->games(), 'mario', 'nes')),
 		);
+	}
+
+	public function testGamesAreFilteredByTag(): void {
+		$games = [
+			['path' => '/a.nes', 'basename' => 'a.nes', 'system' => 'nes', 'tags' => ['Finished', 'Co-op']],
+			['path' => '/b.nes', 'basename' => 'b.nes', 'system' => 'nes', 'tags' => ['Finished']],
+			['path' => '/c.nes', 'basename' => 'c.nes', 'system' => 'nes'],
+		];
+		$this->assertSame(
+			['a.nes'],
+			$this->names($this->service->filterGames($games, '', '', 'Co-op')),
+		);
+		$this->assertCount(2, $this->service->filterGames($games, '', '', 'Finished'));
+		$this->assertSame([], $this->service->filterGames($games, '', '', 'Backlog'));
+		$this->assertCount(3, $this->service->filterGames($games, '', '', ''), 'no tag keeps everything');
+	}
+
+	public function testTagsAreAttachedByFileIdAndInvisibleOnesStayHidden(): void {
+		$this->tagObjectMapper->method('getTagIdsForObjects')->willReturn([
+			'1' => ['10', '11'],
+			'2' => [],
+		]);
+		$this->tagManager->method('getTagsByIds')->willReturn([
+			'10' => $this->tag('10', 'Finished'),
+			'11' => $this->tag('11', 'Staff only', false),
+		]);
+		$games = [
+			['id' => 1, 'path' => '/a.nes', 'basename' => 'a.nes', 'system' => 'nes'],
+			['id' => 2, 'path' => '/b.nes', 'basename' => 'b.nes', 'system' => 'nes'],
+		];
+
+		$this->service->addTags($games);
+
+		$this->assertSame(['Finished'], $games[0]['tags'], 'the invisible tag is left out');
+		$this->assertSame([], $games[1]['tags']);
 	}
 
 	public function testFilteringKeepsAListWithoutGaps(): void {
