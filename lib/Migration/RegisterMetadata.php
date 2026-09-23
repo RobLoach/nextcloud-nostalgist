@@ -30,19 +30,21 @@ class RegisterMetadata implements IRepairStep {
 	}
 
 	public function run(IOutput $output): void {
+		// The mapper is a detail nobody searches by, so it goes unindexed.
 		foreach ([
-			MetadataListener::SYSTEM,
-			MetadataListener::TITLE,
-			MetadataListener::REGION,
-			MetadataListener::CHECKSUM,
-		] as $key) {
+			MetadataListener::SYSTEM => true,
+			MetadataListener::TITLE => true,
+			MetadataListener::REGION => true,
+			MetadataListener::CHECKSUM => true,
+			MetadataListener::MAPPER => false,
+		] as $key => $indexed) {
 			$this->metadataManager->initMetadata(
 				$key,
 				IMetadataValueWrapper::TYPE_STRING,
-				true,
+				$indexed,
 				IMetadataValueWrapper::EDIT_FORBIDDEN,
 			);
 		}
-		$output->info('The system, title, region and checksum of a ROM are known and searchable.');
+		$output->info('The system, title, region, checksum and mapper of a ROM are known.');
 	}
 }

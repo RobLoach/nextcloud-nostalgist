@@ -19,8 +19,17 @@ class RomHeader {
 	/** Enough for the headers of every system below, SNES HiROM included. */
 	public const BYTES = 0x10200;
 
-	/** The systems whose cartridges carry a name the app can read. */
-	private const READABLE = ['gb', 'gbc', 'gba', 'snes', 'genesis', 'sega32x'];
+	/** The Virtual Boy writes its header at the end of the file instead. */
+	public const TAIL_BYTES = 0x220;
+
+	/** The systems whose files carry something worth opening them for. */
+	private const READABLE = ['gb', 'gbc', 'gba', 'snes', 'genesis', 'sega32x', 'lynx', 'ngp', 'nes', 'vb'];
+
+	/** How every Neo Geo Pocket cartridge opens, first or third party. */
+	private const SNK_LICENSES = [
+		'COPYRIGHT BY SNK CORPORATION',
+		'LICENSED BY SNK CORPORATION',
+	];
 
 	/**
 	 * Whether reading the front of this system's files is worth the read.
@@ -44,6 +53,11 @@ class RomHeader {
 		}
 		if (str_starts_with($data, 'LYNX')) {
 			return 'lynx';
+		}
+		// A Neo Geo Pocket cartridge opens with SNK's licence line, first
+		// party or third; either way the line is the mark.
+		if (in_array(trim(substr($data, 0, 28)), self::SNK_LICENSES, true)) {
+			return 'ngp';
 		}
 		// A ColecoVision cartridge starts with one of two marks, depending
 		// on whether it shows the title screen on the way in.
@@ -77,9 +91,48 @@ class RomHeader {
 			'gba' => self::gameBoyAdvance($data),
 			'snes' => self::superNintendo($data),
 			'genesis', 'sega32x' => self::megaDrive($data),
+			'lynx' => self::lynx($data),
+			'ngp' => self::neoGeoPocket($data),
 			default => null,
 		};
 		return $found ?? ['title' => '', 'region' => ''];
+	}
+
+	/**
+	 * The same, for the one system that writes its header at the end of the
+	 * file. $tail is the last TAIL_BYTES of the file, not its front.
+	 *
+	 * @return array{title: string, region: string} empty strings when the
+	 *                                              file does not say
+	 */
+	public static function readTail(string $tail, string $system): array {
+		$found = match ($system) {
+			'vb' => self::virtualBoy($tail),
+			default => null,
+		};
+		return $found ?? ['title' => '', 'region' => ''];
+	}
+
+	/**
+	 * Which cartridge board an iNES file says it needs. There is no title in
+	 * an iNES header, but the mapper number is the next best thing to know
+	 * about a NES file.
+	 *
+	 * The number is spread over the high nibbles of bytes 6 and 7, and a
+	 * NES 2.0 header, told apart by bits 2-3 of byte 7, keeps a third
+	 * nibble in byte 8.
+	 *
+	 * @return string|null the mapper number, or null when this is not iNES
+	 */
+	public static function nesMapper(string $data): ?string {
+		if (!str_starts_with($data, "NES\x1a") || strlen($data) < 16) {
+			return null;
+		}
+		$mapper = (ord($data[6]) >> 4) | (ord($data[7]) & 0xF0);
+		if ((ord($data[7]) & 0x0C) === 0x08) {
+			$mapper |= (ord($data[8]) & 0x0F) << 8;
+		}
+		return (string)$mapper;
 	}
 
 	/**
@@ -151,6 +204,47 @@ class RomHeader {
 			'title' => $international !== '' ? $international : $domestic,
 			'region' => self::megaDriveRegion(self::text(substr($data, 0x1F0, 3))),
 		];
+	}
+
+	/**
+	 * A Lynx file that keeps the 64-byte LNX header opens with its magic and
+	 * carries the cartridge's name at 10. Dumps without the header exist,
+	 * and those say nothing at all. The header names no region.
+	 *
+	 * @return array{title: string, region: string}|null
+	 */
+	private static function lynx(string $data): ?array {
+		if (!str_starts_with($data, 'LYNX')) {
+			return null;
+		}
+		return ['title' => self::text(substr($data, 10, 32)), 'region' => ''];
+	}
+
+	/**
+	 * SNK's licence line is the mark, and the title follows at 0x24. The
+	 * header names no region -- the console was sold the same everywhere.
+	 *
+	 * @return array{title: string, region: string}|null
+	 */
+	private static function neoGeoPocket(string $data): ?array {
+		if (!in_array(trim(substr($data, 0, 28)), self::SNK_LICENSES, true)) {
+			return null;
+		}
+		return ['title' => self::text(substr($data, 0x24, 12)), 'region' => ''];
+	}
+
+	/**
+	 * The Virtual Boy header sits in the last 544 bytes of the file, title
+	 * first. The title may be Shift-JIS; a Japanese one is left unread
+	 * rather than mangled, since only plain ASCII is trusted here.
+	 *
+	 * @return array{title: string, region: string}|null
+	 */
+	private static function virtualBoy(string $tail): ?array {
+		if (strlen($tail) < self::TAIL_BYTES) {
+			return null;
+		}
+		return ['title' => self::text(substr($tail, 0, 20)), 'region' => ''];
 	}
 
 	/**
