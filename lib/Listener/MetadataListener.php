@@ -32,11 +32,18 @@ class MetadataListener implements IEventListener {
 	public const TITLE = 'arcade-title';
 	public const REGION = 'arcade-region';
 	public const CHECKSUM = 'arcade-md5';
+	public const MAPPER = 'arcade-mapper';
 
 	/**
 	 * Hashing a file that big would cost more than the name it might win.
 	 */
 	private const MAX_HASH_SIZE = 64 * 1024 * 1024;
+
+	/**
+	 * No Virtual Boy cartridge is bigger than this, so anything bigger is
+	 * not one, and its tail is not worth a seek.
+	 */
+	private const MAX_TAIL_SIZE = 16 * 1024 * 1024;
 
 	public function __construct(
 		private SettingsService $settingsService,
@@ -122,9 +129,27 @@ class MetadataListener implements IEventListener {
 			if ($header['region'] !== '') {
 				$metadata->setString(self::REGION, $header['region'], true);
 			}
+			// An iNES header carries no title, but it does say which
+			// cartridge board the game needs.
+			if ($system === 'nes') {
+				$mapper = RomHeader::nesMapper($front);
+				if ($mapper !== null) {
+					$metadata->setString(self::MAPPER, $mapper);
+				}
+			}
 
 			if ($given === '' && $this->hashingWanted() && $node->getSize() <= self::MAX_HASH_SIZE) {
 				$metadata->setString(self::CHECKSUM, $this->hash($handle, $front), true);
+			}
+
+			// The Virtual Boy writes its header at the END of the file, so
+			// its title takes a second, seeked read. It comes after the
+			// hash on purpose: the hash wants the stream in one pass.
+			if ($system === 'vb' && $header['title'] === '') {
+				$title = RomHeader::readTail($this->tail($handle, $node->getSize()), 'vb')['title'];
+				if ($title !== '') {
+					$metadata->setString(self::TITLE, $title, true);
+				}
 			}
 		} catch (\Throwable $e) {
 			$this->logger->debug('Could not read the header of a ROM', ['exception' => $e]);
@@ -133,6 +158,23 @@ class MetadataListener implements IEventListener {
 				fclose($handle);
 			}
 		}
+	}
+
+	/**
+	 * The last TAIL_BYTES of the file, or nothing when the file is too
+	 * small to hold them, too big to be a Virtual Boy cartridge, or the
+	 * stream cannot be seeked. Nothing here slurps the whole file.
+	 *
+	 * @param resource $handle
+	 */
+	private function tail($handle, int|float $size): string {
+		if ($size < RomHeader::TAIL_BYTES || $size > self::MAX_TAIL_SIZE) {
+			return '';
+		}
+		if (@fseek($handle, -RomHeader::TAIL_BYTES, SEEK_END) !== 0) {
+			return '';
+		}
+		return (string)fread($handle, RomHeader::TAIL_BYTES);
 	}
 
 	/**

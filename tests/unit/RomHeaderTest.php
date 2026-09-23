@@ -51,6 +51,8 @@ class RomHeaderTest extends TestCase {
 			'a 32X cartridge, which needs the other core' => [[0x100 => 'SEGA 32X        '], 'sega32x'],
 			'an iNES file' => [[0 => "NES\x1a"], 'nes'],
 			'a Lynx file' => [[0 => 'LYNX'], 'lynx'],
+			'a first-party Neo Geo Pocket cartridge' => [[0 => 'COPYRIGHT BY SNK CORPORATION'], 'ngp'],
+			'a third-party Neo Geo Pocket cartridge' => [[0 => ' LICENSED BY SNK CORPORATION'], 'ngp'],
 			'a ColecoVision cartridge' => [[0 => "\xAA\x55"], 'coleco'],
 			'one that skips its title screen' => [[0 => "\x55\xAA"], 'coleco'],
 			'a Game Boy cartridge' => [[0x104 => "\xCE\xED\x66\x66"], 'gb'],
@@ -139,6 +141,69 @@ class RomHeaderTest extends TestCase {
 	public function testAMegaDriveCartridgeFallsBackToItsNameAtHome(): void {
 		$data = $this->rom([0x100 => 'SEGA GENESIS    ', 0x120 => str_pad('PUYO PUYO', 48)]);
 		$this->assertSame('PUYO PUYO', RomHeader::read($data, 'genesis')['title']);
+	}
+
+	public function testALynxFileWithTheLnxHeaderGivesItsTitle(): void {
+		$data = $this->rom([0 => 'LYNX', 10 => "California Games\x00\x00", 42 => 'Atari']);
+		$header = RomHeader::read($data, 'lynx');
+		$this->assertSame('California Games', $header['title']);
+		$this->assertSame('', $header['region'], 'the header names no region');
+	}
+
+	public function testAHeaderlessLynxDumpSaysNothing(): void {
+		$data = $this->rom([0 => "\x00\x00\x81\xEA", 10 => 'NOT A HEADER']);
+		$this->assertSame('', RomHeader::read($data, 'lynx')['title']);
+	}
+
+	public function testANeoGeoPocketCartridgeGivesItsTitle(): void {
+		foreach (['COPYRIGHT BY SNK CORPORATION', ' LICENSED BY SNK CORPORATION'] as $licence) {
+			$data = $this->rom([0 => $licence, 0x24 => str_pad('SONIC POCKET', 12)]);
+			$header = RomHeader::read($data, 'ngp');
+			$this->assertSame('SONIC POCKET', $header['title'], "under '$licence'");
+			$this->assertSame('', $header['region'], 'the header names no region');
+		}
+	}
+
+	public function testWithoutSnksLineThereIsNoNeoGeoPocketHeader(): void {
+		$data = $this->rom([0 => 'SOME OTHER CORPORATION      ', 0x24 => 'LOOKS REAL']);
+		$this->assertSame('', RomHeader::read($data, 'ngp')['title']);
+	}
+
+	public function testAVirtualBoyTailGivesItsTitle(): void {
+		$tail = $this->rom([0 => "VIRTUAL BOWLING\x00"], RomHeader::TAIL_BYTES);
+		$this->assertSame('VIRTUAL BOWLING', RomHeader::readTail($tail, 'vb')['title']);
+	}
+
+	public function testATailTooShortToBeAVirtualBoyHeaderIsNoHeader(): void {
+		$this->assertSame('', RomHeader::readTail('VIRTUAL BOWLING', 'vb')['title']);
+	}
+
+	public function testATailIsOnlyReadForTheSystemThatHasOne(): void {
+		$tail = $this->rom([0 => 'A TITLE'], RomHeader::TAIL_BYTES);
+		$this->assertSame(['title' => '', 'region' => ''], RomHeader::readTail($tail, 'gb'));
+	}
+
+	public function testAnInesFileGivesItsMapper(): void {
+		// MMC3: mapper 4, low nibble in byte 6, none above.
+		$data = $this->rom([0 => "NES\x1a", 6 => "\x40"]);
+		$this->assertSame('4', RomHeader::nesMapper($data));
+	}
+
+	public function testAMapperIsSpreadOverBothItsNibbles(): void {
+		// Mapper 65 = 0x41: 1 in byte 6's high nibble, 4 in byte 7's.
+		$data = $this->rom([0 => "NES\x1a", 6 => "\x10", 7 => "\x40"]);
+		$this->assertSame('65', RomHeader::nesMapper($data));
+	}
+
+	public function testANes20HeaderKeepsAThirdNibbleOfItsMapper(): void {
+		// Mapper 0x111 = 273, the 2 in bits 2-3 of byte 7 saying NES 2.0.
+		$data = $this->rom([0 => "NES\x1a", 6 => "\x10", 7 => "\x18", 8 => "\x01"]);
+		$this->assertSame('273', RomHeader::nesMapper($data));
+	}
+
+	public function testWithoutTheInesMagicThereIsNoMapper(): void {
+		$this->assertNull(RomHeader::nesMapper($this->rom([6 => "\x40"])));
+		$this->assertNull(RomHeader::nesMapper("NES\x1a"), 'too short to hold one');
 	}
 
 	public function testBinaryWhereTextShouldBeIsNotATitle(): void {
