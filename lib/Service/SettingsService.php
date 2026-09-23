@@ -252,16 +252,25 @@ class SettingsService {
 		if ($stored === '') {
 			return $defaults;
 		}
-		$settings = json_decode($stored, true);
-		if (!is_array($settings)) {
+		$decoded = json_decode($stored, true);
+		if (!is_array($decoded)) {
 			return $defaults;
 		}
+		// Early versions saved the whole settings form, so a row from then
+		// still carries the core options and the instance-only settings.
+		// Those belong to the administrator, and a stale copy here would
+		// shadow whatever is set now, so they are dropped -- and the row
+		// trued up for good by the write-back below.
+		$settings = array_diff_key(
+			$decoded,
+			array_flip(['core_options', ...array_keys(self::INSTANCE_ONLY)]),
+		);
 		// The folders are looked up by their ids, so the settings follow
 		// them when they are moved or renamed. Anything learned -- a new
 		// path, or the id of a folder that was only stored as a path
 		// before ids were kept -- is written back right away.
 		$resolved = $this->resolveFolders($userId, $settings);
-		if ($resolved !== $settings) {
+		if ($resolved !== $decoded) {
 			$this->userConfig->setValueString($userId, Application::APP_ID, 'settings', json_encode($resolved));
 		}
 		return array_merge($defaults, $this->sanitize($resolved));

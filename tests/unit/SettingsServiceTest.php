@@ -172,6 +172,32 @@ class SettingsServiceTest extends TestCase {
 		$this->assertSame(3, $settings['fastforward_ratio']);
 	}
 
+	public function testAStaleRowCannotShadowTheInstanceSettings(): void {
+		// Early versions saved the whole form, core options and all.
+		$stored = json_encode([
+			'video_smooth' => true,
+			'core_options' => ['snes9x' => ['snes9x_overclock' => '150%']],
+			'max_games' => 123,
+		]);
+		$config = $this->createMock(IUserConfig::class);
+		$config->method('getValueString')->willReturn($stored);
+		$written = null;
+		$config->expects($this->once())->method('setValueString')->willReturnCallback(
+			function (string $user, string $app, string $key, string $value) use (&$written): bool {
+				$written = json_decode($value, true);
+				return true;
+			},
+		);
+		$service = new SettingsService($config, $this->createStub(IAppConfig::class), $this->emptyRootFolder());
+
+		$settings = $service->getUserSettings(self::USER);
+
+		$this->assertSame([], $settings['core_options'], 'the core options are the administrator\'s');
+		$this->assertSame(5000, $settings['max_games'], 'and so are the instance limits');
+		$this->assertTrue($settings['video_smooth'], 'while the user\'s own choices stay');
+		$this->assertSame(['video_smooth' => true], $written, 'the row is trued up so it cannot shadow again');
+	}
+
 	public function testFoldersAreNormalized(): void {
 		$saved = $this->save([
 			'library_folder' => 'Games/Roms/',
