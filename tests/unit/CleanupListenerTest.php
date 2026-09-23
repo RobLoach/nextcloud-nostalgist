@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\Arcade\Tests\Unit;
 
 use OCA\Arcade\Listener\CleanupListener;
+use OCA\Arcade\Service\RecentService;
 use OCA\Arcade\Service\StateService;
 use OCP\App\IAppManager;
 use OCP\EventDispatcher\Event;
@@ -19,18 +20,21 @@ use Psr\Log\LoggerInterface;
 
 class CleanupListenerTest extends TestCase {
 	private StateService&MockObject $stateService;
+	private RecentService&MockObject $recentService;
 	private CleanupListener $listener;
 	/** Whether the deleted file has a trash to fall into. */
 	private bool $trashbin = false;
 
 	protected function setUp(): void {
 		$this->stateService = $this->createMock(StateService::class);
+		$this->recentService = $this->createMock(RecentService::class);
 		$appManager = $this->createStub(IAppManager::class);
 		$appManager->method('isEnabledForUser')->willReturnCallback(
 			fn (string $appId): bool => $appId === 'files_trashbin' && $this->trashbin,
 		);
 		$this->listener = new CleanupListener(
 			$this->stateService,
+			$this->recentService,
 			$appManager,
 			$this->createStub(LoggerInterface::class),
 		);
@@ -115,6 +119,9 @@ class CleanupListenerTest extends TestCase {
 		$user->method('getUID')->willReturn('alice');
 
 		$this->stateService->expects($this->once())
+			->method('deleteAllForUser')
+			->with('alice');
+		$this->recentService->expects($this->once())
 			->method('deleteAllForUser')
 			->with('alice');
 

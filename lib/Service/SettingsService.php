@@ -115,7 +115,7 @@ class SettingsService {
 	 * @return array<string, string> system id => kind of image
 	 */
 	public function getThumbnailTypes(): array {
-		$stored = $this->appConfig->getValueString(Application::APP_ID, 'thumbnail_types');
+		$stored = $this->appConfig->getValueString(Application::APP_ID, 'thumbnail_types', lazy: true);
 		if ($stored === '') {
 			return [];
 		}
@@ -141,7 +141,7 @@ class SettingsService {
 	 * @return array<string, array<string, string>>
 	 */
 	public function getCoreOptions(): array {
-		$stored = $this->appConfig->getValueString(Application::APP_ID, 'core_options');
+		$stored = $this->appConfig->getValueString(Application::APP_ID, 'core_options', lazy: true);
 		if ($stored === '') {
 			return [];
 		}
@@ -189,9 +189,14 @@ class SettingsService {
 				);
 			}
 		}
+		// These two are large JSON blobs, so they are stored lazy: Nextcloud
+		// preloads every non-lazy app config value on every request of the
+		// instance, and these are only needed when the app itself runs.
+		// Writing with the lazy flag also moves a value stored non-lazy by
+		// an earlier version of the app over to the lazy pile.
 		foreach (['core_options', 'thumbnail_types'] as $key) {
 			if (array_key_exists($key, $sanitized)) {
-				$this->appConfig->setValueString(Application::APP_ID, $key, json_encode($sanitized[$key]));
+				$this->appConfig->setValueString(Application::APP_ID, $key, json_encode($sanitized[$key]), lazy: true);
 			}
 		}
 		$this->settings = [];

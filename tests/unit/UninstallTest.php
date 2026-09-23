@@ -16,6 +16,7 @@ use OCP\Files\SimpleFS\ISimpleFolder;
 use OCP\IAppConfig;
 use OCP\ICache;
 use OCP\ICacheFactory;
+use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -32,6 +33,8 @@ class UninstallTest extends TestCase {
 	private array $removedJobs = [];
 	private array $clearedCaches = [];
 	private array $forgottenApps = [];
+	/** The tables of the app that were dropped. */
+	private array $droppedTables = [];
 	/** Set when the app data has never been written to. */
 	private bool $withoutAppData = false;
 
@@ -94,6 +97,14 @@ class UninstallTest extends TestCase {
 			},
 		);
 
+		$connection = $this->createStub(IDBConnection::class);
+		$connection->method('tableExists')->willReturn(true);
+		$connection->method('dropTable')->willReturnCallback(
+			function (string $table): void {
+				$this->droppedTables[] = $table;
+			},
+		);
+
 		return new CommandTester(new Uninstall(
 			$config,
 			$appConfig,
@@ -102,6 +113,7 @@ class UninstallTest extends TestCase {
 			// things, and that is the point of it being shared.
 			new UninstallCleanup($jobList, $cacheFactory),
 			$mimeTypeLoader,
+			$connection,
 		));
 	}
 
@@ -123,6 +135,7 @@ class UninstallTest extends TestCase {
 		return [
 			'reverted' => $this->reverted,
 			'deleted' => $this->deleted,
+			'tables' => $this->droppedTables,
 			'jobs' => $this->removedJobs,
 			'caches' => $this->clearedCaches,
 			'forgotten' => $this->forgottenApps,
@@ -135,7 +148,7 @@ class UninstallTest extends TestCase {
 
 		$this->assertStringContainsString('--force', $tester->getDisplay());
 		$this->assertSame(
-			['reverted' => [], 'deleted' => [], 'jobs' => [], 'caches' => [], 'forgotten' => []],
+			['reverted' => [], 'deleted' => [], 'tables' => [], 'jobs' => [], 'caches' => [], 'forgotten' => []],
 			$this->touched(),
 			'being run by a script is not an answer',
 		);
@@ -148,8 +161,9 @@ class UninstallTest extends TestCase {
 		$display = $tester->getDisplay();
 		$this->assertStringContainsString('Dry run', $display);
 		$this->assertStringContainsString('Would remove', $display);
+		$this->assertStringContainsString('Would drop the tables', $display);
 		$this->assertSame(
-			['reverted' => [], 'deleted' => [], 'jobs' => [], 'caches' => [], 'forgotten' => []],
+			['reverted' => [], 'deleted' => [], 'tables' => [], 'jobs' => [], 'caches' => [], 'forgotten' => []],
 			$this->touched(),
 		);
 	}
@@ -165,6 +179,11 @@ class UninstallTest extends TestCase {
 		$this->tester()->execute(['--force' => true], ['interactive' => false]);
 
 		$this->assertSame(['states'], $this->deleted);
+		$this->assertSame(
+			['arcade_plays', 'arcade_games'],
+			$this->droppedTables,
+			'the play records and the registry of games with saves',
+		);
 		$this->assertSame(Application::JOBS, $this->removedJobs, 'every job the app queues');
 		$this->assertSame(
 			array_map(static fn (string $cache): string => Application::APP_ID . $cache, Application::CACHES),

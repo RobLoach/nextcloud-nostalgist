@@ -6,6 +6,7 @@ namespace OCA\Arcade\Service;
 
 use OCA\Arcade\AppInfo\Application;
 use OCA\Arcade\CoreMap;
+use OCA\Arcade\Db\GameMapper;
 use OCA\Arcade\Listener\MetadataListener;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\File;
@@ -31,7 +32,7 @@ class StateService {
 	public const SLOTS = 3;
 	/** The slot written when a game is closed, kept apart from the numbered ones. */
 	public const AUTO_SLOT = 0;
-	/** Lists the games a user has states for, next to the states. */
+	/** Where older versions listed the games a user has states for. */
 	private const GAMES_FILE = 'games.json';
 	/**
 	 * Earlier versions offered more slots. They are still listed, so what
@@ -56,12 +57,15 @@ class StateService {
 	 * @var array<string, array<string, Folder>>
 	 */
 	private array $gameFolders = [];
+	/** The users whose old games.json has been brought into the table. */
+	private array $importedGames = [];
 
 	public function __construct(
 		private IAppDataFactory $appDataFactory,
 		private IRootFolder $rootFolder,
 		private SettingsService $settingsService,
 		private IFilesMetadataManager $metadataManager,
+		private GameMapper $gameMapper,
 	) {
 	}
 
@@ -221,6 +225,7 @@ class StateService {
 	 * own files, and so any saves folder, are removed by Nextcloud itself.
 	 */
 	public function deleteAllForUser(string $userId): void {
+		$this->gameMapper->deleteAllForUser($userId);
 		try {
 			$this->statesRoot()->getFolder($this->userKey($userId))->delete();
 		} catch (NotFoundException) {
@@ -571,10 +576,7 @@ class StateService {
 
 	/** Notes where a game is now, so it can be followed if it moves. */
 	private function remember(string $userId, string $romPath): void {
-		$folder = $this->userStates($userId, true);
-		if ($folder !== null) {
-			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath), $this->checksumOf($userId, $romPath));
-		}
+		$this->rememberGame($userId, $romPath, $this->key($userId, $romPath), $this->checksumOf($userId, $romPath));
 	}
 
 	/**
@@ -609,9 +611,8 @@ class StateService {
 	 * @return array<string, string>
 	 */
 	private function gameEntry(string $userId, string $key): array {
-		$folder = $this->userStates($userId, false);
-		$entry = $folder === null ? null : ($this->readGames($folder)[$key] ?? null);
-		return is_array($entry) ? $entry : [];
+		$this->importLegacyGames($userId);
+		return $this->gameMapper->entryOf($userId, $key) ?? [];
 	}
 
 	private function readAnySram(Folder $folder): ?string {
@@ -663,49 +664,30 @@ class StateService {
 			$folder->newFile($name, $data);
 		}
 		if ($romPath !== '') {
-			$this->rememberGame($folder, $romPath, $this->key($userId, $romPath), $this->checksumOf($userId, $romPath));
+			$this->remember($userId, $romPath);
 		}
 	}
 
 	/**
 	 * The file names hide which game they belong to, so the games a user has
-	 * states for are listed alongside them. That is what tells apart a state
-	 * whose game is gone from one whose game is merely not being played.
+	 * states for are kept in a table of their own. That is what tells apart a
+	 * state whose game is gone from one whose game is merely not being played.
 	 */
-	private function rememberGame(ISimpleFolder $folder, string $romPath, string $key, string $checksum): void {
-		$games = $this->readGames($folder);
-		$entry = ['path' => $romPath, 'md5' => $checksum];
-		if (($games[$key] ?? null) === $entry) {
-			return;
-		}
-		$games[$key] = $entry;
-		$this->writeGames($folder, $games);
+	private function rememberGame(string $userId, string $romPath, string $key, string $checksum): void {
+		$this->importLegacyGames($userId);
+		$this->gameMapper->set($userId, $key, $this->fileIdOfKey($key), $romPath, $checksum);
 	}
 
 	private function forgetGame(string $userId, string $romPath): void {
-		$folder = $this->userStates($userId, false);
-		if ($folder === null) {
-			return;
-		}
-		$games = $this->readGames($folder);
-		unset($games[$this->key($userId, $romPath)], $games[$this->pathKey($romPath)]);
-		$this->writeGames($folder, $games);
+		$this->forgetKeys($userId, $this->key($userId, $romPath), $this->pathKey($romPath));
 	}
 
 	/**
-	 * Drop what the app data remembers of a game, by the names it is
-	 * filed under.
+	 * Drop what is remembered of a game, by the names it is filed under.
 	 */
 	private function forgetKeys(string $userId, string ...$keys): void {
-		$folder = $this->userStates($userId, false);
-		if ($folder === null) {
-			return;
-		}
-		$games = $this->readGames($folder);
-		foreach ($keys as $key) {
-			unset($games[$key]);
-		}
-		$this->writeGames($folder, $games);
+		$this->importLegacyGames($userId);
+		$this->gameMapper->remove($userId, ...$keys);
 	}
 
 	/**
@@ -714,16 +696,56 @@ class StateService {
 	 * @return array<string, string>
 	 */
 	public function gamesOf(string $userId): array {
-		$folder = $this->userStates($userId, false);
+		$this->importLegacyGames($userId);
 		$games = [];
-		foreach ($folder === null ? [] : $this->readGames($folder) as $key => $entry) {
-			// Written as a bare path before the checksum was kept with it.
-			$path = is_array($entry) ? ($entry['path'] ?? '') : $entry;
-			if (is_string($path) && $path !== '') {
-				$games[(string)$key] = $path;
+		foreach ($this->gameMapper->entriesOf($userId) as $key => $entry) {
+			if ($entry['path'] !== '') {
+				$games[$key] = $entry['path'];
 			}
 		}
 		return $games;
+	}
+
+	/**
+	 * The registry used to be a games.json next to the states. The first
+	 * touch of a user's registry brings it into the table, and the file
+	 * goes. An entry the table already has was written since, and stays.
+	 */
+	private function importLegacyGames(string $userId): void {
+		if (isset($this->importedGames[$userId])) {
+			return;
+		}
+		$this->importedGames[$userId] = true;
+		$folder = $this->userStates($userId, false);
+		if ($folder === null) {
+			return;
+		}
+		foreach ($this->readGames($folder) as $key => $entry) {
+			$key = (string)$key;
+			// Written as a bare path before the checksum was kept with it.
+			$path = is_array($entry) ? ($entry['path'] ?? '') : $entry;
+			$checksum = is_array($entry) ? ($entry['md5'] ?? '') : '';
+			if (!is_string($path) || $path === '' || !is_string($checksum)) {
+				continue;
+			}
+			$this->gameMapper->importEntry($userId, $key, $this->fileIdOfKey($key), $path, $checksum);
+		}
+		try {
+			if ($folder->fileExists(self::GAMES_FILE)) {
+				$folder->getFile(self::GAMES_FILE)->delete();
+			}
+		} catch (NotFoundException) {
+			// Already gone.
+		}
+	}
+
+	/**
+	 * The id of the file a key stands for: the keys are the file id as a
+	 * string, or the hash of a path for the games that never had one, and a
+	 * hash is nothing to count with.
+	 */
+	private function fileIdOfKey(string $key): int {
+		return ctype_digit($key) ? (int)$key : 0;
 	}
 
 	/**
@@ -739,18 +761,6 @@ class StateService {
 			return [];
 		}
 		return is_array($games) ? $games : [];
-	}
-
-	/**
-	 * @param array<string, mixed> $games
-	 */
-	private function writeGames(ISimpleFolder $folder, array $games): void {
-		$content = json_encode($games);
-		try {
-			$folder->getFile(self::GAMES_FILE)->putContent($content);
-		} catch (NotFoundException) {
-			$folder->newFile(self::GAMES_FILE, $content);
-		}
 	}
 
 	/**

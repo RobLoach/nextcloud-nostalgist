@@ -12,6 +12,7 @@ use OCA\Arcade\Listener\CSPListener;
 use OCA\Arcade\Listener\LoadViewerListener;
 use OCA\Arcade\Listener\MetadataListener;
 use OCA\Arcade\Preview\RomPreview;
+use OCA\Arcade\SetupChecks\ArcadeSetupCheck;
 use OCA\Viewer\Event\LoadViewer;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
@@ -55,6 +56,9 @@ class Application extends App implements IBootstrap {
 		// Box art becomes the preview of a ROM, in the Files app and
 		// anywhere else Nextcloud shows one.
 		$context->registerPreviewProvider(RomPreview::class, RomPreview::mimeTypeRegex());
+		// Games are only recognized by background jobs, so a server that
+		// never runs them is told so where an administrator will look.
+		$context->registerSetupCheck(ArcadeSetupCheck::class);
 	}
 
 	public function boot(IBootContext $context): void {

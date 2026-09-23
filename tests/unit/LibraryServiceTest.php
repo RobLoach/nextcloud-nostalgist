@@ -186,6 +186,27 @@ class LibraryServiceTest extends TestCase {
 		$this->assertSame([], $games[1]['tags']);
 	}
 
+	public function testABigLibraryIsAskedAboutInChunks(): void {
+		$askedFor = [];
+		$this->tagObjectMapper->method('getTagIdsForObjects')->willReturnCallback(
+			static function (array $fileIds, string $type) use (&$askedFor): array {
+				$askedFor[] = count($fileIds);
+				return array_fill_keys($fileIds, ['10']);
+			},
+		);
+		$this->tagManager->method('getTagsByIds')->willReturn(['10' => $this->tag('10', 'Finished')]);
+		$games = [];
+		for ($id = 1; $id <= 501; $id++) {
+			$games[] = ['id' => $id, 'path' => "/g$id.nes", 'basename' => "g$id.nes", 'system' => 'nes'];
+		}
+
+		$this->service->addTags($games);
+
+		$this->assertSame([500, 1], $askedFor, 'no query carries more ids than Oracle allows');
+		$this->assertSame(['Finished'], $games[0]['tags']);
+		$this->assertSame(['Finished'], $games[500]['tags'], 'the game in the second chunk is tagged too');
+	}
+
 	public function testFilteringKeepsAListWithoutGaps(): void {
 		$filtered = $this->service->filterGames($this->games(), '', 'genesis');
 		$this->assertSame([0], array_keys($filtered), 'the keys are renumbered for the JSON response');
