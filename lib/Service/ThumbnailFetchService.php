@@ -51,12 +51,15 @@ class ThumbnailFetchService {
 	/**
 	 * Look for the box art of games that have no image yet.
 	 *
+	 * The files written this run are handed back so the caller can warm
+	 * their previews without going over the whole folder.
+	 *
 	 * @param list<array<string, mixed>> $games
-	 * @return array{fetched: int, missing: int, tried: int}
+	 * @return array{fetched: int, missing: int, tried: int, written: list<File>}
 	 */
 	public function fetch(string $userId, array $games, Folder $thumbnails, int $limit): array {
 		if (!$this->isAllowed()) {
-			return ['fetched' => 0, 'tried' => 0, 'missing' => count($games)];
+			return ['fetched' => 0, 'tried' => 0, 'missing' => count($games), 'written' => []];
 		}
 		$cache = $this->cacheFactory->createDistributed(Application::APP_ID . '_fetch');
 		$client = $this->clientService->newClient();
@@ -64,6 +67,7 @@ class ThumbnailFetchService {
 		$fetched = 0;
 		$tried = 0;
 		$missing = 0;
+		$written = [];
 		foreach ($games as $game) {
 			$platform = CoreMap::SYSTEMS[$game['system']]['platform'] ?? null;
 			if ($platform === null) {
@@ -93,10 +97,13 @@ class ThumbnailFetchService {
 				$missing++;
 				continue;
 			}
-			$this->store($thumbnails, $platform, $game['basename'], $image);
+			$file = $this->store($thumbnails, $platform, $game['basename'], $image);
+			if ($file !== null) {
+				$written[] = $file;
+			}
 			$fetched++;
 		}
-		return ['fetched' => $fetched, 'missing' => $missing, 'tried' => $tried];
+		return ['fetched' => $fetched, 'missing' => $missing, 'tried' => $tried, 'written' => $written];
 	}
 
 	/**
@@ -167,20 +174,25 @@ class ThumbnailFetchService {
 	/**
 	 * Store the image the way a libretro thumbnail pack would, but under
 	 * the name of the game as the user has it.
+	 *
+	 * @return File|null the stored file, so its previews can be warmed
 	 */
-	private function store(Folder $thumbnails, string $platform, string $basename, string $image): void {
+	private function store(Folder $thumbnails, string $platform, string $basename, string $image): ?File {
 		try {
 			$folder = $this->folder($this->folder($thumbnails, $platform), self::TYPE_FOLDER);
 			$name = pathinfo($basename, PATHINFO_FILENAME) . '.png';
 			$existing = $folder->nodeExists($name) ? $folder->get($name) : null;
 			if ($existing instanceof File) {
 				$existing->putContent($image);
-			} elseif ($existing === null) {
-				$folder->newFile($name, $image);
+				return $existing;
+			}
+			if ($existing === null) {
+				return $folder->newFile($name, $image);
 			}
 		} catch (\Throwable $e) {
 			$this->logger->warning('Could not store the box art', ['exception' => $e]);
 		}
+		return null;
 	}
 
 	private function folder(Folder $parent, string $name): Folder {

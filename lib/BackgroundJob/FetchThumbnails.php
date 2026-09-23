@@ -13,8 +13,10 @@ use OCP\BackgroundJob\IJobList;
 use OCP\BackgroundJob\QueuedJob;
 use OCP\Config\IUserConfig;
 use OCP\Files\Folder;
+use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
+use OCP\IPreview;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -35,6 +37,14 @@ class FetchThumbnails extends QueuedJob {
 	 */
 	public const BATCH = 10;
 
+	/**
+	 * The sizes the library asks /core/preview for: 256 for the cards of
+	 * the grid, 64 for the rows of the list (see thumbnailFor() in
+	 * src/library.js). The library passes a=1, which the preview endpoint
+	 * turns into crop=false, so the same is asked for here.
+	 */
+	public const PREVIEW_SIZES = [256, 64];
+
 	public function __construct(
 		ITimeFactory $time,
 		private SettingsService $settingsService,
@@ -43,6 +53,7 @@ class FetchThumbnails extends QueuedJob {
 		private IRootFolder $rootFolder,
 		private IJobList $jobList,
 		private IUserConfig $userConfig,
+		private IPreview $preview,
 		private LoggerInterface $logger,
 	) {
 		parent::__construct($time);
@@ -107,6 +118,7 @@ class FetchThumbnails extends QueuedJob {
 		}
 
 		$result = $this->fetchService->fetch($userId, $missing, $thumbnails, self::BATCH);
+		$this->warm($result['written'] ?? []);
 		if ($result['tried'] >= self::BATCH) {
 			// There is more to look for; carry on in the next run.
 			$this->report($userId, sprintf(
@@ -121,6 +133,33 @@ class FetchThumbnails extends QueuedJob {
 			$result['fetched'],
 			$result['missing'],
 		));
+	}
+
+	/**
+	 * Generate and cache the previews the library will ask for, so the
+	 * first paint does not send a request per game to a cold preview
+	 * generator.
+	 *
+	 * Done right here, one file after the other: a run writes at most
+	 * BATCH images, and a preview of a small box art PNG is cheap, so a
+	 * handful of them is no reason for sub-jobs. Only the files written
+	 * this run are warmed, never the whole folder.
+	 *
+	 * A warm-up is a nicety: whatever it cannot do, the preview endpoint
+	 * will do later, so trouble is logged at debug and the job goes on.
+	 *
+	 * @param list<File> $files
+	 */
+	private function warm(array $files): void {
+		foreach ($files as $file) {
+			foreach (self::PREVIEW_SIZES as $size) {
+				try {
+					$this->preview->getPreview($file, $size, $size, false);
+				} catch (\Throwable $e) {
+					$this->logger->debug('Could not warm a box art preview', ['exception' => $e]);
+				}
+			}
+		}
 	}
 
 	private function folderAt(Folder $userFolder, string $path): ?Folder {
