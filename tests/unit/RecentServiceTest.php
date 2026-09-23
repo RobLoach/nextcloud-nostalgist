@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
+use OCA\Arcade\Db\PlayMapper;
 use OCA\Arcade\Service\RecentService;
 use OCP\Config\IUserConfig;
 use OCP\Files\File;
@@ -17,8 +18,12 @@ use PHPUnit\Framework\TestCase;
 class RecentServiceTest extends TestCase {
 	private const USER = 'alice';
 
-	/** What is kept under the app, by key. */
+	/** What is kept under the app in the user config, by key. */
 	private array $stored = [];
+	/** The rows of the plays table, by file id, as the mapper keeps them. */
+	private array $plays = [];
+	/** Stands in for the autoincrementing id, which breaks ties. */
+	private int $sequence = 0;
 	/** The file ids the user has starred in Files, as keys. */
 	private array $starred = [];
 	/** The files the user has, by path. */
@@ -84,7 +89,72 @@ class RecentServiceTest extends TestCase {
 		$rootFolder = $this->createStub(IRootFolder::class);
 		$rootFolder->method('getUserFolder')->willReturn($folder);
 
-		return new RecentService($config, $tagManager, $rootFolder);
+		return new RecentService($config, $tagManager, $rootFolder, $this->playMapper());
+	}
+
+	/**
+	 * The table, as the mapper presents it: rows counted in place, ordered
+	 * by the moment last played and then by the newest row.
+	 */
+	private function playMapper(): PlayMapper {
+		$mapper = $this->createStub(PlayMapper::class);
+		$mapper->method('recentFileIds')->willReturnCallback(
+			function (string $userId, int $limit): array {
+				$rows = array_filter($this->plays, static fn (array $row): bool => $row['plays'] > 0);
+				uasort(
+					$rows,
+					static fn (array $a, array $b): int => [$b['time'], $b['seq']] <=> [$a['time'], $a['seq']],
+				);
+				return array_slice(array_keys($rows), 0, $limit);
+			},
+		);
+		$mapper->method('statsOf')->willReturnCallback(
+			fn (string $userId): array => array_map(
+				static fn (array $row): array => [
+					'seconds' => $row['seconds'],
+					'plays' => $row['plays'],
+					'time' => $row['time'],
+				],
+				$this->plays,
+			),
+		);
+		$mapper->method('recordPlay')->willReturnCallback(
+			function (string $userId, int $fileId, int $time): void {
+				if (isset($this->plays[$fileId])) {
+					$this->plays[$fileId]['plays']++;
+					// As the mapper does it: played again within the same
+					// second, the game still moves to the front.
+					$this->plays[$fileId]['time'] = max($this->plays[$fileId]['time'] + 1, $time);
+					return;
+				}
+				$this->plays[$fileId] = ['plays' => 1, 'seconds' => 0, 'time' => $time, 'seq' => ++$this->sequence];
+			},
+		);
+		$mapper->method('addSeconds')->willReturnCallback(
+			function (string $userId, int $fileId, int $seconds, int $time): void {
+				if (isset($this->plays[$fileId])) {
+					$this->plays[$fileId]['seconds'] += $seconds;
+					return;
+				}
+				$this->plays[$fileId] = ['plays' => 0, 'seconds' => $seconds, 'time' => $time, 'seq' => ++$this->sequence];
+			},
+		);
+		$mapper->method('importPlay')->willReturnCallback(
+			function (string $userId, int $fileId, int $plays, int $seconds, int $time): void {
+				$this->plays[$fileId] ??= [
+					'plays' => $plays,
+					'seconds' => $seconds,
+					'time' => $time,
+					'seq' => ++$this->sequence,
+				];
+			},
+		);
+		$mapper->method('deleteAllForUser')->willReturnCallback(
+			function (string $userId): void {
+				$this->plays = [];
+			},
+		);
+		return $mapper;
 	}
 
 	public function testNothingIsRememberedToStartWith(): void {
@@ -121,7 +191,7 @@ class RecentServiceTest extends TestCase {
 		$this->assertSame([101, 102], $service->get(self::USER), 'a game is not remembered twice');
 	}
 
-	public function testOnlyTheLastTwelveGamesAreKept(): void {
+	public function testOnlyTheLastTwelveGamesAreListed(): void {
 		$service = $this->service();
 		for ($i = 1; $i <= 20; $i++) {
 			$service->record(self::USER, "/Games/Game $i.nes");
@@ -168,6 +238,16 @@ class RecentServiceTest extends TestCase {
 		);
 	}
 
+	public function testAGameOnlyEverReportedForIsNotCalledRecent(): void {
+		// A session whose start was never seen still counts its time, but
+		// the game was not started here, and the recent list says what was.
+		$service = $this->service();
+		$service->addPlayTime(self::USER, '/Games/Mario.nes', 300);
+
+		$this->assertSame([], $service->get(self::USER));
+		$this->assertSame(300, $service->stats(self::USER)[101]['seconds']);
+	}
+
 	public function testAForgottenTabDoesNotCountForHours(): void {
 		$service = $this->service();
 		$service->record(self::USER, '/Games/Mario.nes');
@@ -180,6 +260,14 @@ class RecentServiceTest extends TestCase {
 		$service->record(self::USER, '/Games/Mario.nes');
 		$service->addPlayTime(self::USER, '/Games/Mario.nes', -60);
 		$this->assertSame(0, $service->stats(self::USER)[101]['seconds']);
+	}
+
+	public function testEverythingOfAUserGoesWithThem(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		$service->deleteAllForUser(self::USER);
+		$this->assertSame([], $service->get(self::USER));
+		$this->assertSame([], $service->stats(self::USER));
 	}
 
 	public function testAFavoriteIsTheStarOfTheFilesApp(): void {
@@ -216,4 +304,39 @@ class RecentServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('favorites', $this->stored, 'and the old list is gone');
 	}
 
+	// What older versions kept as JSON blobs is brought into the table.
+
+	public function testTheOldCountsAreBroughtIntoTheTableOnce(): void {
+		$this->stored['stats'] = json_encode([
+			101 => ['seconds' => 300, 'plays' => 2, 'time' => 6000],
+			102 => ['seconds' => 90, 'plays' => 1, 'time' => 5000],
+		]);
+		$this->stored['recent'] = json_encode([['id' => 101], ['id' => 102]]);
+
+		$service = $this->service();
+		$this->assertSame([101, 102], $service->get(self::USER), 'newest first, as the old list had them');
+		$this->assertSame(
+			['seconds' => 300, 'plays' => 2, 'time' => 6000],
+			$service->stats(self::USER)[101],
+		);
+		$this->assertArrayNotHasKey('stats', $this->stored, 'the old blobs are gone');
+		$this->assertArrayNotHasKey('recent', $this->stored);
+	}
+
+	public function testARecentListWithoutCountsKeepsItsOrder(): void {
+		// As a version from before the counts would have left it.
+		$this->stored['recent'] = json_encode([['id' => 103], ['id' => 104]]);
+
+		$this->assertSame([103, 104], $this->service()->get(self::USER));
+	}
+
+	public function testWhatWasCountedSinceIsNotOverwrittenByTheImport(): void {
+		$service = $this->service();
+		$service->record(self::USER, '/Games/Mario.nes');
+		// A blob that turns up late, from before the table.
+		$this->stored['stats'] = json_encode([101 => ['seconds' => 999, 'plays' => 9, 'time' => 1]]);
+
+		$service->record(self::USER, '/Games/Mario.nes');
+		$this->assertSame(2, $service->stats(self::USER)[101]['plays'], 'the table already knew better');
+	}
 }

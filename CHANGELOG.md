@@ -6,6 +6,21 @@ All notable changes to NextCloud Arcade. The format follows
 
 ## [Unreleased]
 
+## [0.38.0] - 2026-09-22
+
+### Changed
+- The play statistics and the recently played list moved from JSON blobs in
+  the user config into a table, `arcade_plays`. Plays and play time are
+  counted in the database itself, so two sessions ending together both
+  count, and the cap of 200 games with statistics is gone. What the blobs
+  held is brought over the first time a user's records are touched.
+- The registry of games with save states moved from a `games.json` in the
+  app data into a table, `arcade_games`. An existing `games.json` is
+  brought over the first time a user's registry is touched, and then
+  removed.
+- `occ arcade:uninstall` drops both tables, which removing the app would
+  leave behind.
+
 ## [0.37.0] - 2026-09-22
 
 ### Added
@@ -275,7 +290,8 @@ All notable changes to NextCloud Arcade. The format follows
 ### Added
 - The first version.
 
-[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.37.0...HEAD
+[Unreleased]: https://github.com/robloach/nextcloud-arcade/compare/v0.38.0...HEAD
+[0.38.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.38.0
 [0.37.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.37.0
 [0.36.1]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.36.1
 [0.36.0]: https://github.com/robloach/nextcloud-arcade/releases/tag/v0.36.0

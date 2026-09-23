@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Arcade\Tests\Unit;
 
+use OCA\Arcade\Db\GameMapper;
 use OCA\Arcade\Service\SettingsService;
 use OCA\Arcade\Service\StateService;
 use OCP\Files\AppData\IAppDataFactory;
@@ -30,6 +31,8 @@ class StateServiceTest extends TestCase {
 	private array $ids = [];
 	/** What each file id hashes to, for the ROMs that have been read. */
 	private array $checksums = [];
+	/** The rows of the games table, by user then key, as the mapper keeps them. */
+	private array $games = [];
 
 	private function service(string $savesFolder = ''): StateService {
 		$settings = $this->createStub(SettingsService::class);
@@ -40,7 +43,48 @@ class StateServiceTest extends TestCase {
 			$this->rootFolder(),
 			$settings,
 			$this->metadataManager(),
+			$this->gameMapper(),
 		);
+	}
+
+	/** The games table, as the mapper presents it. */
+	private function gameMapper(): GameMapper {
+		$mapper = $this->createStub(GameMapper::class);
+		$mapper->method('entriesOf')->willReturnCallback(
+			fn (string $userId): array => array_map(
+				static fn (array $row): array => ['path' => $row['path'], 'md5' => $row['md5']],
+				$this->games[$userId] ?? [],
+			),
+		);
+		$mapper->method('entryOf')->willReturnCallback(
+			function (string $userId, string $key): ?array {
+				$row = $this->games[$userId][$key] ?? null;
+				return $row === null ? null : ['path' => $row['path'], 'md5' => $row['md5']];
+			},
+		);
+		$mapper->method('set')->willReturnCallback(
+			function (string $userId, string $key, int $fileId, string $path, string $checksum): void {
+				$this->games[$userId][$key] = ['file_id' => $fileId, 'path' => $path, 'md5' => $checksum];
+			},
+		);
+		$mapper->method('importEntry')->willReturnCallback(
+			function (string $userId, string $key, int $fileId, string $path, string $checksum): void {
+				$this->games[$userId][$key] ??= ['file_id' => $fileId, 'path' => $path, 'md5' => $checksum];
+			},
+		);
+		$mapper->method('remove')->willReturnCallback(
+			function (string $userId, string ...$keys): void {
+				foreach ($keys as $key) {
+					unset($this->games[$userId][$key]);
+				}
+			},
+		);
+		$mapper->method('deleteAllForUser')->willReturnCallback(
+			function (string $userId): void {
+				unset($this->games[$userId]);
+			},
+		);
+		return $mapper;
 	}
 
 	/**
@@ -474,6 +518,33 @@ class StateServiceTest extends TestCase {
 		// Which is what tells the cleanup what is still played.
 		$service->deleteAllForGame(self::USER, self::GAME);
 		$this->assertSame(['/Games/Zelda.sfc'], array_values($service->gamesOf(self::USER)));
+	}
+
+	public function testAGamesJsonOfOlderVersionsIsBroughtIntoTheTable(): void {
+		// As an earlier version would have left it: next to the states, with
+		// an entry that still carried its checksum, one written as a bare
+		// path before the checksum was kept, and one keyed by the hash of
+		// its path from before the file id was used.
+		$userFolder = 'states/' . hash('sha256', self::USER);
+		$pathHash = hash('sha256', '/Games/Kirby.gb');
+		$this->appData['states'] = [];
+		$this->appData[$userFolder] = [
+			'games.json' => json_encode([
+				'101' => ['path' => self::GAME, 'md5' => 'the dump'],
+				'202' => '/Games/Zelda.sfc',
+				$pathHash => ['path' => '/Games/Kirby.gb', 'md5' => ''],
+			]),
+		];
+
+		$games = $this->service()->gamesOf(self::USER);
+		$this->assertSame(
+			[self::GAME, '/Games/Zelda.sfc', '/Games/Kirby.gb'],
+			[$games['101'], $games['202'], $games[$pathHash]],
+		);
+		$this->assertSame('the dump', $this->games[self::USER]['101']['md5']);
+		$this->assertSame(101, $this->games[self::USER]['101']['file_id']);
+		$this->assertSame(0, $this->games[self::USER][$pathHash]['file_id'], 'a hash is no file id');
+		$this->assertArrayNotHasKey('games.json', $this->appData[$userFolder], 'and the file is gone');
 	}
 
 	public function testStatesWrittenBeforeTheyWereKeptPerUserAreStillRead(): void {

@@ -1,0 +1,145 @@
+<?php
+
+declare(strict_types=1);
+
+namespace OCA\Arcade\Db;
+
+use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\Exception;
+use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IDBConnection;
+
+/**
+ * The games a user has states for, which used to be a games.json next to
+ * the states. That is what tells apart a state whose game is gone from one
+ * whose game is merely not being played.
+ *
+ * @template-extends QBMapper<Game>
+ */
+class GameMapper extends QBMapper {
+	public function __construct(IDBConnection $db) {
+		parent::__construct($db, 'arcade_games', Game::class);
+	}
+
+	/**
+	 * Every game of a user, by the key its states are filed under.
+	 *
+	 * @return array<string, array{path: string, md5: string}>
+	 */
+	public function entriesOf(string $userId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('game_key', 'last_path', 'checksum')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+		$result = $qb->executeQuery();
+		$entries = [];
+		while (($row = $result->fetch()) !== false) {
+			$entries[(string)$row['game_key']] = [
+				'path' => (string)$row['last_path'],
+				'md5' => (string)$row['checksum'],
+			];
+		}
+		$result->closeCursor();
+		return $entries;
+	}
+
+	/**
+	 * @return array{path: string, md5: string}|null
+	 */
+	public function entryOf(string $userId, string $key): ?array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('last_path', 'checksum')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('game_key', $qb->createNamedParameter($key)));
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$result->closeCursor();
+		if ($row === false) {
+			return null;
+		}
+		return [
+			'path' => (string)$row['last_path'],
+			'md5' => (string)$row['checksum'],
+		];
+	}
+
+	/**
+	 * Note where a game is now and what it hashes to, replacing what was
+	 * noted before.
+	 */
+	public function set(string $userId, string $key, int $fileId, string $path, string $checksum): void {
+		if ($this->replace($userId, $key, $fileId, $path, $checksum) > 0) {
+			return;
+		}
+		$game = new Game();
+		$game->setUserId($userId);
+		$game->setGameKey($key);
+		$game->setFileId($fileId);
+		$game->setLastPath($path);
+		$game->setChecksum($checksum);
+		try {
+			$this->insert($game);
+		} catch (Exception $e) {
+			if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+				throw $e;
+			}
+			// Another request noted it first. An update that changes nothing
+			// counts no rows on some databases, so this one may too; either
+			// way the entry is there.
+			$this->replace($userId, $key, $fileId, $path, $checksum);
+		}
+	}
+
+	private function replace(string $userId, string $key, int $fileId, string $path, string $checksum): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('file_id', $qb->createNamedParameter($fileId, IQueryBuilder::PARAM_INT))
+			->set('last_path', $qb->createNamedParameter($path))
+			->set('checksum', $qb->createNamedParameter($checksum))
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->eq('game_key', $qb->createNamedParameter($key)));
+		return $qb->executeStatement();
+	}
+
+	/**
+	 * Bring over what a games.json noted. An entry that is already there
+	 * has been written since, and wins.
+	 */
+	public function importEntry(string $userId, string $key, int $fileId, string $path, string $checksum): void {
+		$game = new Game();
+		$game->setUserId($userId);
+		$game->setGameKey($key);
+		$game->setFileId($fileId);
+		$game->setLastPath($path);
+		$game->setChecksum($checksum);
+		try {
+			$this->insert($game);
+		} catch (Exception $e) {
+			if ($e->getReason() !== Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+				throw $e;
+			}
+		}
+	}
+
+	/**
+	 * Drop what is remembered of a game, by the names it is filed under.
+	 */
+	public function remove(string $userId, string ...$keys): void {
+		if ($keys === []) {
+			return;
+		}
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)))
+			->andWhere($qb->expr()->in('game_key', $qb->createNamedParameter($keys, IQueryBuilder::PARAM_STR_ARRAY)));
+		$qb->executeStatement();
+	}
+
+	public function deleteAllForUser(string $userId): void {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('user_id', $qb->createNamedParameter($userId)));
+		$qb->executeStatement();
+	}
+}

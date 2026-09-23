@@ -11,6 +11,7 @@ use OCP\Config\IUserConfig;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\IMimeTypeLoader;
 use OCP\IAppConfig;
+use OCP\IDBConnection;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,12 +31,16 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  * @psalm-suppress UnusedClass
  */
 class Uninstall extends Command {
+	/** The tables of the app, which removing the app leaves behind. */
+	private const TABLES = ['arcade_plays', 'arcade_games'];
+
 	public function __construct(
 		private IUserConfig $userConfig,
 		private IAppConfig $appConfig,
 		private IAppDataFactory $appDataFactory,
 		private UninstallCleanup $cleanup,
 		private IMimeTypeLoader $mimeTypeLoader,
+		private IDBConnection $connection,
 	) {
 		parent::__construct();
 	}
@@ -59,6 +64,7 @@ class Uninstall extends Command {
 
 		$this->forgetMimeTypes($dryRun, $output);
 		$this->forgetSaveStates($dryRun, $output);
+		$this->forgetTables($dryRun, $output);
 		$this->forgetWork($dryRun, $output);
 		$this->forgetSettings($dryRun, $output);
 
@@ -125,6 +131,30 @@ class Uninstall extends Command {
 		}
 		$verb = $dryRun ? 'Would remove' : 'Removed';
 		$output->writeln("$verb <info>$removed</info> folders of save states and battery saves");
+	}
+
+	/**
+	 * The play records and the registry of the games with saves, which live
+	 * in tables of the app. Removing the app deletes the code and nothing
+	 * else, so the tables go here.
+	 */
+	private function forgetTables(bool $dryRun, OutputInterface $output): void {
+		$dropped = [];
+		foreach (self::TABLES as $table) {
+			if (!$this->connection->tableExists($table)) {
+				continue;
+			}
+			if (!$dryRun) {
+				$this->connection->dropTable($table);
+			}
+			$dropped[] = $table;
+		}
+		$verb = $dryRun ? 'Would drop' : 'Dropped';
+		$output->writeln(
+			$dropped === []
+				? 'No tables of the app were found'
+				: "$verb the tables of the app: <info>" . implode(', ', $dropped) . '</info>',
+		);
 	}
 
 	private function forgetWork(bool $dryRun, OutputInterface $output): void {
