@@ -1,21 +1,23 @@
 /* The player overlay: the control bar and its panels. Loaded on the
-   Arcade page and, through the listeners, inside the Files app. */
+   Arcade page and, through the listeners, inside the Files app.
+   The overlay sits on the game picture itself, so it keeps a fixed dark
+   scrim in every theme; sizes and radii follow the Nextcloud variables. */
 
 .arcade-player-container { position: relative; }
 .arcade-toolbar {
 	position: absolute;
-	bottom: 8px;
+	bottom: calc(var(--default-grid-baseline, 4px) * 2);
 	left: 50%;
 	transform: translateX(-50%);
 	display: flex;
-	gap: 4px;
+	gap: var(--default-grid-baseline, 4px);
 	align-items: center;
 	background-color: rgba(0, 0, 0, 0.65);
-	border-radius: 8px;
-	padding: 4px 8px;
+	border-radius: var(--border-radius-large, 8px);
+	padding: var(--default-grid-baseline, 4px) calc(var(--default-grid-baseline, 4px) * 2);
 	z-index: 20100;
 	opacity: 0.4;
-	transition: opacity 0.2s;
+	transition: opacity var(--animation-quick, 100ms);
 }
 .arcade-toolbar:hover,
 .arcade-toolbar:focus-within { opacity: 1; }
@@ -27,7 +29,7 @@
 	padding: 6px;
 	margin: 0;
 	cursor: pointer;
-	border-radius: 6px;
+	border-radius: var(--border-radius, 6px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -42,8 +44,8 @@
 	left: 50%;
 	transform: translateX(-50%);
 	background-color: rgba(0, 0, 0, 0.85);
-	border-radius: 8px;
-	padding: 12px;
+	border-radius: var(--border-radius-large, 8px);
+	padding: calc(var(--default-grid-baseline, 4px) * 3);
 	z-index: 20100;
 	color: #fff;
 	max-height: 70%;
@@ -55,14 +57,14 @@
 .arcade-states-slot {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 4px 0;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
+	padding: var(--default-grid-baseline, 4px) 0;
 }
 .arcade-states-thumbnail {
 	width: 64px;
 	height: 48px;
 	object-fit: cover;
-	border-radius: 4px;
+	border-radius: var(--border-radius, 4px);
 	background-color: rgba(255, 255, 255, 0.1);
 	flex-shrink: 0;
 }
@@ -74,7 +76,7 @@
 .arcade-states-slot button {
 	background-color: rgba(255, 255, 255, 0.15);
 	border: none;
-	border-radius: 6px;
+	border-radius: var(--border-radius, 6px);
 	color: #fff;
 	font-size: 12px;
 	padding: 6px 10px;
@@ -86,15 +88,15 @@
 .arcade-states-slot button:disabled { opacity: 0.4; cursor: default; }
 .arcade-resume {
 	position: absolute;
-	top: 16px;
+	top: calc(var(--default-grid-baseline, 4px) * 4);
 	left: 50%;
 	transform: translateX(-50%);
 	display: flex;
-	gap: 8px;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
 	align-items: center;
 	background-color: rgba(0, 0, 0, 0.8);
-	border-radius: 8px;
-	padding: 8px 12px;
+	border-radius: var(--border-radius-large, 8px);
+	padding: calc(var(--default-grid-baseline, 4px) * 2) calc(var(--default-grid-baseline, 4px) * 3);
 	z-index: 20100;
 	color: #fff;
 	font-size: 13px;
@@ -102,7 +104,7 @@
 .arcade-resume button {
 	background-color: rgba(255, 255, 255, 0.15);
 	border: none;
-	border-radius: 6px;
+	border-radius: var(--border-radius, 6px);
 	color: #fff;
 	font-size: 13px;
 	padding: 6px 12px;
@@ -118,8 +120,8 @@
 	left: 50%;
 	transform: translateX(-50%);
 	background-color: rgba(0, 0, 0, 0.85);
-	border-radius: 8px;
-	padding: 12px;
+	border-radius: var(--border-radius-large, 8px);
+	padding: calc(var(--default-grid-baseline, 4px) * 3);
 	z-index: 20100;
 	color: #fff;
 	max-height: 70%;
@@ -132,14 +134,14 @@
 .arcade-gallery-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-	gap: 8px;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
 }
 .arcade-gallery-item { position: relative; }
 .arcade-gallery-item img {
 	width: 100%;
 	aspect-ratio: 4 / 3;
 	object-fit: cover;
-	border-radius: 4px;
+	border-radius: var(--border-radius, 4px);
 	background-color: rgba(255, 255, 255, 0.1);
 	display: block;
 }
@@ -150,18 +152,18 @@
 }
 .arcade-gallery-item button {
 	position: absolute;
-	top: 4px;
-	inset-inline-end: 4px;
+	top: var(--default-grid-baseline, 4px);
+	inset-inline-end: var(--default-grid-baseline, 4px);
 	background-color: rgba(0, 0, 0, 0.6);
 	border: none;
-	border-radius: 4px;
+	border-radius: var(--border-radius, 4px);
 	padding: 4px;
 	margin: 0;
 	min-height: 0;
 	cursor: pointer;
 	display: flex;
 	opacity: 0;
-	transition: opacity 0.2s;
+	transition: opacity var(--animation-quick, 100ms);
 }
 .arcade-gallery-item:hover button,
 .arcade-gallery-item button:focus-visible { opacity: 1; }
@@ -169,7 +171,7 @@
 .arcade-gallery-empty { font-size: 12px; color: rgba(255, 255, 255, 0.7); }
 
 .arcade-states-stale {
-	color: #e9a13b;
+	color: var(--color-warning, #e9a13b);
 	font-size: 11px;
 	margin-inline-start: 6px;
 }
