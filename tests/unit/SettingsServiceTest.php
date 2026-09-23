@@ -101,8 +101,9 @@ class SettingsServiceTest extends TestCase {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$saved = '';
 		$appConfig->method('setValueString')->willReturnCallback(
-			function (string $app, string $key, string $value) use (&$saved): bool {
+			function (string $app, string $key, string $value, bool $lazy = false) use (&$saved): bool {
 				if ($key === 'core_options') {
+					$this->assertTrue($lazy, 'the core options blob is stored lazy');
 					$saved = $value;
 				}
 				return true;
@@ -357,6 +358,43 @@ class SettingsServiceTest extends TestCase {
 
 	public function testUnknownSettingsAreDropped(): void {
 		$this->assertArrayNotHasKey('evil', $this->save(['evil' => 'value']));
+	}
+
+	public function testTheJsonBlobsAreStoredAndReadLazily(): void {
+		// Nextcloud preloads every non-lazy app config value on every
+		// request of the instance; these blobs are big and only needed
+		// when the app itself runs, so they stay out of that pile. The
+		// small scalar settings are not worth the second query.
+		$appConfig = $this->createMock(IAppConfig::class);
+		$setLazy = $getLazy = [];
+		$appConfig->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value, bool $lazy = false) use (&$setLazy): bool {
+				$setLazy[$key] = $lazy;
+				return true;
+			},
+		);
+		$appConfig->method('getValueString')->willReturnCallback(
+			function (string $app, string $key, string $default = '', bool $lazy = false) use (&$getLazy): string {
+				$getLazy[$key] = $lazy;
+				return '';
+			},
+		);
+		$service = new SettingsService($this->createStub(IUserConfig::class), $appConfig, $this->emptyRootFolder());
+		$service->setInstanceDefaults([
+			'core_options' => [],
+			'thumbnail_types' => [],
+			'library_folder' => '/Games',
+			'fetch_enabled' => true,
+		]);
+		$service->getCoreOptions();
+		$service->getThumbnailTypes();
+		$this->assertTrue($setLazy['core_options']);
+		$this->assertTrue($setLazy['thumbnail_types']);
+		$this->assertFalse($setLazy['library_folder']);
+		$this->assertFalse($setLazy['fetch_enabled']);
+		$this->assertTrue($getLazy['core_options']);
+		$this->assertTrue($getLazy['thumbnail_types']);
+		$this->assertFalse($getLazy['library_folder']);
 	}
 
 	public function testCoreOptionsAreCheckedAgainstWhatTheCoresOffer(): void {
