@@ -8,6 +8,7 @@ import { createAppConfig } from '@nextcloud/vite-config'
 export default createAppConfig({
 	main: resolve(join('src', 'main.js')),
 	viewer: resolve(join('src', 'viewer.js')),
+	files: resolve(join('src', 'files.js')),
 	settings: resolve(join('src', 'settings.js')),
 }, {
 	// The stylesheets in css/ are served as they are with style(); the

@@ -1,0 +1,62 @@
+/* The Arcade tab of the Files sidebar. The sidebar itself brings the type
+   and the spacing of the panel; only what is ours is styled here. */
+
+.arcade-sidebar {
+	padding: calc(var(--default-grid-baseline, 4px) * 2) 0;
+}
+
+.arcade-sidebar .arcade-sidebar-play {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
+	margin-bottom: calc(var(--default-grid-baseline, 4px) * 3);
+}
+
+.arcade-sidebar .arcade-sidebar-play svg {
+	width: 20px;
+	height: 20px;
+	fill: currentColor;
+}
+
+.arcade-sidebar .arcade-sidebar-details {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: calc(var(--default-grid-baseline, 4px)) calc(var(--default-grid-baseline, 4px) * 3);
+}
+
+.arcade-sidebar .arcade-sidebar-details dt {
+	color: var(--color-text-maxcontrast);
+}
+
+.arcade-sidebar .arcade-sidebar-details dd {
+	overflow-wrap: anywhere;
+}
+
+.arcade-sidebar h3 {
+	margin-top: calc(var(--default-grid-baseline, 4px) * 4);
+	margin-bottom: calc(var(--default-grid-baseline, 4px));
+}
+
+.arcade-sidebar .arcade-sidebar-slots {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--default-grid-baseline, 4px));
+}
+
+.arcade-sidebar .arcade-sidebar-slots li {
+	display: flex;
+	justify-content: space-between;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
+}
+
+.arcade-sidebar .arcade-sidebar-slots li span {
+	color: var(--color-text-maxcontrast);
+}
+
+.arcade-sidebar .arcade-sidebar-slots li.arcade-sidebar-stale span {
+	color: var(--color-warning-text, var(--color-text-maxcontrast));
+}
+
+.arcade-sidebar .arcade-sidebar-empty {
+	color: var(--color-text-maxcontrast);
+}
