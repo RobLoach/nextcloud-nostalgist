@@ -269,8 +269,14 @@ class LibraryService {
 		}, $games);
 		$encoded = json_encode($lean);
 		$compressed = $encoded === false ? false : gzcompress($encoded, 6);
-		// A library that cannot be compressed is cached as it always was.
-		return $compressed === false ? $games : $compressed;
+		if ($compressed === false) {
+			// A library that cannot be compressed is cached as it always was.
+			return $games;
+		}
+		// Base64, because a distributed cache may run what it holds through
+		// json_encode, which cannot carry raw bytes and would quietly cache
+		// nothing at all.
+		return 'gz:' . base64_encode($compressed);
 	}
 
 	/**
@@ -282,7 +288,14 @@ class LibraryService {
 	 */
 	private function inflate(mixed $cached): ?array {
 		if (is_string($cached)) {
-			$encoded = @gzuncompress($cached);
+			if (str_starts_with($cached, 'gz:')) {
+				$binary = base64_decode(substr($cached, 3), true);
+				$encoded = $binary === false ? false : @gzuncompress($binary);
+			} else {
+				// Cached before the bytes were wrapped for the caches that
+				// json_encode what they hold.
+				$encoded = @gzuncompress($cached);
+			}
 			$cached = json_decode($encoded === false ? $cached : $encoded, true);
 		}
 		if (!is_array($cached)) {
