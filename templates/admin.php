@@ -8,7 +8,6 @@ $settings = ['core_options' => $_['storedCoreOptions']];
 $systems = $_['systems'];
 $thumbnailTypes = $_['thumbnailTypes'];
 $storedTypes = $_['storedThumbnailTypes'];
-$limits = $_['limits'];
 ?>
 
 <div id="arcade-settings" data-scope="admin">
@@ -34,55 +33,9 @@ $limits = $_['limits'];
 		<?php endforeach; ?>
 	</div>
 
-	<div class="section">
-		<h2 class="inlineblock"><?php p($l->t('Box art')); ?></h2>
-		<span class="msg" aria-live="polite"></span>
-		<p class="checkbox-radio-switch">
-			<input type="checkbox" id="arcade-fetch-enabled" class="checkbox-radio-switch__input arcade-setting"
-				data-setting="fetch_enabled" <?php if ($defaults['fetch_enabled']) { p('checked'); } ?>>
-			<label for="arcade-fetch-enabled">
-				<?php p($l->t('Let users look up box art on the libretro thumbnail server')); ?>
-			</label>
-		</p>
-		<p class="settings-hint">
-			<?php p($l->t('This is the only thing the app has the server itself fetch from the internet. Turned off, the button is gone and games are shown with the pictures in your own files.')); ?>
-		</p>
-	</div>
-
-	<div class="section">
-		<h2 class="inlineblock"><?php p($l->t('ROM checksums')); ?></h2>
-		<span class="msg" aria-live="polite"></span>
-		<p class="checkbox-radio-switch">
-			<input type="checkbox" id="arcade-hash-roms" class="checkbox-radio-switch__input arcade-setting"
-				data-setting="hash_roms" <?php if ($defaults['hash_roms']) { p('checked'); } ?>>
-			<label for="arcade-hash-roms">
-				<?php p($l->t('Work out the checksum of a ROM the server was not given one for')); ?>
-			</label>
-		</p>
-		<p class="settings-hint">
-			<?php p($l->t('Checksums that arrive with an upload are always kept. Working one out means reading the whole file, in the background, once per game — on object storage that is a download of each ROM.')); ?>
-		</p>
-	</div>
-
-	<div class="section">
-		<h2 class="inlineblock"><?php p($l->t('Library scanning')); ?></h2>
-		<span class="msg" aria-live="polite"></span>
-		<p class="settings-hint"><?php p($l->t('How far a games library folder is walked, and how long the result is kept.')); ?></p>
-		<?php foreach ([
-			'max_games' => $l->t('Games listed at most'),
-			'max_depth' => $l->t('Folders deep at most'),
-			'cache_ttl' => $l->t('Seconds a scan is kept'),
-		] as $key => $label): ?>
-			<p>
-				<label for="arcade-<?php p($key); ?>"><?php p($label); ?></label><br>
-				<?php /* The bounds the settings clamp to, so the two cannot disagree. */ ?>
-				<input type="number" id="arcade-<?php p($key); ?>" class="arcade-setting"
-					data-setting="<?php p($key); ?>" min="<?php p($limits[$key]['min']); ?>"
-					max="<?php p($limits[$key]['max']); ?>"
-					value="<?php p($defaults[$key]); ?>">
-			</p>
-		<?php endforeach; ?>
-	</div>
+	<?php /* Box art, checksums and the scan limits are a declarative
+	        settings form now, rendered and saved by the server itself:
+	        see \OCA\Arcade\Settings\DeclarativeAdmin. */ ?>
 
 	<div class="section">
 		<h2 class="inlineblock"><?php p($l->t('Core options')); ?></h2>
