@@ -38,6 +38,8 @@
 !/img/cores/mednafen_wswan_libretro.wasm
 !/img/cores/mgba_libretro.js
 !/img/cores/mgba_libretro.wasm
+!/img/cores/pcsx_rearmed_libretro.js
+!/img/cores/pcsx_rearmed_libretro.wasm
 !/img/cores/picodrive_libretro.js
 !/img/cores/picodrive_libretro.wasm
 !/img/cores/snes9x_libretro.js

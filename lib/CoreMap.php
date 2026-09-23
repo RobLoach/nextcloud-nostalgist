@@ -175,6 +175,19 @@ class CoreMap {
 			'aliases' => ['coleco', 'colecovision'],
 			'bios' => ['colecovision.rom'],
 		],
+		'psx' => [
+			'label' => 'PlayStation',
+			'short' => 'PlayStation',
+			'platform' => 'Sony - PlayStation',
+			'mime' => 'application/x-playstation-rom',
+			// Only the single-file disc formats. A .cue names its tracks in
+			// other files and a .bin or .iso does not say whose it is, so
+			// those wait until multi-file games can be handed over whole.
+			'extensions' => ['chd', 'pbp'],
+			'core' => 'pcsx_rearmed',
+			'aliases' => ['psx', 'ps1', 'psone', 'playstation', 'playstation1', 'sonyplaystation'],
+			'bios' => ['scph1001.bin', 'scph5501.bin', 'scph5500.bin', 'scph5502.bin'],
+		],
 	];
 
 	/**
@@ -224,7 +237,7 @@ class CoreMap {
 	 */
 	public const VENDORS = [
 		'nintendo', 'sega', 'snk', 'nec', 'atari', 'bandai', 'coleco', 'gce',
-		'hudson',
+		'hudson', 'sony',
 	];
 
 	/**

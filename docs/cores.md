@@ -23,6 +23,7 @@ own defaults are used.
 | Virtual Boy | mednafen_vb |
 | Vectrex | vecx |
 | ColecoVision | gearcoleco |
+| PlayStation | pcsx_rearmed |
 
 To extract them again from the submodule, run:
 

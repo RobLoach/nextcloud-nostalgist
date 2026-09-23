@@ -17,6 +17,9 @@ class CoreMapTest extends TestCase {
 			['Super Nintendo', 'snes'],
 			['Game Boy Color', 'gbc'],
 			['32X', 'sega32x'],
+			['PSX', 'psx'],
+			['PS1', 'psx'],
+			['PlayStation', 'psx'],
 			// No-Intro platform names, where the vendor comes first.
 			['Nintendo - Nintendo Entertainment System', 'nes'],
 			['Nintendo - Super Nintendo Entertainment System', 'snes'],
@@ -29,12 +32,14 @@ class CoreMapTest extends TestCase {
 			['GCE - Vectrex', 'vectrex'],
 			['Coleco - ColecoVision', 'coleco'],
 			['Atari - Lynx', 'lynx'],
+			['Sony - PlayStation', 'psx'],
 			// The maker in front, with or without the dashes.
 			['Nintendo Game Boy Advance', 'gba'],
 			['Sega Genesis', 'genesis'],
 			['SNK Neo Geo Pocket', 'ngp'],
 			['NEC TurboGrafx-16', 'pce'],
 			['Bandai WonderSwan Color', 'wonderswan'],
+			['Sony PlayStation', 'psx'],
 			// A word hung off the end, or the front.
 			['SNES Roms', 'snes'],
 			['NES Games', 'nes'],
@@ -105,6 +110,17 @@ class CoreMapTest extends TestCase {
 		$this->assertSame('genesis', CoreMap::systemForPath('/Games/MegaDrive/Sonic.zip'));
 		$this->assertSame('genesis', CoreMap::systemForPath('/Games/Sega - Mega Drive - Genesis/Sonic.zip'));
 		$this->assertSame('snes', CoreMap::systemForPath('/Games/SNES Roms/NHL 96.zip'));
+		$this->assertSame('psx', CoreMap::systemForPath('/Games/PS1/Crash Bandicoot.zip'));
+	}
+
+	public function testASingleFileDiscImageNamesItsSystemItself(): void {
+		// Only the single-file disc formats belong to the PlayStation: a
+		// .cue names its tracks in other files, and a .bin or .iso says
+		// nothing about whose it is.
+		$this->assertSame('psx', CoreMap::systemForPath('/Games/Crash Bandicoot.chd'));
+		$this->assertSame('psx', CoreMap::systemForPath('/Games/Castlevania.pbp'));
+		$this->assertNull(CoreMap::systemForPath('/Games/Some Disc.iso'));
+		$this->assertNull(CoreMap::systemForPath('/Games/Some Disc.cue'));
 	}
 
 	public function testExtensionsAreUnique(): void {
