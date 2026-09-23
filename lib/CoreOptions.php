@@ -321,6 +321,33 @@ class CoreOptions {
 				'values' => ['1' => '1x', '2' => '2x', '3' => '3x', '4' => '4x'],
 			],
 		],
+		'pcsx_rearmed' => [
+			'pcsx_rearmed_region' => [
+				'label' => 'Region',
+				'values' => ['auto' => 'Auto', 'NTSC' => 'NTSC', 'PAL' => 'PAL'],
+			],
+			'pcsx_rearmed_neon_enhancement_enable' => [
+				'label' => 'Enhanced resolution',
+				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
+			],
+			'pcsx_rearmed_neon_enhancement_no_main' => [
+				'label' => 'Enhanced resolution speed hack',
+				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
+			],
+			'pcsx_rearmed_dithering' => [
+				'label' => 'Dithering, as the hardware',
+				'values' => ['enabled' => 'Yes', 'disabled' => 'No'],
+			],
+			'pcsx_rearmed_frameskip_type' => [
+				'label' => 'Frame skipping',
+				'values' => [
+					'disabled' => 'No',
+					'auto' => 'Auto',
+					'auto_threshold' => 'Auto, under load',
+					'fixed_interval' => 'Fixed interval',
+				],
+			],
+		],
 		'gearcoleco' => [
 			'gearcoleco_timing' => [
 				'label' => 'Region',

@@ -16,9 +16,12 @@ and they are handed to the emulator as a game starts:
 | Master System, Game Gear | `bios.sms`, `bios.gg` |
 | Mega Drive | `bios_MD.bin` |
 | Atari Lynx | `lynxboot.img` |
+| PlayStation | `scph1001.bin`, `scph5501.bin`, `scph5500.bin`, `scph5502.bin` |
 
 Only ColecoVision really needs one; for the rest the file is optional, and
 a missing one is quietly left out rather than keeping a game from starting.
+The PlayStation runs without one too, but poorly, so its BIOS is strongly
+recommended.
 
 A BIOS is the one thing a player cannot make for themselves, so an
 administrator can put one where every player reaches it, instead of every

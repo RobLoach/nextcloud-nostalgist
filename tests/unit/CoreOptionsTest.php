@@ -34,6 +34,7 @@ class CoreOptionsTest extends TestCase {
 		'mednafen_vb' => 'vb_',
 		'vecx' => 'vecx_',
 		'gearcoleco' => 'gearcoleco_',
+		'pcsx_rearmed' => 'pcsx_rearmed_',
 	];
 
 	public function testEveryOptionIsUsable(): void {
