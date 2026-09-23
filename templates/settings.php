@@ -73,7 +73,7 @@ $thumbnailTypes = $_['thumbnailTypes'];
 		<span class="msg" aria-live="polite"></span>
 		<p class="settings-hint"><?php p($l->t('Click a key to set it, then press the one to use. A key that works a button of the controller is left to the game.')); ?></p>
 
-		<h4><?php p($l->t('Controller')); ?></h4>
+		<h4><?php p($l->t('Keys')); ?></h4>
 		<div class="arcade-keys">
 			<?php foreach ($buttons as $name => $button): ?>
 				<div class="arcade-key">
@@ -86,7 +86,7 @@ $thumbnailTypes = $_['thumbnailTypes'];
 			<?php endforeach; ?>
 		</div>
 
-		<h4><?php p($l->t('Player')); ?></h4>
+		<h4><?php p($l->t('Hot Keys')); ?></h4>
 		<div class="arcade-keys">
 			<?php foreach ($hotkeys as $name => $hotkey): ?>
 				<div class="arcade-key">

@@ -41,6 +41,7 @@ const state = {
 	offset: 0,
 	search: '',
 	system: '',
+	tag: '',
 }
 
 /**
@@ -72,7 +73,7 @@ async function post(url, params) {
  */
 function cacheKey() {
 	return CACHE_PREFIX + JSON.stringify([
-		state.offset, state.pageSize, state.sort, state.order, state.search, state.system,
+		state.offset, state.pageSize, state.sort, state.order, state.search, state.system, state.tag,
 	])
 }
 
@@ -465,10 +466,11 @@ function renderPagination(data, reload) {
 
 /**
  * @param {string[]} systems the systems present in the library
+ * @param {string[]} tags the system tags carried by games in the library
  * @param {Function} reload reloads the library with new parameters
  * @return {HTMLElement} the filters
  */
-function renderFilters(systems, reload) {
+function renderFilters(systems, tags, reload) {
 	const filters = document.createElement('div')
 	filters.className = 'arcade-library-filters'
 
@@ -509,6 +511,34 @@ function renderFilters(systems, reload) {
 		reload()
 	})
 	filters.appendChild(systemFilter)
+
+	// A tag the filter is set to stays offered even when the last game
+	// carrying it was filtered away, so it can be unset again.
+	const tagOptions = tags.includes(state.tag) || state.tag === ''
+		? tags
+		: [...tags, state.tag].sort((a, b) => a.localeCompare(b))
+	if (tagOptions.length > 0) {
+		const tagFilter = document.createElement('select')
+		tagFilter.className = 'arcade-library-tag-filter'
+		tagFilter.setAttribute('aria-label', t('arcade', 'Filter by tag'))
+		const allTags = document.createElement('option')
+		allTags.value = ''
+		allTags.textContent = t('arcade', 'All tags')
+		tagFilter.appendChild(allTags)
+		for (const tag of tagOptions) {
+			const option = document.createElement('option')
+			option.value = tag
+			option.textContent = tag
+			option.selected = tag === state.tag
+			tagFilter.appendChild(option)
+		}
+		tagFilter.addEventListener('change', () => {
+			state.tag = tagFilter.value
+			state.offset = 0
+			reload()
+		})
+		filters.appendChild(tagFilter)
+	}
 
 	return { element: filters, search }
 }
@@ -585,7 +615,7 @@ export async function renderLibrary(container, onError) {
 		try {
 			const response = await fetch(generateUrl(
 				'/apps/arcade/library?offset={offset}&limit={limit}&sort={sort}&order={order}'
-					+ '&search={search}&system={system}&refresh={refresh}',
+					+ '&search={search}&system={system}&tag={tag}&refresh={refresh}',
 				{
 					offset: state.offset,
 					limit: state.pageSize,
@@ -593,6 +623,7 @@ export async function renderLibrary(container, onError) {
 					order: state.order,
 					search: state.search,
 					system: state.system,
+					tag: state.tag,
 					refresh: refresh ? 1 : 0,
 				},
 			), {
@@ -668,7 +699,7 @@ export async function renderLibrary(container, onError) {
 		}
 
 		// Only on the plain first page: these are shortcuts, not results.
-		const plainPage = state.search === '' && state.system === '' && state.offset === 0
+		const plainPage = state.search === '' && state.system === '' && state.tag === '' && state.offset === 0
 		if (plainPage && (data.favorites ?? []).length > 0) {
 			container.appendChild(renderRow(
 				t('arcade', 'Favorites'),
@@ -686,7 +717,7 @@ export async function renderLibrary(container, onError) {
 			))
 		}
 
-		const filters = renderFilters(data.systems, load)
+		const filters = renderFilters(data.systems, data.tags ?? [], load)
 		container.appendChild(filters.element)
 		if (searchWasFocused) {
 			filters.search.focus()
