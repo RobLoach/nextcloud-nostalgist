@@ -50,13 +50,14 @@ class Application extends App implements IBootstrap {
 		// the game or the user they belong to.
 		$context->registerEventListener(NodeDeletedEvent::class, CleanupListener::class);
 		$context->registerEventListener(UserDeletedEvent::class, CleanupListener::class);
-		if (class_exists(LoadViewer::class)) {
-			$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
-		}
+		// Unconditional, though the classes belong to other apps: ::class is
+		// only a string, and a listener for an event nobody dispatches never
+		// runs. A class_exists() guard here would misfire -- apps register
+		// alphabetically, each right after its own autoloader, so the Files
+		// and Viewer classes are not loadable yet when "arcade" registers.
+		$context->registerEventListener(LoadViewer::class, LoadViewerListener::class);
 		// What the app knows about a ROM, as a tab of the Files sidebar.
-		if (class_exists(LoadSidebar::class)) {
-			$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
-		}
+		$context->registerEventListener(LoadSidebar::class, LoadSidebarListener::class);
 		// What is true of the ROM itself is filed with the file.
 		$context->registerEventListener(MetadataLiveEvent::class, MetadataListener::class);
 		$context->registerEventListener(MetadataBackgroundEvent::class, MetadataListener::class);
