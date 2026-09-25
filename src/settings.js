@@ -223,6 +223,124 @@ async function showFetchStatus() {
 	}
 }
 
+// The upload endpoint refuses anything bigger; a real BIOS is far smaller.
+const BIOS_MAX_SIZE = 16 * 1024 * 1024
+
+/**
+ * @param {number} bytes a file size
+ * @return {string} the size as people write it
+ */
+function formatBiosSize(bytes) {
+	if (bytes < 1024) {
+		return `${bytes} B`
+	}
+	if (bytes < 1024 * 1024) {
+		return `${(bytes / 1024).toFixed(1)} KB`
+	}
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/**
+ * Ask the server which BIOS files it holds, and show every row accordingly.
+ */
+async function refreshBios() {
+	const section = document.getElementById('arcade-bios-section')
+	if (section === null) {
+		return
+	}
+	let status
+	try {
+		status = await (await api(generateUrl('/apps/arcade/bios/status'))).json()
+	} catch (error) {
+		console.error('Could not read the BIOS status', error)
+		return
+	}
+	const files = new Map()
+	for (const entry of status.systems ?? []) {
+		for (const file of entry.files ?? []) {
+			files.set(file.name, file)
+		}
+	}
+	section.querySelectorAll('.arcade-bios-file').forEach((row) => {
+		const file = files.get(row.dataset.name)
+		if (file === undefined) {
+			return
+		}
+		row.querySelector('.arcade-bios-state').textContent = file.present
+			? t('arcade', 'Present ({size})', { size: formatBiosSize(file.size) })
+			: t('arcade', 'Missing')
+		row.querySelector('.arcade-bios-input').classList.toggle('hidden', file.present)
+		row.querySelector('.arcade-bios-remove').classList.toggle('hidden', !file.present)
+	})
+	const extra = section.querySelector('.arcade-bios-extra')
+	const strays = (status.extra ?? [])
+		.map((file) => `${file.name} (${formatBiosSize(file.size)})`)
+	extra.classList.toggle('hidden', strays.length === 0)
+	extra.textContent = strays.length === 0
+		? ''
+		: t('arcade', 'Also in the store, though no system asks for it: {names}', { names: strays.join(', ') })
+}
+
+/**
+ * Send the file just picked to the store, under the name of its row.
+ *
+ * @param {HTMLInputElement} input the file input of a BIOS row
+ */
+async function uploadBios(input) {
+	const row = input.closest('.arcade-bios-file')
+	const status = input.closest('.section').querySelector('.msg')
+	const file = input.files[0]
+	if (file === undefined) {
+		return
+	}
+	if (file.size > BIOS_MAX_SIZE) {
+		status.textContent = t('arcade', 'That file is too big to be a BIOS')
+		input.value = ''
+		return
+	}
+	status.textContent = t('arcade', 'Uploading …')
+	try {
+		await api(generateUrl('/apps/arcade/bios?name={name}', { name: row.dataset.name }), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/octet-stream' },
+			body: file,
+		})
+		status.textContent = t('arcade', 'Saved')
+	} catch (error) {
+		console.error('Could not upload the BIOS file', error)
+		status.textContent = t('arcade', 'Could not upload the file')
+	}
+	input.value = ''
+	await refreshBios()
+	setTimeout(() => {
+		status.textContent = ''
+	}, 3000)
+}
+
+/**
+ * Take the file of a row back out of the store.
+ *
+ * @param {HTMLElement} button the remove button of a BIOS row
+ */
+async function removeBios(button) {
+	const row = button.closest('.arcade-bios-file')
+	const status = button.closest('.section').querySelector('.msg')
+	status.textContent = t('arcade', 'Removing …')
+	try {
+		await api(generateUrl('/apps/arcade/bios?name={name}', { name: row.dataset.name }), {
+			method: 'DELETE',
+		})
+		status.textContent = t('arcade', 'Removed')
+	} catch (error) {
+		console.error('Could not remove the BIOS file', error)
+		status.textContent = t('arcade', 'Could not remove the file')
+	}
+	await refreshBios()
+	setTimeout(() => {
+		status.textContent = ''
+	}, 3000)
+}
+
 if (container !== null) {
 	// No save button: any change is saved right away.
 	container.addEventListener('change', (event) => {
@@ -256,4 +374,11 @@ if (container !== null) {
 			pickFolder(document.getElementById(button.dataset.target))
 		})
 	})
+	container.querySelectorAll('.arcade-bios-input').forEach((input) => {
+		input.addEventListener('change', () => uploadBios(input))
+	})
+	container.querySelectorAll('.arcade-bios-remove').forEach((button) => {
+		button.addEventListener('click', () => removeBios(button))
+	})
+	refreshBios()
 }

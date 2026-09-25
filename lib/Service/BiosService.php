@@ -49,6 +49,19 @@ class BiosService {
 	}
 
 	/**
+	 * The spelling a core asks for, matched without regard to case, or null
+	 * when no core asks for a file of that name at all.
+	 */
+	public static function canonicalName(string $name): ?string {
+		foreach (self::names() as $known) {
+			if (strcasecmp($known, $name) === 0) {
+				return $known;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * The file, or null when the instance has not been given it.
 	 */
 	public function read(string $name): ?string {
@@ -115,6 +128,25 @@ class BiosService {
 			return [];
 		}
 		return $held;
+	}
+
+	/**
+	 * Everything in the store with its size, whether a core asks for it or
+	 * not, so an administrator can see strays as well as what is wanted.
+	 *
+	 * @return array<string, int> name => size in bytes
+	 */
+	public function stored(): array {
+		$stored = [];
+		try {
+			$folder = $this->folder(false);
+			foreach ($folder?->getDirectoryListing() ?? [] as $file) {
+				$stored[$file->getName()] = (int)$file->getSize();
+			}
+		} catch (NotFoundException) {
+			return [];
+		}
+		return $stored;
 	}
 
 	private function folder(bool $create): ?ISimpleFolder {

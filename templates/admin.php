@@ -37,6 +37,28 @@ $storedTypes = $_['storedThumbnailTypes'];
 	        settings form now, rendered and saved by the server itself:
 	        see \OCA\Arcade\Settings\DeclarativeAdmin. */ ?>
 
+	<div class="section" id="arcade-bios-section">
+		<h2 class="inlineblock"><?php p($l->t('BIOS')); ?></h2>
+		<span class="msg" aria-live="polite"></span>
+		<p class="settings-hint"><?php p($l->t('A few consoles will not start without the firmware file of the real hardware. Copy these files from a console you own; a file added here is offered to every player on this instance.')); ?></p>
+		<?php foreach ($systems as $systemId => $system): ?>
+			<?php if ($system['bios'] === []) { continue; } ?>
+			<div class="arcade-bios-system">
+				<h3><?php p($system['label']); ?></h3>
+				<?php foreach ($system['bios'] as $name): ?>
+					<p class="arcade-bios-file" data-name="<?php p($name); ?>">
+						<code><?php p($name); ?></code>
+						<em class="arcade-bios-state"><?php p($l->t('Checking …')); ?></em>
+						<input type="file" class="arcade-bios-input hidden"
+							aria-label="<?php p($l->t('Upload %s', [$name])); ?>">
+						<button type="button" class="arcade-bios-remove hidden"><?php p($l->t('Remove')); ?></button>
+					</p>
+				<?php endforeach; ?>
+			</div>
+		<?php endforeach; ?>
+		<p class="arcade-bios-extra hidden"></p>
+	</div>
+
 	<div class="section">
 		<h2 class="inlineblock"><?php p($l->t('Core options')); ?></h2>
 		<span class="msg" aria-live="polite"></span>
