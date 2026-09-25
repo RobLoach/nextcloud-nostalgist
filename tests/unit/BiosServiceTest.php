@@ -56,6 +56,7 @@ class BiosServiceTest extends TestCase {
 				foreach (array_keys($this->files) as $name) {
 					$file = $this->createStub(ISimpleFile::class);
 					$file->method('getName')->willReturn($name);
+					$file->method('getSize')->willReturnCallback(fn (): int => strlen($this->files[$name]));
 					$listing[] = $file;
 				}
 				return $listing;
@@ -95,6 +96,22 @@ class BiosServiceTest extends TestCase {
 
 	public function testAFileTheInstanceHasNotGotIsNothingToWorryAbout(): void {
 		$this->assertNull($this->service()->read('gba_bios.bin'));
+	}
+
+	public function testTheCanonicalSpellingIsFoundWhateverTheCase(): void {
+		$this->assertSame('gb_bios.bin', BiosService::canonicalName('GB_Bios.BIN'));
+		$this->assertSame('32X_G_BIOS.BIN', BiosService::canonicalName('32x_g_bios.bin'));
+		$this->assertNull(BiosService::canonicalName('anything.bin'));
+	}
+
+	public function testEverythingStoredIsListedWithItsSize(): void {
+		$service = $this->service();
+		$service->write('gb_bios.bin', 'the firmware');
+		$this->files['stray.bin'] = 'lost';
+		$this->assertSame(
+			['gb_bios.bin' => strlen('the firmware'), 'stray.bin' => 4],
+			$service->stored(),
+		);
 	}
 
 	public function testAFileCanBeTakenBack(): void {
