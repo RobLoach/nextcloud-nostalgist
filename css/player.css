@@ -170,6 +170,53 @@
 .arcade-gallery-item button svg { width: 16px; height: 16px; fill: #fff; }
 .arcade-gallery-empty { font-size: 12px; color: rgba(255, 255, 255, 0.7); }
 
+/* The three-dots actions menu, dressed like a core action menu: the theme's
+   own background and shadow rather than the scrim of the panels, because it
+   is chrome of the page and not part of the game picture. */
+.arcade-actions-menu {
+	position: absolute;
+	bottom: 56px;
+	left: 50%;
+	transform: translateX(-50%);
+	display: flex;
+	flex-direction: column;
+	min-width: 200px;
+	background-color: var(--color-main-background, #fff);
+	border-radius: var(--border-radius-large, 8px);
+	box-shadow: 0 1px 10px var(--color-box-shadow, rgba(0, 0, 0, 0.5));
+	padding: var(--default-grid-baseline, 4px);
+	z-index: 20101;
+}
+.arcade-actions-menu.hidden { display: none; }
+.arcade-actions-item {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--default-grid-baseline, 4px) * 2);
+	width: 100%;
+	background-color: transparent;
+	border: none;
+	border-radius: var(--border-radius, 6px);
+	color: var(--color-main-text, #222);
+	font-size: 13px;
+	text-align: start;
+	text-decoration: none;
+	padding: 8px 12px;
+	margin: 0;
+	min-height: 34px;
+	cursor: pointer;
+}
+.arcade-actions-item:hover,
+.arcade-actions-item:focus-visible {
+	background-color: var(--color-background-hover, rgba(0, 0, 0, 0.1));
+	color: var(--color-main-text, #222);
+}
+.arcade-actions-item svg {
+	width: 20px;
+	height: 20px;
+	fill: var(--color-main-text, #222);
+	flex-shrink: 0;
+}
+
 .arcade-states-stale {
 	color: var(--color-warning, #e9a13b);
 	font-size: 11px;
