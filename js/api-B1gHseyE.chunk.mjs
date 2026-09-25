@@ -1,2 +1,0 @@
-import{g as a}from"./index-DkCkDaGh.chunk.mjs";import{g as r}from"./translation-DoG5ZELJ-BMAs1nHq.chunk.mjs";const l=0;function f(s,e,t=null){return t===null?r(`/apps/arcade${s}?file={file}`,{file:e}):r(`/apps/arcade${s}?file={file}&slot={slot}`,{file:e,slot:t})}async function i(s,e={}){const t=await fetch(s,{...e,headers:{requesttoken:a()??"",...e.headers??{}}});if(!t.ok)throw new Error(`${t.status} ${t.statusText}`);return t}export{l as A,i as a,f as s};
-//# sourceMappingURL=api-B1gHseyE.chunk.mjs.map
