@@ -38,6 +38,13 @@ class LibraryService {
 	public const MAX_GAMES = 5000;
 	public const MAX_DEPTH = 6;
 	public const CACHE_TTL = 24 * 3600;
+	/**
+	 * How much of a home folder the onboarding suggestions read: the
+	 * first hits, in path order, say plenty about where the ROMs live.
+	 */
+	public const SUGGEST_SCAN_LIMIT = 2000;
+	/** How many folders are worth offering. */
+	public const SUGGEST_TOP = 3;
 	/** Bumped when the shape of a cached entry changes. */
 	private const CACHE_VERSION = 6;
 	/**
@@ -527,18 +534,7 @@ class LibraryService {
 			if (!isset($extensionMap[$extension])) {
 				continue;
 			}
-			$system = $extensionMap[$extension];
-			if ($system === '') {
-				// Neither a zip nor a .bin reveals its system; the folder it
-				// is stored in often does, e.g. "Games/SNES/NHL 96.zip".
-				foreach (array_reverse($parents) as $parent) {
-					$fromFolder = CoreMap::systemForFolderName($parent);
-					if ($fromFolder !== null) {
-						$system = $fromFolder;
-						break;
-					}
-				}
-			}
+			$system = $this->systemFor($extension, $parents, $extensionMap);
 			// A zip that nothing names is still a zip; a .bin that nothing
 			// names waits for its first bytes to be read.
 			if ($system === '' && $extension === 'zip') {
@@ -553,6 +549,151 @@ class LibraryService {
 				'mtime' => $node->getMTime(),
 			];
 		}
+	}
+
+	/**
+	 * The system of a file, as the scan and the suggestions read it: the
+	 * extension when it names one, otherwise the nearest folder name that
+	 * does -- neither a zip nor a .bin reveals its system, but the folder
+	 * it is stored in often does, e.g. "Games/SNES/NHL 96.zip".
+	 *
+	 * @param list<string> $parents folder names above the file, top first
+	 * @param array<string, string> $extensionMap extension => system id
+	 */
+	private function systemFor(string $extension, array $parents, array $extensionMap): string {
+		$system = $extensionMap[$extension] ?? '';
+		if ($system === '') {
+			foreach (array_reverse($parents) as $parent) {
+				$fromFolder = CoreMap::systemForFolderName($parent);
+				if ($fromFolder !== null) {
+					return $fromFolder;
+				}
+			}
+		}
+		return $system;
+	}
+
+	/**
+	 * Where the ROMs of a user already are, for the first run: the same
+	 * one search findRoms() makes, but over the whole home folder, boiled
+	 * down to the few folders worth offering as a library.
+	 *
+	 * The grouping is deliberately simple. Every folder holding ROMs
+	 * starts as a candidate. Then, deepest first, a candidate whose games
+	 * all belong to one system is folded into its parent when that parent
+	 * holds ROMs of its own or at least two such single-system children:
+	 * /ROMs with /ROMs/SNES and /ROMs/GB inside becomes one suggestion
+	 * for /ROMs, while a lone /Downloads/GB stays its own suggestion
+	 * rather than dragging all of /Downloads in.
+	 *
+	 * @param string $excludeFolder the configured library folder, whose
+	 *                              games need no suggesting
+	 * @return list<array{path: string, games: int, systems: list<string>}>
+	 *         best first, at most SUGGEST_TOP of them
+	 */
+	public function suggestFolders(Folder $userFolder, string $excludeFolder): array {
+		$extensionMap = CoreMap::libraryExtensions();
+		$nodes = $userFolder->search($this->romQuery($extensionMap));
+		// Path order, so the same home folder always gets the same
+		// suggestions, even when it holds more than the cap.
+		usort($nodes, static fn ($a, $b): int => strcmp($a->getPath(), $b->getPath()));
+		$nodes = array_slice($nodes, 0, self::SUGGEST_SCAN_LIMIT);
+
+		/** @var array<string, array{games: int, systems: array<string, true>}> $candidates */
+		$candidates = [];
+		foreach ($nodes as $node) {
+			// A folder named like a ROM matches on its name, but is no game.
+			if ($node instanceof Folder) {
+				continue;
+			}
+			$relative = $userFolder->getRelativePath($node->getPath());
+			if ($relative === null) {
+				continue;
+			}
+			$extension = strtolower(pathinfo($node->getName(), PATHINFO_EXTENSION));
+			if (!isset($extensionMap[$extension])) {
+				continue;
+			}
+			// What is already the library needs no suggesting.
+			if ($excludeFolder !== ''
+				&& ($relative === $excludeFolder || str_starts_with($relative, $excludeFolder . '/'))) {
+				continue;
+			}
+			$parents = explode('/', trim($relative, '/'));
+			array_pop($parents);
+			// A file loose in the home folder has no folder to offer: the
+			// home folder itself cannot be the library.
+			if ($parents === []) {
+				continue;
+			}
+			$path = '/' . implode('/', $parents);
+			$candidates[$path] ??= ['games' => 0, 'systems' => []];
+			$candidates[$path]['games']++;
+			$system = $this->systemFor($extension, $parents, $extensionMap);
+			if (isset(CoreMap::SYSTEMS[$system])) {
+				$candidates[$path]['systems'][$system] = true;
+			}
+		}
+
+		return $this->groupSuggestions($candidates);
+	}
+
+	/**
+	 * Roll the folders holding ROMs up into the few worth offering, as
+	 * suggestFolders() documents.
+	 *
+	 * @param array<string, array{games: int, systems: array<string, true>}> $candidates
+	 * @return list<array{path: string, games: int, systems: list<string>}>
+	 */
+	private function groupSuggestions(array $candidates): array {
+		// Deepest first, so a chain of folders rolls up one level at a time.
+		$paths = array_keys($candidates);
+		usort($paths, static fn (string $a, string $b): int => substr_count($b, '/') <=> substr_count($a, '/'));
+
+		// Counted before any merging, so two system folders find each other
+		// under a parent that holds no ROMs of its own.
+		$singleSystemChildren = [];
+		$directHits = array_fill_keys($paths, true);
+		foreach ($paths as $path) {
+			if (count($candidates[$path]['systems']) === 1) {
+				$parent = self::parentOf($path);
+				$singleSystemChildren[$parent] = ($singleSystemChildren[$parent] ?? 0) + 1;
+			}
+		}
+
+		foreach ($paths as $path) {
+			if (!isset($candidates[$path]) || count($candidates[$path]['systems']) !== 1) {
+				continue;
+			}
+			$parent = self::parentOf($path);
+			if ($parent === '') {
+				// The home folder cannot be the library.
+				continue;
+			}
+			if (!isset($directHits[$parent]) && ($singleSystemChildren[$parent] ?? 0) < 2) {
+				continue;
+			}
+			$candidates[$parent] ??= ['games' => 0, 'systems' => []];
+			$candidates[$parent]['games'] += $candidates[$path]['games'];
+			$candidates[$parent]['systems'] += $candidates[$path]['systems'];
+			unset($candidates[$path]);
+		}
+
+		$suggestions = [];
+		foreach ($candidates as $path => $candidate) {
+			$systems = array_keys($candidate['systems']);
+			sort($systems);
+			$suggestions[] = ['path' => $path, 'games' => $candidate['games'], 'systems' => $systems];
+		}
+		usort($suggestions, static fn (array $a, array $b): int =>
+			($b['games'] <=> $a['games']) ?: strcmp($a['path'], $b['path']));
+		return array_slice($suggestions, 0, self::SUGGEST_TOP);
+	}
+
+	/** The folder above a path, empty at the top. */
+	private static function parentOf(string $path): string {
+		$slash = strrpos($path, '/');
+		return $slash === false || $slash === 0 ? '' : substr($path, 0, $slash);
 	}
 
 	/**

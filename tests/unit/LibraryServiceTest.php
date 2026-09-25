@@ -497,6 +497,135 @@ class LibraryServiceTest extends TestCase {
 		$this->assertSame(['mario.nes'], $this->names($games), 'garbage in the cache falls back to scanning');
 	}
 
+	/**
+	 * @param list<\OCP\Files\Node> $nodes what the one search over the home folder finds
+	 */
+	private function homeFolder(array $nodes): Folder {
+		$folder = $this->createStub(Folder::class);
+		$folder->method('search')->willReturn($nodes);
+		$folder->method('getRelativePath')->willReturnCallback(
+			static fn (string $path): ?string => str_starts_with($path, '/alice/files/')
+				? substr($path, strlen('/alice/files'))
+				: null,
+		);
+		return $folder;
+	}
+
+	public function testSuggestionsMergeSystemFoldersIntoTheirParent(): void {
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/ROMs/SNES/Zelda.sfc'),
+			$this->file(2, '/alice/files/ROMs/SNES/Mario World.sfc'),
+			$this->file(3, '/alice/files/ROMs/GB/Tetris.gb'),
+			$this->file(4, '/alice/files/ROMs/SNES/readme.txt'),
+		]);
+
+		$this->assertSame(
+			[['path' => '/ROMs', 'games' => 3, 'systems' => ['gb', 'snes']]],
+			$this->service->suggestFolders($home, '/Games'),
+			'two single-system folders roll up into their common parent, and a stray text file does not count',
+		);
+	}
+
+	public function testALoneSystemFolderStaysItsOwnSuggestion(): void {
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/Downloads/GB/Tetris.gb'),
+		]);
+
+		$this->assertSame(
+			[['path' => '/Downloads/GB', 'games' => 1, 'systems' => ['gb']]],
+			$this->service->suggestFolders($home, '/Games'),
+			'one system folder does not drag its whole parent in',
+		);
+	}
+
+	public function testAParentWithItsOwnGamesSwallowsASystemChild(): void {
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/ROMs/Mario.nes'),
+			$this->file(2, '/alice/files/ROMs/SNES/Zelda.sfc'),
+		]);
+
+		$this->assertSame(
+			[['path' => '/ROMs', 'games' => 2, 'systems' => ['nes', 'snes']]],
+			$this->service->suggestFolders($home, '/Games'),
+		);
+	}
+
+	public function testTheConfiguredLibraryIsLeftOutOfTheSuggestions(): void {
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/Games/Mario.nes'),
+			$this->file(2, '/alice/files/Games/SNES/Zelda.sfc'),
+		]);
+
+		$this->assertSame(
+			[],
+			$this->service->suggestFolders($home, '/Games'),
+			'what is already the library needs no suggesting',
+		);
+	}
+
+	public function testFilesLooseInTheHomeFolderOfferNothing(): void {
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/Mario.nes'),
+		]);
+
+		$this->assertSame(
+			[],
+			$this->service->suggestFolders($home, ''),
+			'the home folder itself cannot be the library',
+		);
+	}
+
+	public function testOnlyTheBiggestSuggestionsAreOffered(): void {
+		$nodes = [];
+		$id = 0;
+		foreach (['Alpha' => 4, 'Beta' => 3, 'Gamma' => 2, 'Delta' => 1] as $folder => $count) {
+			for ($i = 0; $i < $count; $i++) {
+				// Two systems per folder, so nothing rolls up to the root.
+				$extension = $i % 2 === 0 ? 'nes' : 'sfc';
+				$nodes[] = $this->file(++$id, "/alice/files/$folder/game$i.$extension");
+			}
+		}
+
+		$suggestions = $this->service->suggestFolders($this->homeFolder($nodes), '/Games');
+
+		$this->assertSame(
+			['/Alpha', '/Beta', '/Gamma'],
+			array_column($suggestions, 'path'),
+			'the top three, most games first',
+		);
+		$this->assertSame([4, 3, 2], array_column($suggestions, 'games'));
+	}
+
+	public function testTheSuggestionScanStopsAtItsCap(): void {
+		$nodes = [];
+		for ($i = 0; $i < LibraryService::SUGGEST_SCAN_LIMIT + 100; $i++) {
+			$nodes[] = $this->file($i + 1, sprintf('/alice/files/ROMs/game%05d.nes', $i));
+		}
+
+		$suggestions = $this->service->suggestFolders($this->homeFolder($nodes), '/Games');
+
+		$this->assertSame(
+			[['path' => '/ROMs', 'games' => LibraryService::SUGGEST_SCAN_LIMIT, 'systems' => ['nes']]],
+			$suggestions,
+			'only the first hits are read; the suggestion still names the folder',
+		);
+	}
+
+	public function testAZipTakesItsSystemFromItsFolderInTheSuggestions(): void {
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/Stuff/SNES/Zelda.zip'),
+			$this->file(2, '/alice/files/Stuff/Random/mystery.zip'),
+		]);
+
+		$suggestions = $this->service->suggestFolders($home, '/Games');
+
+		$this->assertSame(
+			[['path' => '/Stuff/Random', 'games' => 1, 'systems' => []], ['path' => '/Stuff/SNES', 'games' => 1, 'systems' => ['snes']]],
+			$suggestions,
+			'a zip counts as a game either way, but only a named folder gives it a system',
+		);
+	}
+
 	public function testFiveThousandGamesFitUnderAMemcachedMegabyte(): void {
 		$nodes = [];
 		for ($i = 0; $i < 5000; $i++) {

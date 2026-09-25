@@ -184,6 +184,28 @@ class PageController extends Controller {
 	}
 
 	/**
+	 * Where a first library could be: the folders of this user that
+	 * already hold ROMs, best first, for the onboarding panel to offer.
+	 * Anything under the configured library folder is left out, and the
+	 * list is empty when nothing is found.
+	 */
+	#[NoAdminRequired]
+	#[FrontpageRoute(verb: 'GET', url: '/suggest')]
+	public function suggest(): JSONResponse {
+		if ($this->userId === null) {
+			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
+		}
+		$settings = $this->settingsService->getUserSettings($this->userId);
+		$userFolder = $this->rootFolder->getUserFolder($this->userId);
+		return new JSONResponse([
+			'suggestions' => $this->libraryService->suggestFolders(
+				$userFolder,
+				(string)$settings['library_folder'],
+			),
+		]);
+	}
+
+	/**
 	 * The listing, with an ETag so a browser that already holds it is told
 	 * so in a 304 instead of being sent it again.
 	 *
