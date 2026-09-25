@@ -46,7 +46,12 @@ class LibraryService {
 	/** How many folders are worth offering. */
 	public const SUGGEST_TOP = 3;
 	/** Bumped when the shape of a cached entry changes. */
-	private const CACHE_VERSION = 6;
+	private const CACHE_VERSION = 7;
+	/**
+	 * Extensions that mean something else at least as often as they mean
+	 * a game, so they only count with corroboration.
+	 */
+	private const CONTESTED = ['md' => true];
 	/**
 	 * Ids asked after in one query. Oracle refuses a list of more than
 	 * a thousand, so a big library is asked about in chunks.
@@ -534,7 +539,10 @@ class LibraryService {
 			if (!isset($extensionMap[$extension])) {
 				continue;
 			}
-			$system = $this->systemFor($extension, $parents, $extensionMap);
+			$system = $this->systemFor($extension, $parents, $extensionMap, $node->getMimetype());
+			if ($system === null) {
+				continue;
+			}
 			// A zip that nothing names is still a zip; a .bin that nothing
 			// names waits for its first bytes to be read.
 			if ($system === '' && $extension === 'zip') {
@@ -557,11 +565,27 @@ class LibraryService {
 	 * does -- neither a zip nor a .bin reveals its system, but the folder
 	 * it is stored in often does, e.g. "Games/SNES/NHL 96.zip".
 	 *
+	 * Null means the file is no game at all: ".md" is a Mega Drive dump
+	 * to Sega and a Markdown note to everyone else, so the extension
+	 * alone proves nothing -- the mimetype or the folder has to agree,
+	 * or every readme in the account would shelve itself as a game.
+	 *
 	 * @param list<string> $parents folder names above the file, top first
 	 * @param array<string, string> $extensionMap extension => system id
 	 */
-	private function systemFor(string $extension, array $parents, array $extensionMap): string {
+	private function systemFor(string $extension, array $parents, array $extensionMap, string $mime = ''): ?string {
 		$system = $extensionMap[$extension] ?? '';
+		if ($system !== '' && isset(self::CONTESTED[$extension])) {
+			if ($mime === (CoreMap::SYSTEMS[$system]['mime'] ?? null)) {
+				return $system;
+			}
+			foreach (array_reverse($parents) as $parent) {
+				if (CoreMap::systemForFolderName($parent) === $system) {
+					return $system;
+				}
+			}
+			return null;
+		}
 		if ($system === '') {
 			foreach (array_reverse($parents) as $parent) {
 				$fromFolder = CoreMap::systemForFolderName($parent);
@@ -626,10 +650,13 @@ class LibraryService {
 			if ($parents === []) {
 				continue;
 			}
+			$system = $this->systemFor($extension, $parents, $extensionMap, $node->getMimetype());
+			if ($system === null) {
+				continue;
+			}
 			$path = '/' . implode('/', $parents);
 			$candidates[$path] ??= ['games' => 0, 'systems' => []];
 			$candidates[$path]['games']++;
-			$system = $this->systemFor($extension, $parents, $extensionMap);
 			if (isset(CoreMap::SYSTEMS[$system])) {
 				$candidates[$path]['systems'][$system] = true;
 			}

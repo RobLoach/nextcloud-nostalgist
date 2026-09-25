@@ -289,14 +289,52 @@ class LibraryServiceTest extends TestCase {
 		return $factory;
 	}
 
-	private function file(int $id, string $path, int $size = 10, int $mtime = 5): File {
+	private function file(int $id, string $path, int $size = 10, int $mtime = 5, string $mime = ''): File {
 		$file = $this->createStub(File::class);
 		$file->method('getId')->willReturn($id);
 		$file->method('getPath')->willReturn($path);
 		$file->method('getName')->willReturn(substr($path, (int)strrpos($path, '/') + 1));
 		$file->method('getSize')->willReturn($size);
 		$file->method('getMTime')->willReturn($mtime);
+		$file->method('getMimetype')->willReturn($mime);
 		return $file;
+	}
+
+	public function testAMarkdownNoteIsNoGame(): void {
+		// ".md" is a Mega Drive dump to Sega and a note to everyone else.
+		$library = $this->libraryFolder([
+			$this->file(1, '/alice/files/Games/README.md'),
+			$this->file(2, '/alice/files/Games/mario.nes'),
+		]);
+		$this->assertSame(
+			['mario.nes'],
+			$this->names($this->scan($this->service, $library)),
+			'a markdown file with nothing vouching for it stays off the shelf',
+		);
+	}
+
+	public function testAMegaDriveDumpIsVouchedForByItsFolderOrMime(): void {
+		$library = $this->libraryFolder([
+			$this->file(1, '/alice/files/Games/Mega Drive/Sonic.md'),
+			$this->file(2, '/alice/files/Games/Streets of Rage.md', 10, 5, 'application/x-genesis-rom'),
+		]);
+		$games = $this->scan($this->service, $library);
+		$this->assertSame(['Sonic.md', 'Streets of Rage.md'], $this->names($games));
+		$this->assertSame(['genesis', 'genesis'], array_column($games, 'system'));
+	}
+
+	public function testMarkdownNotesDoNotBecomeSuggestions(): void {
+		// The skeleton files of a fresh account live in folders full of
+		// notes; none of that is a games library.
+		$home = $this->homeFolder([
+			$this->file(1, '/alice/files/Templates/Readme.md'),
+			$this->file(2, '/alice/files/Documents/Example.md'),
+			$this->file(3, '/alice/files/My ROMs/Tetris.gb'),
+		]);
+		$this->assertSame(
+			[['path' => '/My ROMs', 'games' => 1, 'systems' => ['gb']]],
+			$this->service->suggestFolders($home, '/Games'),
+		);
 	}
 
 	/**
