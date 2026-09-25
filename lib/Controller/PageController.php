@@ -10,6 +10,7 @@ use OCA\Arcade\CoreMap;
 use OCA\Arcade\Service\LibraryService;
 use OCA\Arcade\Service\RecentService;
 use OCA\Arcade\Service\SettingsService;
+use OCA\Files\Event\LoadSidebar;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
@@ -19,6 +20,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\BackgroundJob\IJobList;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -39,6 +41,7 @@ class PageController extends Controller {
 		private RecentService $recentService,
 		private IRootFolder $rootFolder,
 		private IJobList $jobList,
+		private IEventDispatcher $eventDispatcher,
 		private ?string $userId,
 	) {
 		parent::__construct($appName, $request);
@@ -63,6 +66,13 @@ class PageController extends Controller {
 				? $this->settingsService->getDefaults()
 				: $this->settingsService->getUserSettings($this->userId),
 		);
+
+		// The Files sidebar, so the player's actions menu can open it on a
+		// game. The class name above is a plain compile-time string, but the
+		// event is only worth dispatching when the Files app is really here.
+		if (class_exists(LoadSidebar::class)) {
+			$this->eventDispatcher->dispatchTyped(new LoadSidebar());
+		}
 
 		// The emulator's Content Security Policy needs are added globally by
 		// the CSPListener, so the default policy applies here.

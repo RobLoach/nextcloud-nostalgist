@@ -118,6 +118,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 				// Both panels cover the game, so only one shows at a time.
 				galleryPanel?.element.classList.add('hidden')
 				galleryButton?.classList.remove('active')
+				closeActionsMenu()
 				statesPanel.refresh()
 			}
 		})
@@ -201,6 +202,7 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			element.classList.toggle('active', !visible)
 			if (!visible) {
 				hideStates()
+				closeActionsMenu()
 				galleryPanel.refresh()
 			}
 		})
@@ -218,6 +220,85 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 			container.requestFullscreen?.()
 		}
 	})
+
+	// The three-dots actions menu, with what the Files Viewer offers in its
+	// own chrome. Inside the Viewer the player would only double it, so it
+	// is kept to the app page -- the one place a close URL is passed.
+	let actionsMenu = null
+	let actionsButton = null
+	const closeActionsMenu = () => {
+		actionsMenu?.classList.add('hidden')
+		actionsButton?.classList.remove('active')
+		actionsButton?.setAttribute('aria-expanded', 'false')
+	}
+	if (closeUrl !== '') {
+		actionsMenu = document.createElement('div')
+		actionsMenu.className = 'arcade-actions-menu hidden'
+
+		const item = (iconPath, label, onClick) => {
+			const element = document.createElement('button')
+			element.type = 'button'
+			element.className = 'arcade-actions-item'
+			element.innerHTML = icon(iconPath)
+			element.appendChild(document.createTextNode(label))
+			element.addEventListener('click', (event) => {
+				event.stopPropagation()
+				closeActionsMenu()
+				onClick()
+			})
+			actionsMenu.appendChild(element)
+			return element
+		}
+
+		item(ICONS.fullscreen, t('arcade', 'Full screen'), () => fullscreenButton.click())
+		// The full Files sidebar, when the page carries it.
+		if (romPath && window.OCA?.Files?.Sidebar !== undefined) {
+			item(ICONS.sidebar, t('arcade', 'Open sidebar'), () => {
+				window.OCA.Files.Sidebar.open(romPath.startsWith('/') ? romPath : `/${romPath}`)
+			})
+		}
+		if (romPath) {
+			const link = document.createElement('a')
+			link.className = 'arcade-actions-item'
+			link.href = davUrl(romPath)
+			link.setAttribute('download', romName || '')
+			link.innerHTML = icon(ICONS.download)
+			link.appendChild(document.createTextNode(t('arcade', 'Download')))
+			link.addEventListener('click', (event) => {
+				event.stopPropagation()
+				closeActionsMenu()
+			})
+			actionsMenu.appendChild(link)
+		}
+
+		actionsButton = button(ICONS.dots, t('arcade', 'Actions'), (element) => {
+			const visible = !actionsMenu.classList.contains('hidden')
+			actionsMenu.classList.toggle('hidden', visible)
+			element.classList.toggle('active', !visible)
+			element.setAttribute('aria-expanded', String(!visible))
+			if (!visible) {
+				// The menu and the panels cover the same spot.
+				hideStates()
+				galleryPanel?.element.classList.add('hidden')
+				galleryButton?.classList.remove('active')
+			}
+		})
+		actionsButton.setAttribute('aria-haspopup', 'true')
+		actionsButton.setAttribute('aria-expanded', 'false')
+	}
+
+	// A click anywhere else puts the menu away, the way core menus behave.
+	// The toolbar's own buttons stop propagation, so they are not "anywhere
+	// else" and keep their meaning.
+	const onDocumentClick = (event) => {
+		if (actionsMenu === null || actionsMenu.classList.contains('hidden')) {
+			return
+		}
+		if (!actionsMenu.contains(event.target)) {
+			closeActionsMenu()
+		}
+	}
+	document.addEventListener('click', onDocumentClick)
 
 	let closeButton = null
 	if (closeUrl !== '') {
@@ -261,6 +342,13 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	// Escape puts it away, and only then does what it was bound to.
 	const escapeAction = bound.Escape
 	bound.Escape = () => {
+		// The actions menu first: while it shows, Escape means only "put
+		// the menu away", never whatever the key is bound to, such as
+		// closing the game.
+		if (actionsMenu !== null && !actionsMenu.classList.contains('hidden')) {
+			closeActionsMenu()
+			return
+		}
 		const panelOpen = (statesPanel !== null && !statesPanel.element.classList.contains('hidden'))
 			|| (galleryPanel !== null && !galleryPanel.element.classList.contains('hidden'))
 		if (panelOpen) {
@@ -298,15 +386,20 @@ export function attachToolbar({ container, instance, romPath, romName, settings 
 	if (galleryPanel !== null) {
 		container.appendChild(galleryPanel.element)
 	}
+	if (actionsMenu !== null) {
+		container.appendChild(actionsMenu)
+	}
 
 	return () => {
 		clearTimeout(statusTimer)
 		clearInterval(autosaveTimer)
 		document.removeEventListener('visibilitychange', onVisibilityChange)
 		document.removeEventListener('keydown', onKeyDown, true)
+		document.removeEventListener('click', onDocumentClick)
 		touchControls?.detach()
 		statesPanel?.element.remove()
 		galleryPanel?.element.remove()
+		actionsMenu?.remove()
 		container.querySelector('.arcade-resume')?.remove()
 		toolbar.remove()
 	}

@@ -8,9 +8,11 @@ use OCA\Arcade\Controller\PageController;
 use OCA\Arcade\Service\LibraryService;
 use OCA\Arcade\Service\RecentService;
 use OCA\Arcade\Service\SettingsService;
+use OCA\Files\Event\LoadSidebar;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\BackgroundJob\IJobList;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\IRequest;
@@ -53,6 +55,7 @@ class PageControllerTest extends TestCase {
 		array $stats = [],
 		string $ifNoneMatch = '',
 		array $suggestions = [],
+		?IEventDispatcher $eventDispatcher = null,
 	): PageController {
 		$request = $this->createStub(IRequest::class);
 		$request->method('getHeader')->willReturnCallback(
@@ -90,8 +93,20 @@ class PageControllerTest extends TestCase {
 			$recentService,
 			$rootFolder,
 			$this->createStub(IJobList::class),
+			$eventDispatcher ?? $this->createStub(IEventDispatcher::class),
 			'alice',
 		);
+	}
+
+	public function testIndexAsksForTheFilesSidebar(): void {
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects($this->once())
+			->method('dispatchTyped')
+			->with($this->isInstanceOf(LoadSidebar::class));
+
+		$response = $this->controller(eventDispatcher: $dispatcher)->index();
+
+		$this->assertSame('index', $response->getTemplateName());
 	}
 
 	public function testEtagIsSetAndStableForIdenticalInputs(): void {
