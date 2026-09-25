@@ -612,6 +612,125 @@ function renderHeader(reload, setView) {
 }
 
 /**
+ * @param {object} suggestion a suggested folder: path, games, systems
+ * @param {Function} reload reloads the library
+ * @return {HTMLElement} one suggested folder, with its button
+ */
+function renderSuggestion(suggestion, reload) {
+	const item = document.createElement('li')
+	item.className = 'arcade-library-suggestion'
+
+	const text = document.createElement('span')
+	text.className = 'arcade-library-suggestion-text'
+	const games = n('arcade', '%n game in {path}', '%n games in {path}', suggestion.games, {
+		path: suggestion.path,
+	})
+	const systems = (suggestion.systems ?? []).map((system) => systemLabel(system)).join(', ')
+	text.textContent = systems === '' ? games : `${games} (${systems})`
+	item.appendChild(text)
+
+	const use = document.createElement('button')
+	use.type = 'button'
+	use.className = 'primary'
+	use.textContent = t('arcade', 'Use this folder')
+	use.addEventListener('click', async () => {
+		use.disabled = true
+		try {
+			// The personal settings endpoint takes a partial body, so only
+			// the library folder changes.
+			await post('/apps/arcade/settings', { library_folder: suggestion.path })
+			reload(true)
+		} catch (error) {
+			console.error('Could not save the library folder', error)
+			use.disabled = false
+		}
+	})
+	item.appendChild(use)
+
+	return item
+}
+
+/**
+ * Ask the server where ROMs already are, and offer those folders.
+ *
+ * @param {HTMLElement} status the "looking …" line, replaced by what was found
+ * @param {Function} reload reloads the library
+ */
+async function loadSuggestions(status, reload) {
+	let suggestions = []
+	try {
+		const response = await fetch(generateUrl('/apps/arcade/suggest'), {
+			headers: { requesttoken: getRequestToken() ?? '' },
+		})
+		if (!response.ok) {
+			throw new Error(`${response.status} ${response.statusText}`)
+		}
+		suggestions = (await response.json()).suggestions ?? []
+	} catch (error) {
+		console.error('Could not look for ROM folders', error)
+		status.remove()
+		return
+	}
+
+	if (suggestions.length === 0) {
+		status.textContent = t('arcade', 'No ROMs were found in your files yet. Upload some games, then rescan.')
+		return
+	}
+
+	status.textContent = t('arcade', 'ROMs were already found in these folders:')
+	const list = document.createElement('ul')
+	list.className = 'arcade-library-suggestions'
+	for (const suggestion of suggestions) {
+		list.appendChild(renderSuggestion(suggestion, reload))
+	}
+	status.after(list)
+}
+
+/**
+ * The first-run panel, shown when the library folder is missing or holds
+ * no games: what the app looks for, the folders that already hold ROMs,
+ * and the way to pick one by hand.
+ *
+ * @param {object} data the library response
+ * @param {Function} reload reloads the library
+ * @return {HTMLElement} the onboarding panel
+ */
+function renderOnboarding(data, reload) {
+	const panel = document.createElement('div')
+	panel.className = 'arcade-library-onboarding'
+
+	const status = document.createElement('p')
+	status.className = 'arcade-library-hint'
+	status.textContent = data.exists
+		? t('arcade', 'The games library folder {folder} exists, but no games were found in it.', { folder: data.folder })
+		: t('arcade', 'The games library folder {folder} does not exist yet.', { folder: data.folder })
+	panel.appendChild(status)
+
+	const explain = document.createElement('p')
+	explain.textContent = t(
+		'arcade',
+		'Arcade lists the ROM files of retro consoles — like .nes, .sfc, .gba, .md or zipped games — and plays them right in the browser.',
+	)
+	panel.appendChild(explain)
+
+	const looking = document.createElement('p')
+	looking.className = 'arcade-library-hint'
+	looking.textContent = t('arcade', 'Looking for ROMs in your files …')
+	panel.appendChild(looking)
+	loadSuggestions(looking, reload)
+
+	const manual = document.createElement('p')
+	manual.className = 'arcade-library-hint'
+	const link = document.createElement('a')
+	link.href = generateUrl('/settings/user/arcade')
+	link.textContent = t('arcade', 'Or pick a folder yourself in the Arcade personal settings.')
+	manual.appendChild(link)
+	panel.appendChild(manual)
+
+	return panel
+}
+
+/**
  * Render the games library, replacing the contents of the container.
  *
  * @param {HTMLElement} container the element to render into
@@ -712,20 +831,7 @@ export async function renderLibrary(container, onError) {
 		container.appendChild(renderHeader(load, setView))
 
 		if (!data.exists || data.libraryTotal === 0) {
-			const hint = document.createElement('p')
-			hint.className = 'arcade-library-hint'
-			hint.textContent = data.exists
-				? t(
-					'arcade',
-					'No games found in {folder}. Upload some ROMs there, or pick another folder in the Arcade personal settings.',
-					{ folder: data.folder },
-				)
-				: t(
-					'arcade',
-					'The games library folder {folder} does not exist. Create it, or pick another folder in the Arcade personal settings.',
-					{ folder: data.folder },
-				)
-			container.appendChild(hint)
+			container.appendChild(renderOnboarding(data, load))
 			return
 		}
 

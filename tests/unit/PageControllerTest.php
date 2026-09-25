@@ -44,6 +44,7 @@ class PageControllerTest extends TestCase {
 	 * @param list<int> $recentIds file ids in play order
 	 * @param array<int, array<string, int>> $stats play stats by file id
 	 * @param string $ifNoneMatch the If-None-Match header of the request
+	 * @param list<array{path: string, games: int, systems: list<string>}> $suggestions
 	 */
 	private function controller(
 		array $games = self::GAMES,
@@ -51,6 +52,7 @@ class PageControllerTest extends TestCase {
 		array $recentIds = [],
 		array $stats = [],
 		string $ifNoneMatch = '',
+		array $suggestions = [],
 	): PageController {
 		$request = $this->createStub(IRequest::class);
 		$request->method('getHeader')->willReturnCallback(
@@ -72,6 +74,7 @@ class PageControllerTest extends TestCase {
 		$libraryService = $this->createStub(LibraryService::class);
 		$libraryService->method('getGames')->willReturn($games);
 		$libraryService->method('filterGames')->willReturnArgument(0);
+		$libraryService->method('suggestFolders')->willReturn($suggestions);
 
 		$recentService = $this->createStub(RecentService::class);
 		$recentService->method('get')->willReturn($recentIds);
@@ -159,6 +162,25 @@ class PageControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_MODIFIED, $response->getStatus());
 		$this->assertSame($etag, $response->getETag());
 		$this->assertSame([], $response->getData());
+	}
+
+	public function testSuggestionsAreWrappedForTheOnboardingPanel(): void {
+		$suggestions = [
+			['path' => '/ROMs', 'games' => 40, 'systems' => ['gb', 'snes']],
+			['path' => '/Downloads/GB', 'games' => 2, 'systems' => ['gb']],
+		];
+
+		$response = $this->controller(suggestions: $suggestions)->suggest();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['suggestions' => $suggestions], $response->getData());
+	}
+
+	public function testNoSuggestionsIsAnEmptyList(): void {
+		$response = $this->controller()->suggest();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['suggestions' => []], $response->getData());
 	}
 
 	public function testStaleIfNoneMatchGetsTheFullPayload(): void {

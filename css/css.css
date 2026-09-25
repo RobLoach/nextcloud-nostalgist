@@ -133,6 +133,31 @@
 	margin-bottom: calc(var(--default-grid-baseline, 4px) * 3);
 }
 
+/* First-run onboarding */
+
+.arcade .arcade-library-onboarding {
+	max-width: 640px;
+}
+
+.arcade .arcade-library-suggestions {
+	list-style: none;
+	margin: 0 0 calc(var(--default-grid-baseline, 4px) * 4) 0;
+	padding: 0;
+}
+
+.arcade .arcade-library-suggestion {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: calc(var(--default-grid-baseline, 4px) * 3);
+	padding: calc(var(--default-grid-baseline, 4px) * 2) 0;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.arcade .arcade-library-suggestion button {
+	flex-shrink: 0;
+}
+
 .arcade .arcade-library-placeholder {
 	display: flex;
 	align-items: center;
