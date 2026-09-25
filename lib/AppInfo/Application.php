@@ -83,8 +83,14 @@ class Application extends App implements IBootstrap {
 			}
 			// Load the default mappings first, as registering a type before
 			// they are loaded would prevent them from being loaded at all.
-			$detector->getAllMappings();
+			$mappings = $detector->getAllMappings();
 			foreach (CoreMap::extensionMimeMap() as $extension => $mime) {
+				// An extension the server already knows is left alone:
+				// ".md" is Markdown to Nextcloud, and claiming it here
+				// would retype every note on the instance.
+				if (isset($mappings[$extension]) && !in_array($mime, $mappings[$extension], true)) {
+					continue;
+				}
 				$detector->registerType($extension, $mime);
 			}
 		});
