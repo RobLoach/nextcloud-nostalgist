@@ -32,7 +32,7 @@ class RecentController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/recent')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/recent')]
 	public function record(string $file = '', int $seconds = 0): JSONResponse {
 		if (!$this->isGame($file)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -47,7 +47,7 @@ class RecentController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/favorite')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/favorite')]
 	public function favorite(string $file = ''): JSONResponse {
 		if (!$this->isGame($file)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);

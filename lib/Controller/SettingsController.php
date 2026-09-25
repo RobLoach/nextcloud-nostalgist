@@ -28,7 +28,7 @@ class SettingsController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/settings')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/settings')]
 	public function get(): JSONResponse {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
@@ -36,7 +36,7 @@ class SettingsController extends Controller {
 		return new JSONResponse($this->settingsService->getUserSettings($this->userId));
 	}
 
-	#[FrontpageRoute(verb: 'POST', url: '/settings/admin')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/settings/admin')]
 	public function saveAdmin(): JSONResponse {
 		return new JSONResponse(
 			$this->settingsService->setInstanceDefaults($this->request->getParams()),
@@ -44,7 +44,7 @@ class SettingsController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/settings')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/settings')]
 	public function save(): JSONResponse {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);

@@ -39,7 +39,7 @@ class ThumbnailController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/thumbnails/fetch')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/thumbnails/fetch')]
 	public function fetch(): JSONResponse {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);
@@ -67,7 +67,7 @@ class ThumbnailController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/thumbnails/fetch')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/thumbnails/fetch')]
 	public function status(): JSONResponse|array {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);

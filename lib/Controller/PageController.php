@@ -82,7 +82,7 @@ class PageController extends Controller {
 	 * (how often) and 'playtime' (how long) sort keys.
 	 */
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/library')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/library')]
 	public function library(
 		int $offset = 0,
 		int $limit = 60,
@@ -190,7 +190,7 @@ class PageController extends Controller {
 	 * list is empty when nothing is found.
 	 */
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/suggest')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/suggest')]
 	public function suggest(): JSONResponse {
 		if ($this->userId === null) {
 			return new JSONResponse([], Http::STATUS_UNAUTHORIZED);

@@ -68,16 +68,16 @@ All of them are user-scoped and require a session.
 | Method | Route | Purpose |
 | --- | --- | --- |
 | GET | `/apps/arcade/` | The app page, `?file=` plays a game |
-| GET | `/apps/arcade/library` | Games: `offset`, `limit`, `sort`, `order`, `search`, `system`, `refresh` |
-| GET/POST | `/apps/arcade/settings` | Personal settings |
-| GET | `/apps/arcade/states` | Save state slots of a game |
-| GET/POST/DELETE | `/apps/arcade/state` | A save state slot |
-| GET/POST | `/apps/arcade/state/thumbnail` | The screenshot of a slot |
-| GET/POST | `/apps/arcade/sram` | The in-game battery save |
-| POST | `/apps/arcade/recent` | Remember a game as played, and for how long |
-| POST | `/apps/arcade/favorite` | Make a game a favorite, or stop |
-| GET/POST | `/apps/arcade/thumbnails/fetch` | Ask for missing box art, and how it went |
-| GET/DELETE | `/apps/arcade/screenshots` | The screenshots of a game |
+| GET | `/apps/arcade/arcade/library` | Games: `offset`, `limit`, `sort`, `order`, `search`, `system`, `refresh` |
+| GET/POST | `/apps/arcade/arcade/settings` | Personal settings |
+| GET | `/apps/arcade/arcade/states` | Save state slots of a game |
+| GET/POST/DELETE | `/apps/arcade/arcade/state` | A save state slot |
+| GET/POST | `/apps/arcade/arcade/state/thumbnail` | The screenshot of a slot |
+| GET/POST | `/apps/arcade/arcade/sram` | The in-game battery save |
+| POST | `/apps/arcade/arcade/recent` | Remember a game as played, and for how long |
+| POST | `/apps/arcade/arcade/favorite` | Make a game a favorite, or stop |
+| GET/POST | `/apps/arcade/arcade/thumbnails/fetch` | Ask for missing box art, and how it went |
+| GET/DELETE | `/apps/arcade/arcade/screenshots` | The screenshots of a game |
 
 Save states and battery saves are removed along with the game they belong
 to, and with the user they belong to — but a game deleted into the trash
