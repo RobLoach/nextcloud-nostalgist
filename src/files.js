@@ -163,7 +163,7 @@ async function show(fileInfo) {
 	const file = pathOf(fileInfo)
 	mountPoint.textContent = ''
 	try {
-		const response = await api(generateUrl('/apps/arcade/game?file={file}', { file }))
+		const response = await api(generateUrl('/apps/arcade/arcade/game?file={file}', { file }))
 		const game = await response.json()
 		if (mine !== generation || mountPoint === null) {
 			return

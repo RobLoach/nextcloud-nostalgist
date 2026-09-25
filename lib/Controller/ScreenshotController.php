@@ -37,7 +37,7 @@ class ScreenshotController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/screenshots')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/screenshots')]
 	public function list(string $file = ''): JSONResponse {
 		if ($this->userId === null || $file === '') {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -53,7 +53,7 @@ class ScreenshotController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'DELETE', url: '/screenshots')]
+	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/screenshots')]
 	public function delete(int $fileId = 0): JSONResponse {
 		if ($this->userId === null || $fileId === 0) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);

@@ -215,7 +215,7 @@ function thumbnailFor(game, size) {
 	}
 	if (game.fallback?.type === 'state') {
 		image.className = 'arcade-library-thumbnail arcade-library-thumbnail-snap'
-		image.src = generateUrl('/apps/arcade/state/thumbnail?file={file}&slot={slot}', {
+		image.src = generateUrl('/apps/arcade/arcade/state/thumbnail?file={file}&slot={slot}', {
 			file: game.path,
 			slot: game.fallback.slot,
 		})
@@ -267,7 +267,7 @@ function renderCard(game, reload) {
 	favorite.addEventListener('click', async (event) => {
 		event.preventDefault()
 		try {
-			await post('/apps/arcade/favorite', { file: game.path })
+			await post('/apps/arcade/arcade/favorite', { file: game.path })
 			reload(true)
 		} catch (error) {
 			console.error('Could not change the favorites', error)
@@ -638,7 +638,7 @@ function renderSuggestion(suggestion, reload) {
 		try {
 			// The personal settings endpoint takes a partial body, so only
 			// the library folder changes.
-			await post('/apps/arcade/settings', { library_folder: suggestion.path })
+			await post('/apps/arcade/arcade/settings', { library_folder: suggestion.path })
 			reload(true)
 		} catch (error) {
 			console.error('Could not save the library folder', error)
@@ -659,7 +659,7 @@ function renderSuggestion(suggestion, reload) {
 async function loadSuggestions(status, reload) {
 	let suggestions = []
 	try {
-		const response = await fetch(generateUrl('/apps/arcade/suggest'), {
+		const response = await fetch(generateUrl('/apps/arcade/arcade/suggest'), {
 			headers: { requesttoken: getRequestToken() ?? '' },
 		})
 		if (!response.ok) {
@@ -757,7 +757,7 @@ export async function renderLibrary(container, onError) {
 		let data
 		try {
 			const response = await fetch(generateUrl(
-				'/apps/arcade/library?offset={offset}&limit={limit}&sort={sort}&order={order}'
+				'/apps/arcade/arcade/library?offset={offset}&limit={limit}&sort={sort}&order={order}'
 					+ '&search={search}&system={system}&tag={tag}&refresh={refresh}',
 				{
 					offset: state.offset,

@@ -44,7 +44,7 @@ class GameController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/game')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/game')]
 	public function game(string $file = ''): JSONResponse {
 		$userId = $this->userId;
 		if ($userId === null || $file === '') {

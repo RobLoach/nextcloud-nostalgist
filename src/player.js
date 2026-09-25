@@ -145,7 +145,7 @@ async function fetchBios(systemId, folder) {
 		// a BIOS is the one thing a player cannot make for themselves, so
 		// an administrator can put one where everybody can reach it.
 		const urls = folder === '' ? [] : [davUrl(`${folder}/${name}`)]
-		urls.push(generateUrl('/apps/arcade/bios?name={name}', { name }))
+		urls.push(generateUrl('/apps/arcade/arcade/bios?name={name}', { name }))
 		for (const url of urls) {
 			try {
 				const response = await fetch(url, { credentials: 'same-origin' })
@@ -222,7 +222,7 @@ export function recordRecent(romPath) {
  * @param {number} seconds how long it was played, 0 when starting
  */
 function report(romPath, seconds) {
-	fetch(generateUrl('/apps/arcade/recent?file={file}&seconds={seconds}', {
+	fetch(generateUrl('/apps/arcade/arcade/recent?file={file}&seconds={seconds}', {
 		file: romPath,
 		seconds,
 	}), {
@@ -239,7 +239,7 @@ function report(romPath, seconds) {
  * @return {string} the SRAM endpoint URL
  */
 function sramUrl(romPath) {
-	return generateUrl('/apps/arcade/sram?file={file}', { file: romPath })
+	return generateUrl('/apps/arcade/arcade/sram?file={file}', { file: romPath })
 }
 
 /**

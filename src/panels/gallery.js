@@ -33,7 +33,7 @@ export function createGalleryPanel({ romPath, flash }) {
 
 	const remove = async (fileId) => {
 		try {
-			await api(generateUrl('/apps/arcade/screenshots?fileId={fileId}', { fileId }), {
+			await api(generateUrl('/apps/arcade/arcade/screenshots?fileId={fileId}', { fileId }), {
 				method: 'DELETE',
 			})
 			await refresh()
@@ -47,7 +47,7 @@ export function createGalleryPanel({ romPath, flash }) {
 		let data
 		try {
 			const response = await api(generateUrl(
-				'/apps/arcade/screenshots?file={file}',
+				'/apps/arcade/arcade/screenshots?file={file}',
 				{ file: romPath },
 			))
 			data = await response.json()
@@ -110,7 +110,7 @@ export function createGalleryPanel({ romPath, flash }) {
 	const count = async () => {
 		try {
 			const response = await api(generateUrl(
-				'/apps/arcade/screenshots?file={file}',
+				'/apps/arcade/arcade/screenshots?file={file}',
 				{ file: romPath },
 			))
 			const data = await response.json()

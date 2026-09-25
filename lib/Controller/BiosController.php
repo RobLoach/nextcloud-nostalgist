@@ -39,7 +39,7 @@ class BiosController extends Controller {
 
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/bios')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/bios')]
 	public function get(string $name = ''): DataDisplayResponse {
 		if ($this->userId === null) {
 			return new DataDisplayResponse('', Http::STATUS_UNAUTHORIZED);
@@ -60,7 +60,7 @@ class BiosController extends Controller {
 	 * What every system that wants a BIOS has and has not got, for the
 	 * administrator. Admin-only, so no NoAdminRequired here.
 	 */
-	#[FrontpageRoute(verb: 'GET', url: '/bios/status')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/bios/status')]
 	public function status(): JSONResponse {
 		$stored = $this->biosService->stored();
 		$systems = [];
@@ -96,7 +96,7 @@ class BiosController extends Controller {
 	 * Takes one BIOS file, sent as the raw request body, and only under a
 	 * name some core actually asks for. Admin-only.
 	 */
-	#[FrontpageRoute(verb: 'POST', url: '/bios')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/bios')]
 	public function upload(string $name = ''): JSONResponse {
 		$canonical = BiosService::canonicalName($name);
 		if ($canonical === null) {
@@ -124,7 +124,7 @@ class BiosController extends Controller {
 	/**
 	 * Takes a BIOS file back out of the store, by name. Admin-only.
 	 */
-	#[FrontpageRoute(verb: 'DELETE', url: '/bios')]
+	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/bios')]
 	public function remove(string $name = ''): JSONResponse {
 		$canonical = BiosService::canonicalName($name);
 		if ($canonical === null) {

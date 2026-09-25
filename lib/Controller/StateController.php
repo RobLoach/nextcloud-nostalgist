@@ -39,7 +39,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/states')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/states')]
 	public function list(string $file = ''): JSONResponse {
 		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -51,7 +51,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/state')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/state')]
 	public function get(string $file = '', int $slot = 1): Response {
 		if (!$this->isValidRequest($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -64,7 +64,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/state')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/state')]
 	public function save(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isWritableSlot($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -81,7 +81,7 @@ class StateController extends Controller {
 	// token header. The route is read-only and still requires a session.
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/state/thumbnail')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/state/thumbnail')]
 	public function getThumbnail(string $file = '', int $slot = 1): Response {
 		if (!$this->isValidRequest($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -94,7 +94,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/state/thumbnail')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/state/thumbnail')]
 	public function saveThumbnail(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isWritableSlot($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -108,7 +108,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'GET', url: '/sram')]
+	#[FrontpageRoute(verb: 'GET', url: '/arcade/sram')]
 	public function getSram(string $file = ''): Response {
 		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -121,7 +121,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'POST', url: '/sram')]
+	#[FrontpageRoute(verb: 'POST', url: '/arcade/sram')]
 	public function saveSram(string $file = ''): JSONResponse {
 		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
@@ -135,7 +135,7 @@ class StateController extends Controller {
 	}
 
 	#[NoAdminRequired]
-	#[FrontpageRoute(verb: 'DELETE', url: '/state')]
+	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/state')]
 	public function delete(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isValidRequest($file, $slot)) {
 			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
