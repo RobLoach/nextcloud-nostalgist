@@ -4,7 +4,7 @@ import { getCurrentUser, getRequestToken } from '@nextcloud/auth'
 import { defaultRemoteURL, defaultRootPath } from '@nextcloud/files/dav'
 import { translate as t } from '@nextcloud/l10n'
 import { generateFilePath, generateUrl } from '@nextcloud/router'
-import { inputConfig } from './keys.js'
+import { inputConfig, retroarchKey } from './keys.js'
 import { biosForSystem, coreForSystem, systemForFile, systemFromBytes } from './systems.js'
 
 const SRAM_SYNC_INTERVAL = 60 * 1000
@@ -95,6 +95,7 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 	}
 	const sram = canSave ? await fetchSram(romPath) : null
 	const bios = await fetchBios(system.id, settings.system_folder ?? '')
+	const runahead = Number(settings.runahead_frames ?? 0)
 
 	return await Nostalgist.launch({
 		element,
@@ -109,6 +110,10 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 		respondToGlobalEvents: settings.respond_to_global_events !== false,
 		retroarchConfig: {
 			...inputConfig(settings.buttons),
+			...rewindConfig(settings),
+			// Run-ahead runs the core past the shown frame to hide input
+			// lag, at the cost of running it more than once per frame.
+			...(runahead > 0 ? { run_ahead_enabled: true, run_ahead_frames: runahead } : {}),
 			video_smooth: settings.video_smooth === true,
 			video_scale_integer: settings.scale_integer === true,
 			fastforward_ratio: Number(settings.fastforward_ratio ?? 3),
@@ -123,6 +128,31 @@ export async function launchRom({ element, romUrl, romName, settings = {}, syste
 			return coreUrl(`${coreName}_libretro.wasm`)
 		},
 	})
+}
+
+/**
+ * The RetroArch settings that turn rewind on and bind its key.
+ *
+ * Rewind works while its key is held, which only RetroArch itself can
+ * watch, so the binding goes into the config instead of the toolbar's
+ * hotkey handling. A key that works a button of the controller is left
+ * to the game, as everywhere else, and RetroArch's own stock binding is
+ * cleared so it cannot rewind on a key nobody chose.
+ *
+ * @param {object} settings the user settings
+ * @return {object} the settings RetroArch takes
+ */
+function rewindConfig(settings) {
+	if (settings.rewind_enabled !== true) {
+		return { rewind_enable: false }
+	}
+	const code = settings.hotkeys?.rewind
+	const key = typeof code === 'string' ? retroarchKey(code) : null
+	const shadowed = Object.values(settings.buttons ?? {}).includes(code)
+	return {
+		rewind_enable: true,
+		input_rewind: key !== null && !shadowed ? key : 'nul',
+	}
 }
 
 /**

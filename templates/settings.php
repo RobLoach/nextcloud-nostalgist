@@ -17,6 +17,7 @@ $thumbnailTypes = $_['thumbnailTypes'];
 			'arcade-smooth' => ['video_smooth', $l->t('Smooth video filtering (bilinear)')],
 			'arcade-global-events' => ['respond_to_global_events', $l->t('Capture gamepad and keyboard input for the whole page while playing')],
 			'arcade-scale-integer' => ['scale_integer', $l->t('Pixel-perfect scaling (whole pixels, with borders)')],
+			'arcade-rewind' => ['rewind_enabled', $l->t('Rewind support, going back while the rewind key is held (costs some performance)')],
 			'arcade-pause-hidden' => ['pause_when_hidden', $l->t('Pause the game while the tab is in the background')],
 			'arcade-autosave' => ['autosave_on_close', $l->t('Save the game automatically when closing the player')],
 			'arcade-autoload' => ['autoload_on_start', $l->t('Continue from the latest save when a game starts, without asking')],
@@ -40,6 +41,22 @@ $thumbnailTypes = $_['thumbnailTypes'];
 				] as $seconds => $label): ?>
 					<option value="<?php p($seconds); ?>"
 						<?php if ((int)$settings['autosave_interval'] === $seconds) { p('selected'); } ?>>
+						<?php p($label); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</p>
+		<p>
+			<label for="arcade-runahead"><?php p($l->t('Run-ahead, hides input lag at the cost of CPU')); ?></label><br>
+			<select id="arcade-runahead" class="arcade-setting" data-setting="runahead_frames">
+				<?php foreach ([
+					0 => $l->t('Off'),
+					1 => $l->t('1 frame'),
+					2 => $l->t('2 frames'),
+					3 => $l->t('3 frames'),
+				] as $frames => $label): ?>
+					<option value="<?php p($frames); ?>"
+						<?php if ((int)$settings['runahead_frames'] === $frames) { p('selected'); } ?>>
 						<?php p($label); ?>
 					</option>
 				<?php endforeach; ?>
