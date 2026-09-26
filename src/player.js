@@ -9,6 +9,22 @@ import { biosForSystem, coreForSystem, systemForFile, systemFromBytes } from './
 
 const SRAM_SYNC_INTERVAL = 60 * 1000
 
+// The games whose battery save was just deleted. The emulator still holds
+// the old save in memory, and the next sync would write it right back, so
+// uploads stop until the game is opened anew — which starts clean, since
+// there is nothing left to fetch.
+const sramSyncStopped = new Set()
+
+/**
+ * Stop uploading the battery save of a game for the rest of the session,
+ * after its server copy was deleted. Opening the game again resumes it.
+ *
+ * @param {string} romPath path identifying the game
+ */
+export function disableSramSync(romPath) {
+	sramSyncStopped.add(romPath)
+}
+
 /**
  * @param {string} path path of the file, relative to the user folder or,
  *                      on public share pages, the share root
@@ -309,7 +325,13 @@ export function startSramSync(instance, romPath, canSave = true) {
 	if (!romPath || !canSave || getCurrentUser() === null) {
 		return () => {}
 	}
+	// A fresh launch starts from what the server holds, so it syncs again
+	// even when the battery save was deleted in an earlier session.
+	sramSyncStopped.delete(romPath)
 	const upload = async () => {
+		if (sramSyncStopped.has(romPath)) {
+			return
+		}
 		try {
 			const sram = await instance.saveSRAM()
 			if (sram === undefined || sram.size === 0) {

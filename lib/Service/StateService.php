@@ -117,16 +117,49 @@ class StateService {
 	public function loadSram(string $userId, string $romPath): ?string {
 		$folder = $this->getGameFolder($userId, $romPath, false);
 		if ($folder !== null) {
-			// The battery save is named after the game. A game that was
-			// renamed has one under its old name, and there is only ever
-			// one in the folder.
-			return $this->readNode($folder, $this->sramNodeName($romPath))
-				?? $this->readAnySram($folder);
+			return $this->findSram($folder, $romPath)?->getContent();
 		}
 		if ($this->savesFolderPath($userId) !== '') {
 			return null;
 		}
 		return $this->readAppData($userId, $this->sramFileName($this->key($userId, $romPath)));
+	}
+
+	/**
+	 * Whether the game has a battery save at all, looked for the same way
+	 * loadSram finds it, without reading it.
+	 */
+	public function hasSram(string $userId, string $romPath): bool {
+		$folder = $this->getGameFolder($userId, $romPath, false);
+		if ($folder !== null) {
+			return $this->findSram($folder, $romPath) !== null;
+		}
+		if ($this->savesFolderPath($userId) !== '') {
+			return false;
+		}
+		$states = $this->userStates($userId, false);
+		return $states !== null && $states->fileExists($this->sramFileName($this->key($userId, $romPath)));
+	}
+
+	/**
+	 * Remove the battery save, wherever loadSram would have found it, so a
+	 * game with an in-game save file can be started over. Says whether there
+	 * was one to remove.
+	 */
+	public function deleteSram(string $userId, string $romPath): bool {
+		$folder = $this->getGameFolder($userId, $romPath, false);
+		if ($folder !== null) {
+			$sram = $this->findSram($folder, $romPath);
+			if ($sram === null) {
+				return false;
+			}
+			$sram->delete();
+			return true;
+		}
+		if ($this->savesFolderPath($userId) !== '') {
+			return false;
+		}
+		return $this->deleteAppData($userId, $this->sramFileName($this->key($userId, $romPath)));
 	}
 
 	public function delete(string $userId, string $romPath, int $slot): bool {
@@ -536,10 +569,23 @@ class StateService {
 		return $was !== '' && $now !== '' && $was !== $now;
 	}
 
-	private function readAnySram(Folder $folder): ?string {
+	/**
+	 * The battery save of a game's folder. It is named after the game, but
+	 * a game that was renamed has one under its old name, and there is only
+	 * ever one in the folder, so any .srm answers.
+	 */
+	private function findSram(Folder $folder, string $romPath): ?File {
+		try {
+			$node = $folder->get($this->sramNodeName($romPath));
+			if ($node instanceof File) {
+				return $node;
+			}
+		} catch (NotFoundException) {
+			// Perhaps under the name the game had before.
+		}
 		foreach ($folder->getDirectoryListing() as $node) {
 			if ($node instanceof File && str_ends_with(strtolower($node->getName()), '.srm')) {
-				return $node->getContent();
+				return $node;
 			}
 		}
 		return null;

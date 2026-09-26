@@ -481,6 +481,48 @@ class StateServiceTest extends TestCase {
 		$this->assertFalse($service->delete(self::USER, self::GAME, 1), 'and once is enough');
 	}
 
+	public function testTheBatterySaveCanBeDeletedFromTheAppData(): void {
+		$service = $this->service();
+		$service->saveSram(self::USER, self::GAME, 'a battery save');
+		$this->assertTrue($service->hasSram(self::USER, self::GAME));
+
+		$this->assertTrue($service->deleteSram(self::USER, self::GAME));
+
+		$this->assertNull($service->loadSram(self::USER, self::GAME));
+		$this->assertFalse($service->hasSram(self::USER, self::GAME));
+		$this->assertFalse($service->deleteSram(self::USER, self::GAME), 'and once is enough');
+	}
+
+	public function testTheBatterySaveCanBeDeletedFromTheSavesFolder(): void {
+		$service = $this->service('/Saves');
+		$service->saveSram(self::USER, self::GAME, 'a battery save');
+		$this->assertTrue($service->hasSram(self::USER, self::GAME));
+
+		$this->assertTrue($service->deleteSram(self::USER, self::GAME));
+
+		$this->assertArrayNotHasKey('Saves/Nintendo/Mario/Mario.srm', $this->files);
+		$this->assertFalse($service->hasSram(self::USER, self::GAME));
+		$this->assertFalse($service->deleteSram(self::USER, self::GAME), 'and once is enough');
+	}
+
+	public function testABatterySaveUnderTheOldNameOfTheGameIsStillDeleted(): void {
+		$service = $this->service('/Saves');
+		// As a rename leaves it: the folder followed the game, the battery
+		// save inside kept the name the game had.
+		$this->files['Saves/Nintendo/Mario/Super Mario Bros.srm'] = 'a battery save';
+
+		$this->assertTrue($service->hasSram(self::USER, self::GAME));
+		$this->assertSame('a battery save', $service->loadSram(self::USER, self::GAME));
+		$this->assertTrue($service->deleteSram(self::USER, self::GAME));
+		$this->assertArrayNotHasKey('Saves/Nintendo/Mario/Super Mario Bros.srm', $this->files);
+	}
+
+	public function testAGameWithoutABatterySaveHasNothingToDelete(): void {
+		$service = $this->service();
+		$this->assertFalse($service->hasSram(self::USER, self::GAME));
+		$this->assertFalse($service->deleteSram(self::USER, self::GAME));
+	}
+
 	public function testEverythingOfAGameGoesWithIt(): void {
 		$service = $this->service();
 		$service->save(self::USER, self::GAME, 1, 'first');
