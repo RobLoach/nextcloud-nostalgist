@@ -12,6 +12,7 @@ use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -63,7 +64,11 @@ class StateController extends Controller {
 		return new DataDownloadResponse($state, basename($file) . '.state', 'application/octet-stream');
 	}
 
+	// The fastest autosave interval is 30 seconds, so with a manual saving
+	// spree on top the realistic peak is around 6 saves a minute; 60 leaves
+	// ten times that before a runaway client is cut off.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 60, period: 60)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/state')]
 	public function save(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isWritableSlot($file, $slot)) {
@@ -93,7 +98,10 @@ class StateController extends Controller {
 		return new DataDownloadResponse($thumbnail, 'thumbnail.png', 'image/png');
 	}
 
+	// Every state save is followed by at most one thumbnail, so the same
+	// generous ceiling as the state endpoint fits here.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 60, period: 60)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/state/thumbnail')]
 	public function saveThumbnail(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isWritableSlot($file, $slot)) {
@@ -120,7 +128,10 @@ class StateController extends Controller {
 		return new DataDownloadResponse($sram, basename($file) . '.srm', 'application/octet-stream');
 	}
 
+	// SRAM syncs once a minute plus a flush when the page hides or the game
+	// closes; even a few tabs at once stay in single digits per minute.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 30, period: 60)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/sram')]
 	public function saveSram(string $file = ''): JSONResponse {
 		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
@@ -134,7 +145,10 @@ class StateController extends Controller {
 		return new JSONResponse(['size' => strlen($sram)]);
 	}
 
+	// Deleting is a manual click per slot; clearing every slot of a game is
+	// still only a handful of requests.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 30, period: 60)]
 	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/state')]
 	public function delete(string $file = '', int $slot = 1): JSONResponse {
 		if (!$this->isValidRequest($file, $slot)) {

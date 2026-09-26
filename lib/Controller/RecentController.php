@@ -10,6 +10,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\IRootFolder;
 use OCP\IRequest;
@@ -31,7 +32,11 @@ class RecentController extends Controller {
 		parent::__construct($appName, $request);
 	}
 
+	// Fired once when a game starts and once when it is left. The writes are
+	// cheap database rows, but a scripted flood would still churn the table,
+	// so cap it far above any realistic game-hopping pace.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 30, period: 60)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/recent')]
 	public function record(string $file = '', int $seconds = 0): JSONResponse {
 		if (!$this->isGame($file)) {
@@ -46,7 +51,10 @@ class RecentController extends Controller {
 		return new JSONResponse([]);
 	}
 
+	// A heart toggled by hand while browsing; one a second sustained for a
+	// whole minute is already beyond any human clicking.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 60, period: 60)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/favorite')]
 	public function favorite(string $file = ''): JSONResponse {
 		if (!$this->isGame($file)) {
