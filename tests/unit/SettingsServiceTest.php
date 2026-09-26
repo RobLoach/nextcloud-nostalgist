@@ -144,6 +144,8 @@ class SettingsServiceTest extends TestCase {
 		$settings = $this->service()->getUserSettings(self::USER);
 		$this->assertFalse($settings['video_smooth']);
 		$this->assertSame(3, $settings['fastforward_ratio']);
+		$this->assertFalse($settings['rewind_enabled'], 'rewinding costs performance, so it is asked for');
+		$this->assertSame(0, $settings['runahead_frames'], 'and so is run-ahead');
 		$this->assertSame(0, $settings['audio_volume']);
 		$this->assertSame(64, $settings['audio_latency']);
 		$this->assertTrue($settings['pause_when_hidden']);
@@ -303,12 +305,22 @@ class SettingsServiceTest extends TestCase {
 	public function testPlayerTogglesAreStoredAsBooleans(): void {
 		$saved = $this->save([
 			'scale_integer' => 'true',
+			'rewind_enabled' => 'true',
 			'pause_when_hidden' => '0',
 			'autosave_on_close' => false,
 		]);
 		$this->assertTrue($saved['scale_integer']);
+		$this->assertTrue($saved['rewind_enabled']);
 		$this->assertFalse($saved['pause_when_hidden']);
 		$this->assertFalse($saved['autosave_on_close']);
+	}
+
+	public function testRunAheadTakesOnlyAFewFrames(): void {
+		$this->assertSame(0, $this->save(['runahead_frames' => 0])['runahead_frames']);
+		$this->assertSame(2, $this->save(['runahead_frames' => '2'])['runahead_frames']);
+		$this->assertSame(3, $this->save(['runahead_frames' => 10])['runahead_frames']);
+		$this->assertSame(0, $this->save(['runahead_frames' => -1])['runahead_frames']);
+		$this->assertArrayNotHasKey('runahead_frames', $this->save(['runahead_frames' => 'lots']));
 	}
 
 	public function testTheAutosaveIntervalTakesOnlyTheOfferedValues(): void {

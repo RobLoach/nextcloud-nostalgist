@@ -36,6 +36,9 @@ class Controls {
 	public const HOTKEYS = [
 		'pause' => ['label' => 'Pause and resume', 'default' => 'Space'],
 		'fastForward' => ['label' => 'Fast-forward', 'default' => 'KeyT'],
+		// Rewind works while the key is held, which only RetroArch itself
+		// can watch, so the player passes this one on instead of acting on it.
+		'rewind' => ['label' => 'Rewind (hold)', 'default' => 'Backspace'],
 		'fullscreen' => ['label' => 'Fullscreen', 'default' => 'KeyF'],
 		'saveState' => ['label' => 'Save State', 'default' => 'F2'],
 		'loadState' => ['label' => 'Load State', 'default' => 'F4'],

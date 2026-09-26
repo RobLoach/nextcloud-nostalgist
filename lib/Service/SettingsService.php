@@ -211,6 +211,10 @@ class SettingsService {
 			'video_smooth' => false,
 			'scale_integer' => false,
 			'fastforward_ratio' => 3,
+			// Keeping the past around costs memory and CPU, so nobody pays
+			// for rewinding without asking.
+			'rewind_enabled' => false,
+			'runahead_frames' => 0,
 			'audio_volume' => 0,
 			'audio_latency' => 64,
 			'respond_to_global_events' => true,
@@ -380,6 +384,7 @@ class SettingsService {
 		foreach ([
 			'video_smooth',
 			'scale_integer',
+			'rewind_enabled',
 			'respond_to_global_events',
 			'pause_when_hidden',
 			'autosave_on_close',
@@ -405,6 +410,9 @@ class SettingsService {
 		}
 		if (array_key_exists('audio_latency', $settings) && is_numeric($settings['audio_latency'])) {
 			$sanitized['audio_latency'] = max(16, min(256, (int)$settings['audio_latency']));
+		}
+		if (array_key_exists('runahead_frames', $settings) && is_numeric($settings['runahead_frames'])) {
+			$sanitized['runahead_frames'] = max(0, min(3, (int)$settings['runahead_frames']));
 		}
 		foreach (self::INSTANCE_ONLY as $key => $bounds) {
 			if (!array_key_exists($key, $settings)) {

@@ -34,6 +34,10 @@ class ControlsTest extends TestCase {
 		);
 	}
 
+	public function testRewindIsAHotkeyWithAKeyOfItsOwn(): void {
+		$this->assertSame('Backspace', Controls::defaultHotkeys()['rewind']);
+	}
+
 	public function testOnlyKnownBindingsAreKept(): void {
 		$sanitized = Controls::sanitize(
 			['a' => 'KeyM', 'made_up' => 'KeyM'],
