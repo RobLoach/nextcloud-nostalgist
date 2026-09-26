@@ -13,6 +13,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\BackgroundJob\IJobList;
 use OCP\Config\IUserConfig;
@@ -38,7 +39,11 @@ class ThumbnailController extends Controller {
 		parent::__construct($appName, $request);
 	}
 
+	// Queues a background job (deduplicated), so once in a while is all a
+	// player needs; thirty an hour still forgives impatient re-clicking
+	// many times over.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 30, period: 3600)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/thumbnails/fetch')]
 	public function fetch(): JSONResponse {
 		if ($this->userId === null) {

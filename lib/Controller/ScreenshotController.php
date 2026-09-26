@@ -11,6 +11,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Files\File;
 use OCP\Files\Folder;
@@ -52,7 +53,11 @@ class ScreenshotController extends Controller {
 		]);
 	}
 
+	// Uploads go over WebDAV and count against the user quota; only the
+	// delete writes through the app. Emptying a big gallery one click at a
+	// time still stays well under one a second.
 	#[NoAdminRequired]
+	#[UserRateLimit(limit: 60, period: 60)]
 	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/screenshots')]
 	public function delete(int $fileId = 0): JSONResponse {
 		if ($this->userId === null || $fileId === 0) {

@@ -12,6 +12,7 @@ use OCP\AppFramework\Http\Attribute\FrontpageRoute;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\OpenAPI;
+use OCP\AppFramework\Http\Attribute\UserRateLimit;
 use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
@@ -94,8 +95,11 @@ class BiosController extends Controller {
 
 	/**
 	 * Takes one BIOS file, sent as the raw request body, and only under a
-	 * name some core actually asks for. Admin-only.
+	 * name some core actually asks for. Admin-only, but a modest limit is
+	 * cheap insurance: uploading a full BIOS set one file at a time is a few
+	 * dozen requests, so sixty a minute never troubles a real administrator.
 	 */
+	#[UserRateLimit(limit: 60, period: 60)]
 	#[FrontpageRoute(verb: 'POST', url: '/arcade/bios')]
 	public function upload(string $name = ''): JSONResponse {
 		$canonical = BiosService::canonicalName($name);
@@ -122,8 +126,10 @@ class BiosController extends Controller {
 	}
 
 	/**
-	 * Takes a BIOS file back out of the store, by name. Admin-only.
+	 * Takes a BIOS file back out of the store, by name. Admin-only; the same
+	 * generous ceiling as the upload covers clearing a whole store.
 	 */
+	#[UserRateLimit(limit: 60, period: 60)]
 	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/bios')]
 	public function remove(string $name = ''): JSONResponse {
 		$canonical = BiosService::canonicalName($name);
