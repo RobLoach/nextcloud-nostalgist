@@ -50,6 +50,16 @@ class CoreOptions {
 				'label' => 'Crop horizontal overscan',
 				'values' => ['enabled' => 'Yes', 'disabled' => 'No'],
 			],
+			'fceumm_ntsc_filter' => [
+				'label' => 'NTSC video filter',
+				'values' => [
+					'disabled' => 'No',
+					'composite' => 'Composite',
+					'svideo' => 'S-Video',
+					'rgb' => 'RGB',
+					'monochrome' => 'Monochrome',
+				],
+			],
 			'fceumm_turbo_enable' => [
 				'label' => 'Turbo buttons',
 				'values' => ['None' => 'Off', 'Player 1' => 'Player 1', 'Player 2' => 'Player 2', 'Both' => 'Both players'],
@@ -98,6 +108,15 @@ class CoreOptions {
 				'label' => 'SuperFX overclock',
 				'values' => ['100%' => 'None', '150%' => '150%', '200%' => '200%', '300%' => '300%'],
 			],
+			'snes9x_overclock_cycles' => [
+				'label' => 'Reduce slowdown by overclocking',
+				'values' => [
+					'disabled' => 'No',
+					'light' => 'Light',
+					'compatible' => 'Compatible',
+					'max' => 'Max, may break games',
+				],
+			],
 		],
 		'gambatte' => [
 			'gambatte_gb_hwmode' => [
@@ -139,6 +158,10 @@ class CoreOptions {
 				'label' => 'Allow opposite directions at once',
 				'values' => ['disabled' => 'No', 'enabled' => 'Yes'],
 			],
+			'gambatte_gb_bootloader' => [
+				'label' => 'Show the start-up logo',
+				'values' => ['enabled' => 'Yes', 'disabled' => 'No'],
+			],
 			'gambatte_mix_frames' => [
 				'label' => 'Blend frames',
 				'values' => [
@@ -151,6 +174,20 @@ class CoreOptions {
 			],
 		],
 		'mgba' => [
+			'mgba_gb_model' => [
+				'label' => 'Game Boy model',
+				'values' => [
+					'Autodetect' => 'Auto',
+					'Game Boy' => 'Game Boy',
+					'Super Game Boy' => 'Super Game Boy',
+					'Game Boy Color' => 'Game Boy Color',
+					'Game Boy Advance' => 'Game Boy Advance',
+				],
+			],
+			'mgba_use_bios' => [
+				'label' => 'Use the BIOS when available',
+				'values' => ['OFF' => 'No', 'ON' => 'Yes'],
+			],
 			'mgba_color_correction' => [
 				'label' => 'Color correction',
 				'values' => ['OFF' => 'No', 'GBA' => 'Game Boy Advance', 'GBC' => 'Game Boy Color', 'Auto' => 'Auto'],
@@ -209,6 +246,10 @@ class CoreOptions {
 					'rgb' => 'RGB',
 					'monochrome' => 'Monochrome',
 				],
+			],
+			'genesis_plus_gx_addr_error' => [
+				'label' => 'Strict address errors',
+				'values' => ['enabled' => 'Yes, as the hardware', 'disabled' => 'No, helps ROM hacks'],
 			],
 			'genesis_plus_gx_ym2413' => [
 				'label' => 'FM sound chip, Master System',
