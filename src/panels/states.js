@@ -1,5 +1,6 @@
 import { translate as t } from '@nextcloud/l10n'
 import { AUTO_SLOT, api, stateUrl } from '../api.js'
+import { disableSramSync } from '../player.js'
 
 /**
  * Build the save states panel.
@@ -25,6 +26,12 @@ export function createStatesPanel({ instance, romPath, flash, onDone }) {
 
 	const slotsContainer = document.createElement('div')
 	element.appendChild(slotsContainer)
+
+	// The in-game battery save, apart from the slots: it is the game's own
+	// save file, so there is nothing to load or overwrite, only to throw away.
+	const sramContainer = document.createElement('div')
+	sramContainer.className = 'arcade-states-sram'
+	element.appendChild(sramContainer)
 
 	const smallButton = (label, onClick, disabled = false) => {
 		const buttonElement = document.createElement('button')
@@ -90,6 +97,55 @@ export function createStatesPanel({ instance, romPath, flash, onDone }) {
 			console.error('Could not delete the state', error)
 			flash(t('arcade', 'Could not delete the state'))
 		}
+	}
+
+	const removeSram = async () => {
+		try {
+			await api(stateUrl('/sram', romPath), { method: 'DELETE' })
+			// The emulator still holds the old save in memory, and the next
+			// automatic upload would write it right back, so uploads stop
+			// until the game is opened anew — which then starts clean.
+			disableSramSync(romPath)
+			flash(t('arcade', 'Battery save deleted — reopen the game to start over'))
+			await refresh()
+		} catch (error) {
+			console.error('Could not delete the battery save', error)
+			flash(t('arcade', 'Could not delete the battery save'))
+		}
+	}
+
+	const renderSram = (hasSram) => {
+		sramContainer.innerHTML = ''
+		const row = document.createElement('div')
+		row.className = 'arcade-states-slot'
+		const label = document.createElement('span')
+		label.className = 'arcade-states-label'
+		row.appendChild(label)
+		sramContainer.appendChild(row)
+		if (!hasSram) {
+			label.textContent = t('arcade', 'No battery save')
+			return
+		}
+		label.textContent = t('arcade', 'Battery save')
+		// Deleting throws away the game's own save file, so the button asks
+		// to be pressed twice, and forgets being pressed once soon enough.
+		const resting = t('arcade', 'Delete battery save')
+		const armed = t('arcade', 'Really delete?')
+		let disarmTimer = null
+		const deleteButton = smallButton(resting, () => {
+			if (!deleteButton.classList.contains('arcade-states-confirm')) {
+				deleteButton.classList.add('arcade-states-confirm')
+				deleteButton.textContent = armed
+				disarmTimer = setTimeout(() => {
+					deleteButton.classList.remove('arcade-states-confirm')
+					deleteButton.textContent = resting
+				}, 4000)
+				return
+			}
+			clearTimeout(disarmTimer)
+			removeSram()
+		})
+		row.appendChild(deleteButton)
 	}
 
 	const refresh = async () => {
@@ -168,6 +224,7 @@ export function createStatesPanel({ instance, romPath, flash, onDone }) {
 			}
 			slotsContainer.appendChild(row)
 		}
+		renderSram(data.hasSram === true)
 	}
 
 	return { element, refresh, load, save }

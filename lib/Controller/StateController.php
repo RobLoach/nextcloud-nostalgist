@@ -47,6 +47,7 @@ class StateController extends Controller {
 		return new JSONResponse([
 			'slots' => StateService::SLOTS,
 			'states' => $this->stateService->list($this->userId, $file),
+			'hasSram' => $this->stateService->hasSram($this->userId, $file),
 		]);
 	}
 
@@ -132,6 +133,18 @@ class StateController extends Controller {
 		}
 		$this->stateService->saveSram($this->userId, $file, $sram);
 		return new JSONResponse(['size' => strlen($sram)]);
+	}
+
+	#[NoAdminRequired]
+	#[FrontpageRoute(verb: 'DELETE', url: '/arcade/sram')]
+	public function deleteSram(string $file = ''): JSONResponse {
+		if (!$this->isValidRequest($file, StateService::AUTO_SLOT)) {
+			return new JSONResponse([], Http::STATUS_BAD_REQUEST);
+		}
+		if (!$this->stateService->deleteSram($this->userId, $file)) {
+			return new JSONResponse([], Http::STATUS_NOT_FOUND);
+		}
+		return new JSONResponse([]);
 	}
 
 	#[NoAdminRequired]
