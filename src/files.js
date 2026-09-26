@@ -118,6 +118,7 @@ function render(game, file, mime) {
 	addRow(list, t('arcade', 'Region'), game.region ?? '')
 	addRow(list, t('arcade', 'Mapper'), game.mapper ?? '')
 	addRow(list, t('arcade', 'Checksum'), game.checksum ?? '')
+	addRow(list, t('arcade', 'CRC32'), game.crc32 ?? '')
 	addRow(list, t('arcade', 'Played'), playedLine(game.playtime))
 	container.appendChild(list)
 
