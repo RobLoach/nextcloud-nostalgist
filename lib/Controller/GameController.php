@@ -80,6 +80,9 @@ class GameController extends Controller {
 			'region' => $known['region'],
 			'mapper' => $known['mapper'],
 			'checksum' => substr($known['checksum'], 0, self::CHECKSUM_CHARS),
+			// The CRC32 is already only eight characters, and it is the id
+			// the retro databases key on, so it goes out whole.
+			'crc32' => $known['crc32'],
 			'playtime' => $stats,
 			'states' => $this->stateService->list($userId, $file),
 		]);
@@ -89,7 +92,7 @@ class GameController extends Controller {
 	 * What was read out of the ROM itself, empty strings for whatever was
 	 * not. A game nothing has been filed for is still a game.
 	 *
-	 * @return array{system: string, title: string, region: string, mapper: string, checksum: string}
+	 * @return array{system: string, title: string, region: string, mapper: string, checksum: string, crc32: string}
 	 */
 	private function metadataOf(int $fileId): array {
 		$known = [
@@ -98,6 +101,7 @@ class GameController extends Controller {
 			'region' => '',
 			'mapper' => '',
 			'checksum' => '',
+			'crc32' => '',
 		];
 		try {
 			$metadata = $this->metadataManager->getMetadata($fileId);
@@ -107,6 +111,7 @@ class GameController extends Controller {
 				'region' => MetadataListener::REGION,
 				'mapper' => MetadataListener::MAPPER,
 				'checksum' => MetadataListener::CHECKSUM,
+				'crc32' => MetadataListener::CRC32,
 			] as $field => $key) {
 				if ($metadata->hasKey($key)) {
 					$known[$field] = $metadata->getString($key);

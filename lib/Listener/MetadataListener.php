@@ -32,6 +32,7 @@ class MetadataListener implements IEventListener {
 	public const TITLE = 'arcade-title';
 	public const REGION = 'arcade-region';
 	public const CHECKSUM = 'arcade-md5';
+	public const CRC32 = 'arcade-crc32';
 	public const MAPPER = 'arcade-mapper';
 
 	/**
@@ -138,8 +139,14 @@ class MetadataListener implements IEventListener {
 				}
 			}
 
+			// When the client sent an MD5 with the upload, the file is never
+			// hashed here, so the CRC32 stays absent: reading a whole ROM
+			// again only to learn a second name for it would cost more than
+			// the name is worth. The games hashed by the app get both.
 			if ($given === '' && $this->hashingWanted() && $node->getSize() <= self::MAX_HASH_SIZE) {
-				$metadata->setString(self::CHECKSUM, $this->hash($handle, $front), true);
+				$hashes = $this->hash($handle, $front);
+				$metadata->setString(self::CHECKSUM, $hashes['md5'], true);
+				$metadata->setString(self::CRC32, $hashes['crc32']);
 			}
 
 			// The Virtual Boy writes its header at the END of the file, so
@@ -199,12 +206,22 @@ class MetadataListener implements IEventListener {
 	}
 
 	/**
+	 * Both hashes from one pass over the stream: the MD5 the app has always
+	 * kept, and the CRC32 ('crc32b', the zip polynomial) that the No-Intro
+	 * databases key their entries on.
+	 *
 	 * @param resource $handle the file, already read up to $front
+	 * @return array{md5: string, crc32: string} lowercase hex
 	 */
-	private function hash($handle, string $front): string {
-		$context = hash_init('md5');
-		hash_update($context, $front);
-		hash_update_stream($context, $handle);
-		return hash_final($context);
+	private function hash($handle, string $front): array {
+		$md5 = hash_init('md5');
+		$crc32 = hash_init('crc32b');
+		hash_update($md5, $front);
+		hash_update($crc32, $front);
+		while (($chunk = fread($handle, 512 * 1024)) !== false && $chunk !== '') {
+			hash_update($md5, $chunk);
+			hash_update($crc32, $chunk);
+		}
+		return ['md5' => hash_final($md5), 'crc32' => hash_final($crc32)];
 	}
 }

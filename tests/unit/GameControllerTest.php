@@ -89,6 +89,7 @@ class GameControllerTest extends TestCase {
 				'arcade-region' => 'Japan, USA',
 				'arcade-mapper' => 'MMC3',
 				'arcade-md5' => '811b027eaf99c2def7b933c5208636de',
+				'arcade-crc32' => 'cbf43926',
 			],
 			[self::FILE_ID => ['plays' => 3, 'seconds' => 5400, 'time' => 1700000100]],
 			$states,
@@ -103,6 +104,7 @@ class GameControllerTest extends TestCase {
 			'region' => 'Japan, USA',
 			'mapper' => 'MMC3',
 			'checksum' => '811b027e',
+			'crc32' => 'cbf43926',
 			'playtime' => ['plays' => 3, 'seconds' => 5400, 'time' => 1700000100],
 			'states' => $states,
 		], $response->getData());
@@ -117,6 +119,7 @@ class GameControllerTest extends TestCase {
 		$this->assertSame('Genesis', $data['system']['name']);
 		$this->assertSame('', $data['title']);
 		$this->assertSame('', $data['checksum']);
+		$this->assertSame('', $data['crc32']);
 	}
 
 	public function testANeverPlayedGameStillHasThePlaytimeShape(): void {
